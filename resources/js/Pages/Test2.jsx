@@ -95,7 +95,6 @@ export default function Test2() {
     const activeRead = useRef(null);
     const isReading = useRef(false);
     const words = splitWordsBySyllable(DUMMY_TEXT);
-    console.log(words);
 
     useEffect(() => {
         if (!ref.current) return;

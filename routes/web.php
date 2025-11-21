@@ -18,3 +18,17 @@ Route::get('test', function () {
 Route::get('test2', function () {
     return Inertia::render('Test2');
 });
+
+Route::group(['prefix' => 'learn-reading'], function () {
+    Route::get('dashboard', function () {
+        return Inertia::render('LearnReading/Dashboard');
+    });
+
+    Route::get('preview', function () {
+        return Inertia::render('LearnReading/Preview')->rootView('learn-reading');
+    });
+
+    Route::get('{id}', function () {
+        return Inertia::render('LearnReading/Learn');
+    });
+});

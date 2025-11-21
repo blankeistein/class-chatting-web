@@ -82,6 +82,7 @@ export function splitWordsBySyllable(sentence) {
 
 const DUMMY_TEXT =
     "baju itu berwarna merah. rambutnya berwarna pink. tasku berwarna hitam.";
+
 const RESULT = [
     ["ba", "ju"],
     ["i", "tu"],
@@ -95,7 +96,6 @@ export default function Test() {
     const activeRead = useRef(null);
     const isReading = useRef(false);
     const words = splitWordsBySyllable(DUMMY_TEXT);
-    console.log(words);
 
     useEffect(() => {
         if (!ref.current) return;

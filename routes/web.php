@@ -32,3 +32,7 @@ Route::group(['prefix' => 'learn-reading'], function () {
         return Inertia::render('LearnReading/Learn');
     });
 });
+
+Route::get('buku-manager', function () {
+    return Inertia::render('BukuManager');
+});

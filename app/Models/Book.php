@@ -11,4 +11,9 @@ class Book extends Model
         'title',
         'cover_image',
     ];
+
+    public function activationCodes()
+    {
+        return $this->belongsToMany(ActivationCode::class, 'code_book_map', 'book_id', 'activation_code_id');
+    }
 }

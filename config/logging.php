@@ -127,6 +127,17 @@ return [
             'path' => storage_path('logs/laravel.log'),
         ],
 
+        'activation-code' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/activation-code.log'),
+            'level' => env('LOG_ACTIVATION_LEVEL', 'info'),
+            'days' => 180, // Approximately 6 months
+            'formatter' => \Monolog\Formatter\LineFormatter::class,
+            'formatter_with' => [
+                'format' => "[%datetime%] [%level_name%] ACTIVATION_CODE: %message% %context% %extra%\n",
+                'dateFormat' => 'Y-m-d H:i:s',
+            ],
+        ],
     ],
 
 ];

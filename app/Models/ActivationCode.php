@@ -16,25 +16,13 @@ class ActivationCode extends Model
         'max_activated',
     ];
 
-    protected $casts = [
-        'activated_at' => 'datetime',
-        'activated_in' => 'datetime',
-        'times_activated' => 'integer',
-        'max_activated' => 'integer',
-    ];
-
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id', 'uuid');
     }
 
-    public function book()
+    public function items()
     {
-        return $this->belongsTo(Book::class, 'activated_in', 'id');
-    }
-
-    public function books()
-    {
-        return $this->belongsToMany(Book::class, 'code_book_map', 'activation_code_id', 'book_id');
+        return $this->hasMany(ActivationItem::class);
     }
 }

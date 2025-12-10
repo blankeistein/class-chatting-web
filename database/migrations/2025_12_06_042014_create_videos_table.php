@@ -24,6 +24,8 @@ return new class extends Migration
             $table->string('provider')->default('local');
             $table->json('metadata')->nullable();
             $table->timestamps();
+
+            $table->softDeletes();
         });
     }
 

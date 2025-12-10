@@ -14,13 +14,15 @@ return new class extends Migration
         Schema::create('activation_codes', function (Blueprint $table) {
             $table->id();
             $table->string('code')->unique()->collation('utf8mb4_bin');
-            $table->string('user_id')->nullable();
+            $table->string('user_id')->nullable()->index();
             $table->timestamp('activated_at')->nullable();
             $table->foreignId('activated_in')->nullable();
             $table->smallInteger('tier')->default(0);
             $table->integer('times_activated')->default(0);
             $table->integer('max_activated')->nullable();
             $table->timestamps();
+
+            $table->softDeletes();
         });
     }
 

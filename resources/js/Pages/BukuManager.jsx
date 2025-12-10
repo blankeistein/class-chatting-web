@@ -28,49 +28,7 @@ import {
  * SAMPLE DATA
  */
 const INITIAL_DATA_OBJECT = {
-  "99986": {
-    "idBook": "44ADA0967B924BDDB7856AD37A3DFDF7",
-    "idBookPath": "99986",
-    "idPlaystore": "44ADA0967B924BDDB7856AD37A3DFDF7",
-    "nameBook": "SIAP TKA 2026",
-    "orderBook": 1,
-    "status": "publish",
-    "price": 1,
-    "version": 1,
-    "lock": true,
-    "showInShop": false,
-    "urlBook": "https://example.com/file.zip",
-    "keyword": "buku-latihan-soal",
-    "coverBook": "https://firebasestorage.googleapis.com/v0/b/chating-education.appspot.com/o/assets-buku-v2%2Fcover%2Fcover-buku-tka-sd-2026.webp?alt=media&token=06b891cc-40b1-4c70-b11d-2fd2bb42986c"
-  },
-  "99987": {
-    "idBook": "C3B816AFA6348AD3B3E5DE4F8EA1B",
-    "idBookPath": "99987",
-    "idPlaystore": "C3B816AFA6348AD3B3E5DE4F8EA1B",
-    "nameBook": "Amaliah Ramadhan PAUD/TK A 2025",
-    "orderBook": 2,
-    "status": "publish",
-    "price": 1,
-    "version": 1,
-    "lock": false,
-    "showInShop": false,
-    "keyword": "kbr,tk",
-    "coverBook": "https://firebasestorage.googleapis.com/v0/b/chating-education.appspot.com/o/assets-buku-v2%2Fcover%2Fcover-amaliah-kbr-tk-a-2025.jpg?alt=media&token=ebd58907-f966-45e6-b210-1a32df0feec3"
-  },
-  "99990": {
-    "idBook": "C4EEDB17247746B2B269518F77E530D5",
-    "idBookPath": "99990",
-    "idPlaystore": "C4EEDB17247746B2B269518F77E530D5",
-    "nameBook": "TK-A PAI Semester 1",
-    "orderBook": 5,
-    "status": "publish",
-    "price": 1,
-    "version": 2,
-    "lock": true,
-    "showInShop": true,
-    "keyword": "tk,",
-    "coverBook": "https://firebasestorage.googleapis.com/v0/b/chating-education.appspot.com/o/assets-app%2Fcovers%2Fcover-tk-pai-a-semester-1-2022.jpg?alt=media&token=a48203a5-5ea7-4e0b-b847-4b7893a8fb5e"
-  }
+
 };
 
 const DEFAULT_FORM_STATE = {
@@ -436,7 +394,7 @@ export default function App() {
                         <span className="opacity-50">ID:</span>{book.idBook}
                         {copiedId === book.idBook ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
                       </button>
-                      {book.keyword && <span className="text-xs text-slate-400 line-clamp-1 bg-blue-50 text-blue-500 px-1.5 py-0.5 rounded hidden md:block">{book.keyword}</span>}
+                      {book.keyword && <span className="text-xs line-clamp-1 bg-blue-50 text-blue-500 px-1.5 py-0.5 rounded hidden md:block">{book.keyword}</span>}
                       {book.price > 0 && <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">Rp {book.price.toLocaleString()}</span>}
                       {book.lock && <Lock className="w-3 h-3 text-amber-500" />}
                       {book.showInShop && <ShoppingBag className="w-3 h-3 text-purple-500" />}
@@ -521,7 +479,7 @@ export default function App() {
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
-            <div className="bg-white flex justify-between items-center p-6 border-b border-slate-100 bg-slate-50/50 sticky top-0 bg-white z-10">
+            <div className="bg-white flex justify-between items-center p-6 border-b border-slate-100 bg-slate-50/50 sticky top-0 z-10">
               <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
                 {isEditing ? <Pencil className="w-5 h-5 text-indigo-500" /> : <Plus className="w-5 h-5 text-emerald-500" />}
                 {isEditing ? 'Edit Buku' : 'Tambah Buku Baru'}

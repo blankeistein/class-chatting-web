@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Book extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'uuid',
         'title',
@@ -14,6 +17,6 @@ class Book extends Model
 
     public function activationCodes()
     {
-        return $this->belongsToMany(ActivationCode::class, 'code_book_map', 'book_id', 'activation_code_id');
+        return $this->morphToMany(ActivationCode::class, 'model', 'activation_items')->withTimestamps();
     }
 }

@@ -11,12 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('code_book_map', function (Blueprint $table) {
+        Schema::create('activation_items', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('activation_code_id')->references('id')->on('activation_codes')->onDelete('cascade');
-            $table->foreignId('book_id')->references('id')->on('books')->onDelete('cascade');
-            $table->unique(['activation_code_id', 'book_id']);
+            $table->foreignId('activation_code_id')->constrained()->cascadeOnDelete();
+            $table->morphs('model');
             $table->timestamps();
+
+            $table->unique(['activation_code_id', 'model_id', 'model_type'], 'activation_items_unique');
         });
     }
 
@@ -25,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('code_book_map');
+        Schema::dropIfExists('activation_items');
     }
 };

@@ -14,6 +14,14 @@ class VideoSeeder extends Seeder
     {
         $this->command->info('🌱 Mulai menanam data Video...');
 
+        $videos = Video::limit(5)->get();
+
+        if ($videos->count() > 0) {
+            $this->command->info('🌱 Data Video sudah ada...');
+
+            return;
+        }
+
         for ($i = 1; $i <= 5; $i++) {
             Video::create([
                 'title' => "Video Pembahasan Bab $i",

@@ -15,6 +15,14 @@ class BookSeeder extends Seeder
     {
         $this->command->info('🌱 Mulai menanam data Book...');
 
+        $books = Book::limit(5)->get();
+
+        if ($books->count() > 0) {
+            $this->command->info('🌱 Data Book sudah ada...');
+
+            return;
+        }
+
         for ($i = 1; $i <= 5; $i++) {
             Book::create([
                 'uuid' => Str::uuid(),

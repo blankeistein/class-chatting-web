@@ -4,16 +4,16 @@ import { mtConfig } from "@material-tailwind/react";
 export default {
     content: [
         "./resources/**/*.blade.php",
-        "./resources/**/*.js",
-        "./resources/**/*.jsx",
+        "./resources/**/*.{js,ts,jsx,tsx}",
         "./resources/**/*.vue",
         "./node_modules/@material-tailwind/react/**/*.{js,ts,jsx,tsx}",
     ],
     theme: {
         extend: {
             fontFamily: {
-                sans: ['Public Sans', 'sans-serif'],
+                sans: ['Quicksand', 'sans-serif'],
                 mono: ['Space Mono', 'monospace'],
+                neo: ['Public Sans', 'sans-serif']
             },
             colors: {
                 neo: {

@@ -83,10 +83,10 @@ export default function Learn() {
                     >
                         <ChevronLeftIcon />
                     </IconButton>
-                    <IconButton onClick={handleDecreaseFont}>
+                    <IconButton onClick={() => handleDecreaseFont()}>
                         <AArrowDownIcon />
                     </IconButton>
-                    <IconButton onClick={handleIncreaseFont}>
+                    <IconButton onClick={() => handleIncreaseFont()}>
                         <AArrowUpIcon />
                     </IconButton>
                     <IconButton

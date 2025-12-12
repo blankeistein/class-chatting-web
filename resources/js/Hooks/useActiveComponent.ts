@@ -1,11 +1,11 @@
 import { useDashboardStore } from "@/Stores/LearnReading/dashboard";
 
-const findComponentById = (component, id) => {
+const findComponentById = (component: any, id: string) => {
     if (!component || typeof component !== "object") return null;
     if (component.id === id) return component;
     if (component.childrens) {
         for (const child of component.childrens) {
-            const found = findComponentById(child, id);
+            const found: any = findComponentById(child, id);
             if (found) return found;
         }
     }

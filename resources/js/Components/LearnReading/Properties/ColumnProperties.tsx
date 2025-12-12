@@ -35,7 +35,7 @@ export default function ColumnProperties() {
                     id="justify-content"
                     label="Justify Content"
                     value={findClassValue("justify-")}
-                    onChange={(value) => updateClass("justify-", value)}
+                    onChange={(value: string | undefined) => updateClass("justify-", value || '')}
                 >
                     {justifyOptions.map((opt) => (
                         <Select.Option key={opt.value} value={opt.value}>
@@ -56,7 +56,7 @@ export default function ColumnProperties() {
                     id="align-items"
                     label="Align Items"
                     value={findClassValue("items-")}
-                    onChange={(value) => updateClass("items-", value)}
+                    onChange={(value: string | undefined) => updateClass("items-", value || '')}
                 >
                     {alignItemsOptions.map((opt) => (
                         <Select.Option key={opt.value} value={opt.value}>

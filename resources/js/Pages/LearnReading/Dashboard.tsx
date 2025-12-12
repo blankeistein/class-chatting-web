@@ -7,22 +7,21 @@ import { useDashboardStore } from "@/Stores/LearnReading/dashboard";
 import { Head } from "@inertiajs/react";
 import { IconButton, List, Typography } from "@material-tailwind/react";
 import { PlusIcon } from "lucide-react";
-import { shallow } from "zustand/shallow";
+import { useShallow } from "zustand/react/shallow";
 
 export default function Dashboard() {
     const { pages, activePageIndex } = useDashboardStore(
-        (state) => ({
+        useShallow((state) => ({
             pages: state.pages,
             activePageIndex: state.activePageIndex,
-        }),
-        shallow
+        }))
     );
 
     const addPage = useDashboardStore((state) => state.addPage);
     const activeComponent = useActiveComponent();
 
     const Properties = activeComponent?.type
-        ? PROPERTIES_MAP[activeComponent.type]
+        ? PROPERTIES_MAP[activeComponent.type as keyof typeof PROPERTIES_MAP]
         : null;
 
     return (
@@ -97,16 +96,19 @@ export default function Dashboard() {
                 <div className="bg-gray-100 w-full flex items-center justify-center">
                     <div className="bg-white rounded-md w-full max-w-[320px] h-full max-h-[520px] shadow-md">
                         <ComponentRenderer
-                            data={pages[activePageIndex]?.components}
+                            data={
+                                activePageIndex !== null
+                                    ? pages[activePageIndex]?.components
+                                    : null
+                            }
                         />
                     </div>
                 </div>
 
                 {/* Properti */}
                 <div
-                    className={`bg-white w-full max-w-[320px] shadow-sm ${
-                        !activeComponent && "hidden"
-                    }`}
+                    className={`bg-white w-full max-w-[320px] shadow-sm ${!activeComponent && "hidden"
+                        }`}
                 >
                     <div className="p-2 px-4 border-b">
                         <Typography

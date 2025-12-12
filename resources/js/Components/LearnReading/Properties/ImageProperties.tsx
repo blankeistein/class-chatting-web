@@ -37,7 +37,6 @@ export default function ImageProperties() {
                     <Input
                         type="text"
                         id="src"
-                        label="Image Source"
                         value={src}
                         onChange={(e) => setSrc(e.target.value)}
                         onBlur={handleBlur}

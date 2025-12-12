@@ -29,7 +29,6 @@ export default function TextProperties() {
     return (
         <div className="p-4">
             <Input
-                label="Text Value"
                 type="text"
                 value={value}
                 onChange={(e) => setValue(e.target.value)}

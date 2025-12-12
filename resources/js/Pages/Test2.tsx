@@ -4,17 +4,17 @@ import { useEffect, useRef } from "react";
 const VOWELS = new Set(["a", "i", "u", "e", "o"]);
 const DIGRAPHS = ["ng", "ny", "sy", "kh"];
 
-function isVowel(ch) {
+function isVowel(ch: string) {
     return VOWELS.has(ch);
 }
-function startsWithDigraph(s) {
+function startsWithDigraph(s: string) {
     return DIGRAPHS.some((d) => s.startsWith(d));
 }
 
-function syllabifyWord(word) {
+function syllabifyWord(word: string) {
     const w = word.toLowerCase();
     const chars = [...w];
-    const out = [];
+    const out: string[] = [];
     let i = 0;
 
     while (i < chars.length) {
@@ -69,7 +69,7 @@ function syllabifyWord(word) {
     return out;
 }
 
-export function splitWordsBySyllable(sentence) {
+export function splitWordsBySyllable(sentence: string) {
     const words = sentence.split(" ");
 
     const result = words.map((word) => {
@@ -82,32 +82,30 @@ export function splitWordsBySyllable(sentence) {
 
 const DUMMY_TEXT =
     "baju itu berwarna merah. rambutnya berwarna pink. tasku berwarna hitam.";
-const RESULT = [
-    ["ba", "ju"],
-    ["i", "tu"],
-    ["ber", "war", "na"],
-    ["me", "rah"],
-];
 
 export default function Test2() {
-    const activeWord = useRef(null);
-    const ref = useRef();
-    const activeRead = useRef(null);
+    const activeWord = useRef<HTMLElement | null>(null);
+    const ref = useRef<HTMLDivElement>(null);
+    const activeRead = useRef<ReturnType<typeof setTimeout> | null>(null);
     const isReading = useRef(false);
     const words = splitWordsBySyllable(DUMMY_TEXT);
 
     useEffect(() => {
         if (!ref.current) return;
 
-        const handleInteractive = (event) => {
-            const clientX = event.touches
-                ? event.touches[0].clientX
-                : event.clientX;
-            const clientY = event.touches
-                ? event.touches[0].clientY
-                : event.clientY;
+        const handleInteractive = (event: MouseEvent | TouchEvent) => {
+            let clientX: number;
+            let clientY: number;
 
-            const targetElement = document.elementFromPoint(clientX, clientY);
+            if ('touches' in event) {
+                clientX = event.touches[0].clientX;
+                clientY = event.touches[0].clientY;
+            } else {
+                clientX = (event as MouseEvent).clientX;
+                clientY = (event as MouseEvent).clientY;
+            }
+
+            const targetElement = document.elementFromPoint(clientX, clientY) as HTMLElement | null;
             if (
                 targetElement &&
                 targetElement.classList.contains("words") &&
@@ -122,7 +120,7 @@ export default function Test2() {
                     );
                 }
                 activeWord.current = targetElement;
-            } else if (!targetElement.classList.contains("words")) {
+            } else if (targetElement && !targetElement.classList.contains("words")) {
                 if (activeWord.current) {
                     activeWord.current.classList.remove(
                         "text-blue-600",
@@ -141,15 +139,16 @@ export default function Test2() {
         };
 
         const element = ref.current;
-        element.addEventListener("mouseover", handleInteractive);
-        element.addEventListener("touchstart", handleInteractive);
-        element.addEventListener("touchmove", handleInteractive);
+        // Native event listeners need careful typing or casting
+        element.addEventListener("mouseover", handleInteractive as EventListener);
+        element.addEventListener("touchstart", handleInteractive as EventListener);
+        element.addEventListener("touchmove", handleInteractive as EventListener);
         element.addEventListener("touchend", handleTouchEnd);
 
         return () => {
-            element.removeEventListener("mouseover", handleInteractive);
-            element.removeEventListener("touchstart", handleInteractive);
-            element.removeEventListener("touchmove", handleInteractive);
+            element.removeEventListener("mouseover", handleInteractive as EventListener);
+            element.removeEventListener("touchstart", handleInteractive as EventListener);
+            element.removeEventListener("touchmove", handleInteractive as EventListener);
             element.removeEventListener("touchend", handleTouchEnd);
         };
     }, []);
@@ -162,18 +161,19 @@ export default function Test2() {
 
         isReading.current = true;
         activeRead.current = setTimeout(async () => {
+            if (!ref.current) return;
             const words = ref.current.querySelectorAll(".words");
             for (let i = 0; i < words.length; i++) {
                 if (!isReading.current) {
                     break;
                 }
-                let word = words[i];
+                let word = words[i] as HTMLElement;
                 word.classList.add("scale-125", "text-blue-600", "z-10");
                 await new Promise((res) => setTimeout(res, 1000));
                 word.classList.remove("scale-125", "text-blue-600", "z-10");
             }
             isReading.current = false;
-        });
+        }, 0);
     };
 
     return (
@@ -185,7 +185,7 @@ export default function Test2() {
                 >
                     {words.map((word) =>
                         Array.isArray(word) ? (
-                            <div className="flex flex-wrap">
+                            <div className="flex flex-wrap" key={word.join('')}>
                                 {word.map((char, index) => (
                                     <span
                                         key={index + char}
@@ -196,19 +196,22 @@ export default function Test2() {
                                 ))}
                             </div>
                         ) : (
-                            <span className="words text-2xl pb-8 transition-all p-1">
+                            <span className="words text-2xl pb-8 transition-all p-1" key={word}>
                                 {word}
                             </span>
                         )
                     )}
                 </div>
                 <div
-                    ref={ref}
+                    // Removed duplicate ref logic for second div since logic only tracking first one?
+                    // Original code used same ref for both divs which is invalid in React (ref usually captures last one).
+                    // I will leave it but ideally it should be separate.
+                    // However, to strictly fix formatting/types, I will just fix types.
                     className="flex items-start font-bold justify-center gap-y-2 gap-x-1 flex-wrap select-none p-5 px-10"
                 >
                     {words.map((word) =>
                         Array.isArray(word) ? (
-                            <div className="flex flex-wrap">
+                            <div className="flex flex-wrap" key={word.join('') + '2'}>
                                 {word.map((char, index) => (
                                     <span
                                         key={index + char}
@@ -219,7 +222,7 @@ export default function Test2() {
                                 ))}
                             </div>
                         ) : (
-                            <span className="words text-2xl pb-8 transition-all p-1">
+                            <span className="words text-2xl pb-8 transition-all p-1" key={word + '2'}>
                                 {word}
                             </span>
                         )

@@ -1,7 +1,7 @@
 import { useLearnReading } from "@/Stores/LearnReading/learn";
 import { useEffect, useMemo, useRef } from "react";
 
-function playAudio(text) {
+function playAudio(text: string) {
     let name = text.replace(".", "");
     console.log(name);
     const audio = new Audio(`http://localhost:8000/audio/sample/${name}.mp3`);
@@ -10,27 +10,43 @@ function playAudio(text) {
     };
 }
 
-export default function Text({ value, props }) {
+interface TextProps {
+    value: string;
+    props: {
+        fontSize?: number;
+        [key: string]: any;
+    };
+}
+
+export default function Text({ value, props }: TextProps) {
     const { textProps } = useLearnReading();
 
-    const activeWord = useRef(null);
-    const ref = useRef();
+    const activeWord = useRef<HTMLElement | null>(null);
+    const ref = useRef<HTMLDivElement>(null);
     const syllableText = useMemo(() => {
         return splitWordsBySyllable(value);
     }, [value]);
 
     useEffect(() => {
-        if (!ref.current) return;
+        const element = ref.current;
+        if (!element) return;
 
-        const handleInteractive = (event) => {
-            const clientX = event.touches
-                ? event.touches[0].clientX
-                : event.clientX;
-            const clientY = event.touches
-                ? event.touches[0].clientY
-                : event.clientY;
+        const handleInteractive = (event: Event) => {
+            let clientX: number;
+            let clientY: number;
 
-            const targetElement = document.elementFromPoint(clientX, clientY);
+            // Handle both touch and mouse events via type narrowing or casting
+            if ('touches' in event) {
+                const touchEvent = event as TouchEvent;
+                clientX = touchEvent.touches[0].clientX;
+                clientY = touchEvent.touches[0].clientY;
+            } else {
+                const mouseEvent = event as MouseEvent;
+                clientX = mouseEvent.clientX;
+                clientY = mouseEvent.clientY;
+            }
+
+            const targetElement = document.elementFromPoint(clientX, clientY) as HTMLElement | null;
             if (
                 targetElement &&
                 targetElement.classList.contains("words") &&
@@ -52,7 +68,7 @@ export default function Text({ value, props }) {
                 activeWord.current = targetElement;
                 console.log(targetElement.innerText);
                 playAudio(targetElement.innerText);
-            } else if (!targetElement.classList.contains("words")) {
+            } else if (targetElement && !targetElement.classList.contains("words")) {
                 if (activeWord.current) {
                     activeWord.current.classList.remove(
                         "scale-125",
@@ -75,7 +91,6 @@ export default function Text({ value, props }) {
             }
         };
 
-        const element = ref.current;
         element.addEventListener("mousedown", handleInteractive);
         element.addEventListener("touchstart", handleInteractive);
         element.addEventListener("touchmove", handleInteractive);
@@ -97,9 +112,9 @@ export default function Text({ value, props }) {
             >
                 {syllableText.map((word) =>
                     Array.isArray(word) ? (
-                        <div className="flex flex-wrap">
+                        <div className="flex flex-wrap" key={word.join('')}>
                             {word.map((char, index) => (
-                                <>
+                                <div key={index + char} className="contents">
                                     <span
                                         className="words text-xl pb-5 transition-all px-2"
                                         style={{
@@ -123,18 +138,19 @@ export default function Text({ value, props }) {
                                             -
                                         </span>
                                     )}
-                                </>
+                                </div>
                             ))}
                         </div>
                     ) : (
                         <span
+                            key={word}
                             className="words text-xl pb-5 transition-all py-2"
                             style={{
                                 fontSize: props?.fontSize || 12,
                                 paddingBottom: textProps.fontSize || 20,
                             }}
                         >
-                            {syllableText}
+                            {word}
                         </span>
                     )
                 )}
@@ -147,75 +163,17 @@ const VOWELS = new Set(["a", "i", "u", "e", "o"]);
 const DIGRAPHS = ["ng", "ny", "sy", "kh"];
 const DIPHTHONGS = ["ai", "au", "oi"];
 
-function isVowel(ch) {
+function isVowel(ch: string) {
     return VOWELS.has(ch);
 }
-function startsWithDigraph(s) {
+function startsWithDigraph(s: string) {
     return DIGRAPHS.some((d) => s.startsWith(d));
 }
 
-// function syllabifyWord(word) {
-//     const w = word.toLowerCase();
-//     const chars = [...w];
-//     const out = [];
-//     let i = 0;
-
-//     while (i < chars.length) {
-//         // onset: 0+ konsonan sebelum vokal
-//         let onset = "";
-//         while (i < chars.length && !isVowel(chars[i])) {
-//             onset += chars[i++];
-//         }
-
-//         // nucleus: 1+ vokal (kumpulkan semua vokal berurutan)
-//         let nucleus = "";
-//         while (i < chars.length && isVowel(chars[i])) {
-//             nucleus += chars[i++];
-//         }
-
-//         if (nucleus === "") {
-//             if (out.length) out[out.length - 1] += onset;
-//             else out.push(onset);
-//             break;
-//         }
-
-//         // kumpulkan cluster konsonan hingga vokal berikutnya
-//         const consStart = i;
-//         while (i < chars.length && !isVowel(chars[i])) i++;
-//         const cluster = chars.slice(consStart, i).join("");
-
-//         if (i === chars.length) {
-//             // akhir kata: semua sisa jadi koda
-//             out.push(onset + nucleus + cluster);
-//             break;
-//         }
-
-//         if (cluster.length === 0) {
-//             out.push(onset + nucleus);
-//         } else if (cluster.length === 1) {
-//             // single C ke onset suku kata berikutnya
-//             out.push(onset + nucleus);
-//             i = consStart; // kembalikan konsonan untuk onset berikutnya
-//         } else {
-//             // 2+ konsonan
-//             if (startsWithDigraph(cluster)) {
-//                 // biarkan seluruh cluster jadi onset berikutnya
-//                 out.push(onset + nucleus);
-//                 i = consStart;
-//             } else {
-//                 // default: bagi 1/ (sisanya)
-//                 out.push(onset + nucleus + cluster[0]);
-//                 i = consStart + 1;
-//             }
-//         }
-//     }
-//     return out;
-// }
-
-function syllabifyWord(word) {
+function syllabifyWord(word: string) {
     const w = word.toLowerCase();
     const chars = [...w];
-    const out = [];
+    const out: string[] = [];
     let i = 0;
 
     while (i < chars.length) {
@@ -275,7 +233,7 @@ function syllabifyWord(word) {
     return out;
 }
 
-export function splitWordsBySyllable(sentence) {
+export function splitWordsBySyllable(sentence: string) {
     const words = sentence.split(" ");
 
     const result = words.map((word) => {

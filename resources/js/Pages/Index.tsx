@@ -1,7 +1,20 @@
-import { Head } from "@inertiajs/react";
+import { Head, usePage } from "@inertiajs/react";
 import { FacebookIcon, GithubIcon, GlobeIcon, InstagramIcon, LinkedinIcon, TerminalIcon, YoutubeIcon } from "lucide-react";
 
+type AuthProps = {
+    auth: {
+        user: {
+            id: number;
+            name: string;
+            email: string;
+            role: string;
+        } | null;
+    }
+}
+
 export default function Index() {
+    const props = usePage<AuthProps>().props;
+
     return (
         <>
             <Head>
@@ -9,7 +22,7 @@ export default function Index() {
                 <meta name="keywords" content="Lestari Ilmu, Aplikasi, Belajar Bahasa Indonesia" />
                 <meta name="author" content="Lestari Ilmu" />
             </Head>
-            <div className="bg-neo-pinkish text-neo-dark h-screen w-screen overflow-hidden flex flex-col font-sans selection:bg-neo-lime">
+            <div className="bg-neo-pinkish text-neo-dark h-screen w-screen overflow-hidden flex flex-col font-neo selection:bg-neo-lime">
                 <header className="flex-none p-4 md:p-6 flex justify-between items-center border-b-4 border-black bg-white">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-neo-yellow border-2 border-black flex items-center justify-center shadow-neo-sm">
@@ -18,8 +31,13 @@ export default function Index() {
                         </div>
                         <h1 className="text-2xl md:text-3xl font-black tracking-tighter uppercase">Lestari <span className="text-neo-yellow bg-black px-2">Ilmu</span></h1>
                     </div>
-                    <div className="hidden md:block font-mono text-xs font-bold bg-neo-yellow border-2 border-black px-2 py-1 shadow-neo-sm">
-                        STATUS: ONLINE
+                    <div className="flex gap-4 items-center">
+                        <div className="w-8 h-8 md:w-10 md:h-10 bg-white border-4 border-black rounded-full flex items-center justify-center shadow-neo hover:shadow-neo-hover hover:translate-x-[2px] hover:translate-y-[2px] transition-all overflow-hidden">
+                            <img src="/images/avatar-placeholder.webp" className="w-6 h-6 md:w-8 md:h-8" />
+                        </div>
+                        <div className="hidden md:block font-mono text-xs font-bold bg-neo-yellow border-2 border-black px-2 py-1 shadow-neo-sm">
+                            STATUS: ONLINE
+                        </div>
                     </div>
                 </header>
                 <main className="flex-grow flex flex-col items-center justify-center p-4 w-full max-w-5xl mx-auto relative" >
@@ -27,7 +45,7 @@ export default function Index() {
                     <div className="absolute top-10 left-10 w-16 h-16 bg-purple-400 rounded-full border-4 border-black -z-10 opacity-50"></div>
                     <div className="absolute bottom-10 right-10 w-20 h-20 bg-blue-400 rotate-12 border-4 border-black -z-10 opacity-50"></div>
 
-                    <h2 className="text-xl md:text-2xl text-left w-full font-sans">Aplikasi Android</h2>
+                    <h2 className="text-xl md:text-2xl text-left w-full font-neo">Aplikasi Android</h2>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 w-full h-full md:h-auto content-center overflow-y-auto no-scrollbar p-2">
                         <a href="//play.google.com/store/apps/details?id=mgt.li.classchatting" className="group relative block h-32 md:h-40 w-full" target="_blank" rel="noopener noreferrer">
                             <div className="absolute inset-0 bg-black translate-x-[6px] translate-y-[6px] rounded-xl"></div>

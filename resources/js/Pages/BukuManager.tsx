@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, ChangeEvent, DragEvent } from 'react';
 import {
   Book,
   GripVertical,
@@ -24,6 +24,25 @@ import {
   Filter // ✨ New Icon
 } from 'lucide-react';
 
+// ... imports
+
+interface BookData {
+  nameBook: string;
+  coverBook: string;
+  urlBook: string;
+  keyword: string;
+  price: number;
+  version: number;
+  status: string;
+  lock: boolean;
+  showInShop: boolean;
+  idBookPath: string;
+  idBook: string;
+  idPlaystore: string;
+  originalKey?: string;
+  orderBook?: number;
+}
+
 /**
  * SAMPLE DATA
  */
@@ -31,7 +50,7 @@ const INITIAL_DATA_OBJECT = {
 
 };
 
-const DEFAULT_FORM_STATE = {
+const DEFAULT_FORM_STATE: BookData = {
   nameBook: '',
   coverBook: '',
   urlBook: '',
@@ -46,7 +65,7 @@ const DEFAULT_FORM_STATE = {
   idPlaystore: ''
 };
 
-const generateRandomId = (length) => {
+const generateRandomId = (length: number) => {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let result = '';
   for (let i = 0; i < length; i++) {
@@ -56,10 +75,10 @@ const generateRandomId = (length) => {
 };
 
 export default function App() {
-  const [books, setBooks] = useState([]);
+  const [books, setBooks] = useState<BookData[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isDragging, setIsDragging] = useState(false);
-  const [copiedId, setCopiedId] = useState(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState('list');
   const [showPublishedOnly, setShowPublishedOnly] = useState(false); // ✨ New State
 
@@ -69,15 +88,15 @@ export default function App() {
   const [formData, setFormData] = useState(DEFAULT_FORM_STATE);
 
   // Refs untuk Drag & Drop
-  const dragItem = useRef(null);
-  const dragOverItem = useRef(null);
+  const dragItem = useRef<number | null>(null);
+  const dragOverItem = useRef<number | null>(null);
 
   // Load Initial Data
   useEffect(() => {
     processData(INITIAL_DATA_OBJECT);
   }, []);
 
-  const processData = (dataObj) => {
+  const processData = (dataObj: Record<string, any>) => {
     const dataArray = Object.keys(dataObj).map(key => ({
       ...dataObj[key],
       originalKey: key,
@@ -88,13 +107,17 @@ export default function App() {
     setBooks(sorted);
   };
 
-  const handleFileUpload = (e) => {
+  const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const fileReader = new FileReader();
+    if (!e.target.files?.[0]) return;
     fileReader.readAsText(e.target.files[0], "UTF-8");
     fileReader.onload = (e) => {
       try {
-        const parsed = JSON.parse(e.target.result);
-        processData(parsed);
+        const result = e.target?.result;
+        if (typeof result === "string") {
+          const parsed = JSON.parse(result);
+          processData(parsed);
+        }
       } catch (err) {
         alert("Format JSON tidak valid!");
       }
@@ -102,7 +125,7 @@ export default function App() {
   };
 
   const handleExport = () => {
-    const exportObj = {};
+    const exportObj: Record<string, any> = {};
     books.forEach((book) => {
       const key = book.originalKey || book.idBookPath;
       const { originalKey, ...cleanBook } = book;
@@ -118,7 +141,7 @@ export default function App() {
     downloadAnchorNode.remove();
   };
 
-  const toggleStatus = (originalKey) => {
+  const toggleStatus = (originalKey: string) => {
     const index = books.findIndex(b => b.originalKey === originalKey);
     if (index === -1) return;
 
@@ -128,7 +151,7 @@ export default function App() {
     setBooks(newBooks);
   };
 
-  const handleDelete = (originalKey) => {
+  const handleDelete = (originalKey: string) => {
     if (window.confirm("Yakin ingin menghapus buku ini?")) {
       const newBooks = books.filter(b => b.originalKey !== originalKey);
       const reorderedBooks = newBooks.map((book, idx) => ({
@@ -139,7 +162,8 @@ export default function App() {
     }
   };
 
-  const handleCopyId = (id) => {
+  const handleCopyId = (id: string | undefined) => {
+    if (!id) return;
     const textArea = document.createElement("textarea");
     textArea.value = id;
     document.body.appendChild(textArea);
@@ -155,13 +179,13 @@ export default function App() {
   };
 
   // Live Drag and Drop
-  const onDragStart = (e, index) => {
+  const onDragStart = (e: DragEvent<HTMLDivElement>, index: number) => {
     dragItem.current = index;
     setIsDragging(true);
     e.dataTransfer.effectAllowed = "move";
   };
 
-  const onDragEnter = (e, index) => {
+  const onDragEnter = (e: DragEvent<HTMLDivElement>, index: number) => {
     e.preventDefault();
     if (dragItem.current !== null && dragItem.current !== index) {
       let _books = [...books];
@@ -196,13 +220,13 @@ export default function App() {
     setIsModalOpen(true);
   };
 
-  const openEditModal = (book) => {
+  const openEditModal = (book: BookData) => {
     setIsEditing(true);
     setFormData({ ...book });
     setIsModalOpen(true);
   };
 
-  const handleFormSubmit = (e) => {
+  const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (isEditing) {
@@ -221,8 +245,10 @@ export default function App() {
     setIsModalOpen(false);
   };
 
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const target = e.target as HTMLInputElement;
+    const { name, value, type } = target;
+    const checked = target.checked;
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
@@ -375,7 +401,7 @@ export default function App() {
                   <div className="col-span-3 md:col-span-1">
                     <div className="w-12 h-16 bg-slate-100 rounded-md overflow-hidden border border-slate-200 relative mx-auto md:mx-0">
                       {book.coverBook ? (
-                        <img src={book.coverBook} alt="Cover" className="w-full h-full object-cover" onError={(e) => { e.target.src = 'https://placehold.co/100x150?text=No+Cover' }} />
+                        <img src={book.coverBook} alt="Cover" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/100x150?text=No+Cover' }} />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-xs text-slate-400">N/A</div>
                       )}
@@ -404,10 +430,10 @@ export default function App() {
                   {/* Actions */}
                   <div className="col-span-12 md:col-span-3 flex justify-end gap-2 mt-2 md:mt-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-50">
                     <button onClick={() => openEditModal(book)} className="action-btn-list bg-indigo-50 text-indigo-600 border border-indigo-200 hover:bg-indigo-100 p-1.5 rounded-lg"><Pencil className="w-3.5 h-3.5" /></button>
-                    <button onClick={() => toggleStatus(book.originalKey)} className={`action-btn-list border p-1.5 rounded-lg ${book.status === 'publish' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-500 border-slate-200'}`}>
+                    <button onClick={() => book.originalKey && toggleStatus(book.originalKey)} className={`action-btn-list border p-1.5 rounded-lg ${book.status === 'publish' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-500 border-slate-200'}`}>
                       {book.status === 'publish' ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
                     </button>
-                    <button onClick={() => handleDelete(book.originalKey)} className="action-btn-list bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 p-1.5 rounded-lg"><Trash2 className="w-3.5 h-3.5" /></button>
+                    <button onClick={() => book.originalKey && handleDelete(book.originalKey)} className="action-btn-list bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 p-1.5 rounded-lg"><Trash2 className="w-3.5 h-3.5" /></button>
                   </div>
                 </>
               ) : (
@@ -416,7 +442,7 @@ export default function App() {
                   {/* Grid Cover */}
                   <div className="relative aspect-[3/4] bg-slate-100 border-b border-slate-100">
                     {book.coverBook ? (
-                      <img src={book.coverBook} alt="Cover" className="w-full h-full object-cover" onError={(e) => { e.target.src = 'https://placehold.co/300x400?text=No+Cover' }} />
+                      <img src={book.coverBook} alt="Cover" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/300x400?text=No+Cover' }} />
                     ) : (
                       <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
                         <Book className="w-12 h-12 mb-2 opacity-20" />
@@ -463,8 +489,8 @@ export default function App() {
                   {/* Grid Actions */}
                   <div className="p-3 border-t border-slate-100 flex gap-2 bg-slate-50/50">
                     <button onClick={() => openEditModal(book)} className="flex-1 flex items-center justify-center py-1.5 rounded-md bg-white border border-slate-200 text-indigo-600 hover:border-indigo-300 hover:shadow-sm text-xs font-medium transition"><Pencil className="w-3.5 h-3.5 mr-1" /> Edit</button>
-                    <button onClick={() => toggleStatus(book.originalKey)} className="p-1.5 rounded-md bg-white border border-slate-200 text-slate-500 hover:border-slate-300 hover:text-slate-700 transition"><Eye className="w-3.5 h-3.5" /></button>
-                    <button onClick={() => handleDelete(book.originalKey)} className="p-1.5 rounded-md bg-white border border-slate-200 text-red-500 hover:border-red-300 hover:text-red-600 transition"><Trash2 className="w-3.5 h-3.5" /></button>
+                    <button onClick={() => book.originalKey && toggleStatus(book.originalKey)} className="p-1.5 rounded-md bg-white border border-slate-200 text-slate-500 hover:border-slate-300 hover:text-slate-700 transition"><Eye className="w-3.5 h-3.5" /></button>
+                    <button onClick={() => book.originalKey && handleDelete(book.originalKey)} className="p-1.5 rounded-md bg-white border border-slate-200 text-red-500 hover:border-red-300 hover:text-red-600 transition"><Trash2 className="w-3.5 h-3.5" /></button>
                   </div>
                 </>
               )}
@@ -489,16 +515,16 @@ export default function App() {
             <form onSubmit={handleFormSubmit} className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Judul Buku</label>
-                <input type="text" name="nameBook" required value={formData.nameBook} onChange={handleInputChange} className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition" placeholder="Masukkan judul buku..." />
+                <input type="text" name="nameBook" required value={formData.nameBook || ''} onChange={handleInputChange} className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition" placeholder="Masukkan judul buku..." />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">ID Unik (Path)</label>
-                  <input type="text" name="idBookPath" value={formData.idBookPath} onChange={handleInputChange} className="w-full px-4 py-2 rounded-lg border border-slate-300 bg-slate-50 font-mono text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition" />
+                  <input type="text" name="idBookPath" value={formData.idBookPath || ''} onChange={handleInputChange} className="w-full px-4 py-2 rounded-lg border border-slate-300 bg-slate-50 font-mono text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">ID Playstore</label>
-                  <input type="text" name="idPlaystore" value={formData.idPlaystore} onChange={handleInputChange} className="w-full px-4 py-2 rounded-lg border border-slate-300 bg-slate-50 font-mono text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition" />
+                  <input type="text" name="idPlaystore" value={formData.idPlaystore || ''} onChange={handleInputChange} className="w-full px-4 py-2 rounded-lg border border-slate-300 bg-slate-50 font-mono text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition" />
                 </div>
               </div>
               <div>

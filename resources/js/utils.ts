@@ -14,18 +14,18 @@ export const useClassManager = () => {
         (state) => state.updateComponentProps
     );
 
-    const findClassValue = (prefix) => {
+    const findClassValue = (prefix: string) => {
         const className = activeComponent?.props?.className || [];
-        return className.find((cls) => cls.startsWith(prefix)) || "";
+        return className.find((cls: string) => cls.startsWith(prefix)) || "";
     };
 
-    const updateClass = (prefix, newClass) => {
+    const updateClass = (prefix: string, newClass: string) => {
         if (!activeComponent) return;
 
         const oldClasses = activeComponent.props?.className || [];
         // 1. Hapus kelas lama yang punya prefix sama
         const filteredClasses = oldClasses.filter(
-            (cls) => !cls.startsWith(prefix)
+            (cls: string) => !cls.startsWith(prefix)
         );
         // 2. Tambahkan kelas baru jika ada
         if (newClass) {

@@ -1,6 +1,9 @@
 import { Head } from "@inertiajs/react";
 
 export default function Test4() {
+    const compile = () => {
+        console.log("Compile");
+    };
     return (
         <>
             <Head title="Preview">

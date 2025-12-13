@@ -21,7 +21,8 @@ import {
   CheckCircle,
   Zap,
   History,
-  MoreVertical
+  MoreVertical,
+  Plus
 } from 'lucide-react';
 
 const formatBytes = (bytes: number, decimals = 2) => {
@@ -423,6 +424,70 @@ export default function BookBuilder() {
   const [error, setError] = useState('');
   const [selectedFile, setSelectedFile] = useState<FileSystemFileHandle | null>(null);
   const [isBuildMenuOpen, setIsBuildMenuOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  // Form State
+  const [bookForm, setBookForm] = useState({
+    folderName: '',
+    title: '',
+    subTitle: ''
+  });
+
+  const handleCreateBook = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!bookForm.folderName || !bookForm.title) {
+      alert("Nama Folder dan Judul Buku wajib diisi!");
+      return;
+    }
+
+    try {
+      // 1. Ask for parent directory
+      const parentHandle = await window.showDirectoryPicker();
+
+      // 2. Create the book folder
+      const bookHandle = await parentHandle.getDirectoryHandle(bookForm.folderName, { create: true });
+
+      // 3. Create subdirectories
+      await bookHandle.getDirectoryHandle('images', { create: true });
+      await bookHandle.getDirectoryHandle('audio', { create: true });
+      await bookHandle.getDirectoryHandle('json', { create: true });
+      await bookHandle.getDirectoryHandle('videos', { create: true });
+
+      // 4. Create package.json
+      // @ts-ignore
+      const fileHandle = await bookHandle.getFileHandle('package.json', { create: true });
+      // @ts-ignore
+      const writable = await fileHandle.createWritable();
+
+      const packageContent = {
+        title: bookForm.title,
+        subtitle: bookForm.subTitle || "",
+        version: 1,
+        content: [
+          {
+            file: "json/data_assets_subtema_1.json",
+            name: "Mari Belajar"
+          }
+        ],
+      };
+
+      await writable.write(JSON.stringify(packageContent, null, 2));
+      await writable.close();
+
+      // 5. Open the new folder automatically
+      setRootHandle(bookHandle);
+      setIsCreateModalOpen(false);
+      setError('');
+      setSelectedFile(null);
+      setBookForm({ folderName: '', title: '', subTitle: '' });
+
+    } catch (err) {
+      console.error(err);
+      if (err instanceof Error && err.name !== 'AbortError') {
+        alert("Gagal membuat buku: " + err.message);
+      }
+    }
+  };
 
   const handleOpenFolder = async () => {
     try {
@@ -451,9 +516,9 @@ export default function BookBuilder() {
           </div>
           <div>
             <h1 className="text-lg font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-              DevExplorer
+              BookBuilder
             </h1>
-            <p className="text-xs text-slate-500">Local File System Viewer</p>
+            <p className="text-xs text-slate-500">Manage book content</p>
           </div>
         </div>
 
@@ -495,6 +560,14 @@ export default function BookBuilder() {
           </div>
 
           <button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-all shadow-lg shadow-indigo-900/20"
+          >
+            <Plus size={16} />
+            Buat Buku
+          </button>
+
+          <button
             onClick={handleOpenFolder}
             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all active:scale-95 shadow-lg shadow-blue-900/20"
           >
@@ -503,6 +576,75 @@ export default function BookBuilder() {
           </button>
         </div>
       </header>
+
+      {/* Create Book Modal */}
+      {isCreateModalOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-slate-900 border border-slate-700 rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95">
+            <div className="flex items-center justify-between p-4 border-b border-slate-800 bg-slate-800/50">
+              <h2 className="text-lg font-bold text-slate-200">Buat Buku Baru</h2>
+              <button
+                onClick={() => setIsCreateModalOpen(false)}
+                className="text-slate-400 hover:text-white transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <form onSubmit={handleCreateBook} className="p-6 space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-400">Nama Folder</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="contoh: matematika kelas 1"
+                  className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-mono text-sm"
+                  value={bookForm.folderName}
+                  onChange={e => setBookForm({ ...bookForm, folderName: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-400">Judul Buku</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="contoh: Matematika Dasar"
+                  className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+                  value={bookForm.title}
+                  onChange={e => setBookForm({ ...bookForm, title: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-400">Sub Judul (Opsional)</label>
+                <input
+                  type="text"
+                  placeholder="contoh: Untuk Kelas 1 SD"
+                  className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+                  value={bookForm.subTitle}
+                  onChange={e => setBookForm({ ...bookForm, subTitle: e.target.value })}
+                />
+              </div>
+
+              <div className="pt-4 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsCreateModalOpen(false)}
+                  className="flex-1 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg font-medium transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium transition-colors shadow-lg shadow-blue-900/20"
+                >
+                  Pilih Lokasi & Buat
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <main className="flex-1 overflow-auto p-6">

@@ -12,21 +12,13 @@ Route::get('/', function () {
 $adminPath = Config::get('app.admin_path');
 
 Route::group(['prefix' => $adminPath, 'as' => 'admin.'], function () {
-    Route::get('login', [AuthController::class, 'login'])->name('login');
+    Route::get('login', [AuthController::class, 'login'])->name('login')->middleware('guest');
 
-    Route::post('login', [AuthController::class, 'loginAction']);
+    Route::post('login', [AuthController::class, 'loginAction'])->middleware('guest');
 
     Route::get('dashboard', function () {
-        return 'Admin Dashboard';
+        return Inertia::render('Admin/Index');
     })->name('dashboard');
-});
-
-Route::get('test', function () {
-    return Inertia::render('Test');
-});
-
-Route::get('test2', function () {
-    return Inertia::render('Test2');
 });
 
 Route::group(['prefix' => 'learn-reading'], function () {

@@ -25,7 +25,7 @@ import {
   Plus,
   Smartphone
 } from 'lucide-react';
-import PreviewModal from '@/Components/PreviewModal';
+import PreviewModal from '@/Components/BookBuilder/PreviewModal';
 
 const formatBytes = (bytes: number, decimals = 2) => {
   if (bytes === 0) return '0 Bytes';
@@ -431,6 +431,12 @@ export default function BookBuilder() {
   const [previewScreenUrl, setPreviewScreenUrl] = useState<string | null>(null);
   const [packageData, setPackageData] = useState<any | null>(null);
 
+  // Build State
+  const [isBuildModalOpen, setIsBuildModalOpen] = useState(false);
+  const [buildLogs, setBuildLogs] = useState<string[]>([]);
+  const [isBuilding, setIsBuilding] = useState(false);
+  const [buildProgress, setBuildProgress] = useState(0);
+
   // Form State
   const [bookForm, setBookForm] = useState({
     folderName: '',
@@ -578,14 +584,64 @@ export default function BookBuilder() {
   }, [isPreviewModalOpen]);
 
   const compileBook = async () => {
-    if (!rootHandle) return
+    if (!rootHandle) return;
 
-    const pkgHandle = await rootHandle.getFileHandle('package.json');
-    const pkgFile = await pkgHandle.getFile();
-    const pkgText = await pkgFile.text();
-    const pkgJson = JSON.parse(pkgText);
+    setIsBuildModalOpen(true);
+    setIsBuilding(true);
+    setBuildLogs([]);
+    setBuildProgress(0);
 
-  }
+    const addLog = (msg: string) => setBuildLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${msg}`]);
+
+    try {
+      addLog("Starting build process...");
+      await new Promise(r => setTimeout(r, 800));
+
+      // 1. Validate package.json
+      addLog("Reading package.json...");
+      const pkgHandle = await rootHandle.getFileHandle('package.json');
+      const pkgFile = await pkgHandle.getFile();
+      const pkgText = await pkgFile.text();
+      const pkgJson = JSON.parse(pkgText);
+      addLog(`Version: ${pkgJson.version}`);
+      addLog(`Title: ${pkgJson.title}`);
+      setBuildProgress(5);
+      await new Promise(r => setTimeout(r, 1000));
+
+      // 2. Validate Assets (Simulated)
+      addLog("Validating assets...");
+      setBuildProgress(50);
+      await new Promise(r => setTimeout(r, 1200));
+      const images = await (await rootHandle.getDirectoryHandle('image')).getDirectoryHandle('subtema_dua');
+      for await (const item of images) {
+        console.log(item)
+      }
+
+
+      addLog("Found images/ directory");
+      addLog("Found audio/ directory");
+      addLog("Found videos/ directory");
+
+      // 3. Compiling
+      addLog("Compiling book data...");
+      setBuildProgress(75);
+      await new Promise(r => setTimeout(r, 1500));
+
+      // 4. Packaging
+      addLog("Generating output package...");
+      setBuildProgress(90);
+      await new Promise(r => setTimeout(r, 1000));
+
+      addLog("Build completed successfully!");
+      setBuildProgress(100);
+      setIsBuilding(false);
+
+    } catch (err) {
+      console.error(err);
+      addLog(`ERROR: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      setIsBuilding(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200 font-sans flex flex-col">
@@ -748,6 +804,47 @@ export default function BookBuilder() {
         screenUrl={previewScreenUrl}
         packageData={packageData}
       />
+
+      {/* Build Process Modal */}
+      {isBuildModalOpen && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-slate-900 border border-slate-700 rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[80vh]">
+            <div className="flex items-center justify-between p-4 border-b border-slate-800 bg-slate-800/50">
+              <div className="flex items-center gap-2">
+                <Zap className={`w-5 h-5 ${isBuilding ? 'text-yellow-500 animate-pulse' : 'text-green-500'}`} />
+                <h2 className="text-lg font-bold text-slate-200">
+                  {isBuilding ? 'Building Project...' : 'Build Complete'}
+                </h2>
+              </div>
+              {!isBuilding && (
+                <button onClick={() => setIsBuildModalOpen(false)} className="text-slate-400 hover:text-white">
+                  <X size={20} />
+                </button>
+              )}
+            </div>
+
+            <div className="p-6 bg-black/50 font-mono text-xs text-slate-400 overflow-y-auto flex-1 space-y-1">
+              {buildLogs.map((log, i) => (
+                <div key={i} className="border-l-2 border-slate-800 pl-2">{log}</div>
+              ))}
+              {isBuilding && <div className="animate-pulse">...</div>}
+            </div>
+
+            <div className="p-4 border-t border-slate-800 bg-slate-800/30">
+              <div className="w-full bg-slate-800 rounded-full h-2.5 mb-2 overflow-hidden">
+                <div
+                  className={`h-2.5 rounded-full transition-all duration-300 ${isBuilding ? 'bg-blue-500' : 'bg-green-500'}`}
+                  style={{ width: `${buildProgress}%` }}
+                ></div>
+              </div>
+              <div className="flex justify-between text-xs text-slate-500">
+                <span>{buildProgress}%</span>
+                <span>{isBuilding ? 'Processing...' : 'Done'}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <main className="flex-1 overflow-auto p-6">

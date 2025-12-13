@@ -22,8 +22,10 @@ import {
   Zap,
   History,
   MoreVertical,
-  Plus
+  Plus,
+  Smartphone
 } from 'lucide-react';
+import PreviewModal from '@/Components/PreviewModal';
 
 const formatBytes = (bytes: number, decimals = 2) => {
   if (bytes === 0) return '0 Bytes';
@@ -425,6 +427,9 @@ export default function BookBuilder() {
   const [selectedFile, setSelectedFile] = useState<FileSystemFileHandle | null>(null);
   const [isBuildMenuOpen, setIsBuildMenuOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [previewScreenUrl, setPreviewScreenUrl] = useState<string | null>(null);
+  const [packageData, setPackageData] = useState<any | null>(null);
 
   // Form State
   const [bookForm, setBookForm] = useState({
@@ -496,6 +501,8 @@ export default function BookBuilder() {
       setRootHandle(handle);
       setError('');
       setSelectedFile(null); // Reset selection when folder changes
+      setPreviewScreenUrl(null); // Reset preview url
+      setPackageData(null); // Reset package data
     } catch (err) {
       if (err instanceof Error) {
         if (err.name !== 'AbortError') {
@@ -505,6 +512,80 @@ export default function BookBuilder() {
       }
     }
   };
+
+  const loadPreviewScreen = async () => {
+    if (!rootHandle) return;
+
+    setIsPreviewModalOpen(true);
+    setPreviewScreenUrl(null);
+    setPackageData(null);
+
+    try {
+      // 1. Load package.json for metadata
+      try {
+        const pkgHandle = await rootHandle.getFileHandle('package.json');
+        const pkgFile = await pkgHandle.getFile();
+        const pkgText = await pkgFile.text();
+        const pkgJson = JSON.parse(pkgText);
+        setPackageData(pkgJson);
+      } catch (e) {
+        console.warn("No package.json found or invalid JSON", e);
+      }
+
+      // 2. Cari file screen di folder images atau root
+      // Cari file screen di folder images atau root
+      // Prioritas: images/screen.png, images/screen.jpg, screen.png, screen.jpg
+      let fileHandle: FileSystemFileHandle | undefined;
+
+      const tryGetFile = async (name: string, dirHandle: FileSystemDirectoryHandle) => {
+        try {
+          return await dirHandle.getFileHandle(name);
+        } catch {
+          return undefined;
+        }
+      };
+
+      // Cek folder images
+      try {
+        const imagesHandle = await rootHandle.getDirectoryHandle('images');
+        fileHandle = await tryGetFile('screen.png', imagesHandle) || await tryGetFile('screen.jpg', imagesHandle);
+      } catch {
+        // Ignore if no images folder
+      }
+
+      // Cek root jika belum ketemu
+      if (!fileHandle) {
+        fileHandle = await tryGetFile('screen', rootHandle);
+      }
+
+      if (fileHandle) {
+        const file = await fileHandle.getFile();
+        const url = URL.createObjectURL(file);
+        setPreviewScreenUrl(url);
+      }
+
+    } catch (err) {
+      console.error("Error loading preview screen:", err);
+    }
+  };
+
+  // Cleanup preview url when modal closes
+  useEffect(() => {
+    if (!isPreviewModalOpen && previewScreenUrl) {
+      URL.revokeObjectURL(previewScreenUrl);
+      setPreviewScreenUrl(null);
+    }
+  }, [isPreviewModalOpen]);
+
+  const compileBook = async () => {
+    if (!rootHandle) return
+
+    const pkgHandle = await rootHandle.getFileHandle('package.json');
+    const pkgFile = await pkgHandle.getFile();
+    const pkgText = await pkgFile.text();
+    const pkgJson = JSON.parse(pkgText);
+
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200 font-sans flex flex-col">
@@ -528,7 +609,7 @@ export default function BookBuilder() {
             <div className="flex bg-slate-800 rounded-lg p-0.5 border border-slate-700">
               <button
                 className="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-700 text-slate-300 hover:text-white rounded-md transition-colors text-sm font-medium"
-                onClick={() => console.log("Build clicked")}
+                onClick={compileBook}
               >
                 <Zap size={16} className="text-yellow-500" />
                 Build
@@ -560,6 +641,19 @@ export default function BookBuilder() {
           </div>
 
           <button
+            onClick={loadPreviewScreen}
+            disabled={!rootHandle}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border border-slate-700
+                ${!rootHandle
+                ? 'bg-slate-900 text-slate-600 cursor-not-allowed border-slate-800'
+                : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white'
+              }
+            `}
+          >
+            <Smartphone size={16} />
+            Preview
+          </button>
+          <button
             onClick={() => setIsCreateModalOpen(true)}
             className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-all shadow-lg shadow-indigo-900/20"
           >
@@ -575,76 +669,85 @@ export default function BookBuilder() {
             Buka Folder
           </button>
         </div>
-      </header>
+      </header >
 
       {/* Create Book Modal */}
-      {isCreateModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-slate-900 border border-slate-700 rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95">
-            <div className="flex items-center justify-between p-4 border-b border-slate-800 bg-slate-800/50">
-              <h2 className="text-lg font-bold text-slate-200">Buat Buku Baru</h2>
-              <button
-                onClick={() => setIsCreateModalOpen(false)}
-                className="text-slate-400 hover:text-white transition-colors"
-              >
-                <X size={20} />
-              </button>
-            </div>
-            <form onSubmit={handleCreateBook} className="p-6 space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-400">Nama Folder</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="contoh: matematika kelas 1"
-                  className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-mono text-sm"
-                  value={bookForm.folderName}
-                  onChange={e => setBookForm({ ...bookForm, folderName: e.target.value })}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-400">Judul Buku</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="contoh: Matematika Dasar"
-                  className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
-                  value={bookForm.title}
-                  onChange={e => setBookForm({ ...bookForm, title: e.target.value })}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-400">Sub Judul (Opsional)</label>
-                <input
-                  type="text"
-                  placeholder="contoh: Untuk Kelas 1 SD"
-                  className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
-                  value={bookForm.subTitle}
-                  onChange={e => setBookForm({ ...bookForm, subTitle: e.target.value })}
-                />
-              </div>
-
-              <div className="pt-4 flex gap-3">
+      {
+        isCreateModalOpen && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in">
+            <div className="bg-slate-900 border border-slate-700 rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95">
+              <div className="flex items-center justify-between p-4 border-b border-slate-800 bg-slate-800/50">
+                <h2 className="text-lg font-bold text-slate-200">Buat Buku Baru</h2>
                 <button
-                  type="button"
                   onClick={() => setIsCreateModalOpen(false)}
-                  className="flex-1 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg font-medium transition-colors"
+                  className="text-slate-400 hover:text-white transition-colors"
                 >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium transition-colors shadow-lg shadow-blue-900/20"
-                >
-                  Pilih Lokasi & Buat
+                  <X size={20} />
                 </button>
               </div>
-            </form>
+              <form onSubmit={handleCreateBook} className="p-6 space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-400">Nama Folder</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="contoh: matematika kelas 1"
+                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-mono text-sm"
+                    value={bookForm.folderName}
+                    onChange={e => setBookForm({ ...bookForm, folderName: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-400">Judul Buku</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="contoh: Matematika Dasar"
+                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+                    value={bookForm.title}
+                    onChange={e => setBookForm({ ...bookForm, title: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-400">Sub Judul (Opsional)</label>
+                  <input
+                    type="text"
+                    placeholder="contoh: Untuk Kelas 1 SD"
+                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+                    value={bookForm.subTitle}
+                    onChange={e => setBookForm({ ...bookForm, subTitle: e.target.value })}
+                  />
+                </div>
+
+                <div className="pt-4 flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsCreateModalOpen(false)}
+                    className="flex-1 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg font-medium transition-colors"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium transition-colors shadow-lg shadow-blue-900/20"
+                  >
+                    Pilih Lokasi & Buat
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
+
+      <PreviewModal
+        isOpen={isPreviewModalOpen}
+        onClose={() => setIsPreviewModalOpen(false)}
+        screenUrl={previewScreenUrl}
+        packageData={packageData}
+      />
 
       {/* Main Content */}
       <main className="flex-1 overflow-auto p-6">
@@ -693,6 +796,6 @@ export default function BookBuilder() {
       <footer className="p-4 text-center text-xs text-slate-600 border-t border-slate-900/50">
         Dibuat untuk Dika • Menggunakan File System Access API
       </footer>
-    </div>
+    </div >
   );
 }

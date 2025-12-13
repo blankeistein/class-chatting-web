@@ -52,5 +52,5 @@ Route::get('preview-surah', function () {
 });
 
 Route::get('folder-explorer', function () {
-    return Inertia::render('FolderExplorer');
+    return Inertia::render('BookBuilder');
 });

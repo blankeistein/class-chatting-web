@@ -418,7 +418,7 @@ const FileSystemNode = ({ handle, level = 0, onSelect, selectedHandleName }: Fil
   );
 };
 
-export default function FolderExplorer() {
+export default function BookBuilder() {
   const [rootHandle, setRootHandle] = useState<FileSystemDirectoryHandle | null>(null);
   const [error, setError] = useState('');
   const [selectedFile, setSelectedFile] = useState<FileSystemFileHandle | null>(null);

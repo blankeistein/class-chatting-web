@@ -16,7 +16,12 @@ import {
   Download,
   Play,
   Pause,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Save,
+  CheckCircle,
+  Zap,
+  History,
+  MoreVertical
 } from 'lucide-react';
 
 const formatBytes = (bytes: number, decimals = 2) => {
@@ -33,6 +38,8 @@ const FilePreview = ({ fileHandle, onClose }: { fileHandle: FileSystemFileHandle
   const [fileType, setFileType] = useState<'image' | 'text' | 'video' | 'audio' | 'binary' | 'loading' | 'none'>('none');
   const [fileInfo, setFileInfo] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
 
   useEffect(() => {
     let objectUrl: string | null = null;
@@ -42,11 +49,13 @@ const FilePreview = ({ fileHandle, onClose }: { fileHandle: FileSystemFileHandle
         setFileType('none');
         setFileInfo(null);
         setContent(null);
+        setIsDirty(false);
         return;
       }
 
       setFileType('loading');
       setError(null);
+      setIsDirty(false);
 
       try {
         const file = await fileHandle.getFile();
@@ -68,13 +77,15 @@ const FilePreview = ({ fileHandle, onClose }: { fileHandle: FileSystemFileHandle
           setContent(objectUrl);
         } else if (
           file.type.startsWith('text/') ||
-          ['js', 'jsx', 'ts', 'tsx', 'json', 'css', 'html', 'md', 'txt', 'php', 'py', 'java', 'c', 'cpp', 'sql', 'xml', 'yml', 'env', 'gitignore'].includes(ext)
+          ['js', 'jsx', 'ts', 'tsx', 'json', 'css', 'html', 'md', 'txt', 'php', 'py', 'java', 'c', 'cpp', 'sql', 'xml', 'yml', 'env', 'gitignore', 'ini', 'conf'].includes(ext)
         ) {
           setFileType('text');
           const text = await file.text();
           // Limit text preview for performance
-          if (text.length > 50000) {
-            setContent(text.substring(0, 50000) + '\n... (File too large, truncated)');
+          if (text.length > 500000) {
+            // Read only partial if too big, but for editor we warn
+            setContent(text.substring(0, 50000) + '\n... (File too large to edit)');
+            setError("File terlalu besar untuk diedit.");
           } else {
             setContent(text);
           }
@@ -94,6 +105,43 @@ const FilePreview = ({ fileHandle, onClose }: { fileHandle: FileSystemFileHandle
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
   }, [fileHandle]);
+
+  const handleSave = async () => {
+    if (!fileHandle || fileType !== 'text' || !content) return;
+
+    setIsSaving(true);
+    try {
+      // @ts-ignore - createWritable exists on FileSystemFileHandle in generic type but TS might complain depending on lib
+      const writable = await fileHandle.createWritable();
+      await writable.write(content);
+      await writable.close();
+      setIsDirty(false);
+
+      // Refresh file info
+      const file = await fileHandle.getFile();
+      setFileInfo(file);
+    } catch (err) {
+      console.error("Gagal menyimpan:", err);
+      setError("Gagal menyimpan perubahan. Pastikan kamu memiliki izin.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Keyboard shortcut for Save
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        if (fileType === 'text' && isDirty) {
+          e.preventDefault();
+          handleSave();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [fileType, isDirty, content]);
 
   if (!fileHandle) {
     return (
@@ -122,7 +170,38 @@ const FilePreview = ({ fileHandle, onClose }: { fileHandle: FileSystemFileHandle
             {fileInfo && <p className="text-xs text-slate-500">{formatBytes(fileInfo.size)}</p>}
           </div>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
+          {fileType === 'text' && !error && (
+            <button
+              onClick={handleSave}
+              disabled={!isDirty || isSaving}
+              className={`
+                    flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all
+                    ${isDirty
+                  ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/20'
+                  : 'bg-transparent text-slate-500 cursor-not-allowed'
+                }
+                  `}
+            >
+              {isSaving ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Saving...
+                </>
+              ) : !isDirty ? (
+                <>
+                  <CheckCircle size={16} className="text-green-500" />
+                  Saved
+                </>
+              ) : (
+                <>
+                  <Save size={16} />
+                  Save
+                </>
+              )}
+            </button>
+          )}
+          <div className="w-px h-6 bg-slate-700 mx-1"></div>
           <button onClick={onClose} className="p-2 hover:bg-slate-700 rounded-lg text-slate-400 hover:text-white transition-colors">
             <X size={18} />
           </button>
@@ -130,7 +209,7 @@ const FilePreview = ({ fileHandle, onClose }: { fileHandle: FileSystemFileHandle
       </div>
 
       {/* Content Preview */}
-      <div className="flex-1 overflow-auto p-4 relative bg-slate-950/50">
+      <div className={`flex-1 overflow-auto relative bg-slate-950/50 ${fileType === 'text' ? 'p-0' : 'p-4'}`}>
         {fileType === 'loading' && (
           <div className="absolute inset-0 flex items-center justify-center text-blue-400">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-current"></div>
@@ -138,7 +217,7 @@ const FilePreview = ({ fileHandle, onClose }: { fileHandle: FileSystemFileHandle
         )}
 
         {error && (
-          <div className="text-red-400 bg-red-500/10 p-4 rounded-lg text-sm border border-red-500/20">
+          <div className="m-4 text-red-400 bg-red-500/10 p-4 rounded-lg text-sm border border-red-500/20">
             {error}
           </div>
         )}
@@ -164,10 +243,16 @@ const FilePreview = ({ fileHandle, onClose }: { fileHandle: FileSystemFileHandle
           </div>
         )}
 
-        {!error && fileType === 'text' && content && (
-          <pre className="text-xs font-mono text-slate-300 bg-slate-900 p-4 rounded-lg overflow-x-auto border border-slate-800 tab-4 leading-relaxed whitespace-pre">
-            <code>{content}</code>
-          </pre>
+        {!error && fileType === 'text' && content !== null && (
+          <textarea
+            value={content}
+            onChange={(e) => {
+              setContent(e.target.value);
+              setIsDirty(true);
+            }}
+            spellCheck={false}
+            className="w-full h-full bg-[#1e1e1e] text-slate-300 font-mono text-sm leading-relaxed p-4 resize-none focus:outline-none file-explorer-scrollbar"
+          />
         )}
 
         {!error && fileType === 'binary' && (
@@ -210,7 +295,8 @@ const FileSystemNode = ({ handle, level = 0, onSelect, selectedHandleName }: Fil
 
   // Fungsi untuk membaca isi folder
   const fetchChildren = async () => {
-    if (children.length > 0) return; // Sudah dimuat
+    // Note: We don't check children.length here because useEffect controls when this is called
+    // and we want to allow force-refresh if needed, though typically controlled by isExpanded check
     if (handle.kind !== 'directory') return;
 
     setIsLoading(true);
@@ -238,13 +324,24 @@ const FileSystemNode = ({ handle, level = 0, onSelect, selectedHandleName }: Fil
     }
   };
 
-  const toggleExpand = async () => {
+  // Reset state when handle changes (e.g. root folder change or refresh)
+  useEffect(() => {
+    setIsExpanded(level === 0);
+    setChildren([]);
+    setIsLoading(false);
+    setError(null);
+  }, [handle, level]);
+
+  // Declarative fetch: Load children when expanded and empty
+  useEffect(() => {
+    if (isExpanded && children.length === 0 && !isLoading && !error) {
+      fetchChildren();
+    }
+  }, [isExpanded, children.length, handle]); // Handle dependency ensures freshness
+
+  const toggleExpand = () => {
     if (handle.kind === 'directory') {
-      const nextState = !isExpanded;
-      setIsExpanded(nextState);
-      if (nextState) {
-        await fetchChildren();
-      }
+      setIsExpanded(prev => !prev);
     } else {
       // Handle select file
       onSelect?.(handle as FileSystemFileHandle);
@@ -325,6 +422,7 @@ export default function FolderExplorer() {
   const [rootHandle, setRootHandle] = useState<FileSystemDirectoryHandle | null>(null);
   const [error, setError] = useState('');
   const [selectedFile, setSelectedFile] = useState<FileSystemFileHandle | null>(null);
+  const [isBuildMenuOpen, setIsBuildMenuOpen] = useState(false);
 
   const handleOpenFolder = async () => {
     try {
@@ -332,6 +430,7 @@ export default function FolderExplorer() {
       const handle = await window.showDirectoryPicker();
       setRootHandle(handle);
       setError('');
+      setSelectedFile(null); // Reset selection when folder changes
     } catch (err) {
       if (err instanceof Error) {
         if (err.name !== 'AbortError') {
@@ -358,13 +457,51 @@ export default function FolderExplorer() {
           </div>
         </div>
 
-        <button
-          onClick={handleOpenFolder}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all active:scale-95 shadow-lg shadow-blue-900/20"
-        >
-          <FolderOpen size={16} />
-          Buka Folder
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Build Button with Dropdown */}
+          <div className="relative">
+            <div className="flex bg-slate-800 rounded-lg p-0.5 border border-slate-700">
+              <button
+                className="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-700 text-slate-300 hover:text-white rounded-md transition-colors text-sm font-medium"
+                onClick={() => console.log("Build clicked")}
+              >
+                <Zap size={16} className="text-yellow-500" />
+                Build
+              </button>
+              <div className="w-px bg-slate-700 my-1"></div>
+              <button
+                className="px-1.5 hover:bg-slate-700 text-slate-400 hover:text-white rounded-md transition-colors"
+                onClick={() => setIsBuildMenuOpen(!isBuildMenuOpen)}
+              >
+                <ChevronDown size={14} className={`transition-transform duration-200 ${isBuildMenuOpen ? 'rotate-180' : ''}`} />
+              </button>
+            </div>
+
+            {/* Dropdown Menu */}
+            {isBuildMenuOpen && (
+              <div className="absolute top-full right-0 mt-2 w-48 bg-slate-800 border border-slate-700 rounded-lg shadow-xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
+                <button
+                  className="w-full text-left px-4 py-2.5 text-sm text-slate-300 hover:bg-slate-700 hover:text-white flex items-center gap-2 transition-colors"
+                  onClick={() => {
+                    console.log("Build Old Version clicked");
+                    setIsBuildMenuOpen(false);
+                  }}
+                >
+                  <History size={14} className="text-slate-400" />
+                  Build Old Version
+                </button>
+              </div>
+            )}
+          </div>
+
+          <button
+            onClick={handleOpenFolder}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all active:scale-95 shadow-lg shadow-blue-900/20"
+          >
+            <FolderOpen size={16} />
+            Buka Folder
+          </button>
+        </div>
       </header>
 
       {/* Main Content */}

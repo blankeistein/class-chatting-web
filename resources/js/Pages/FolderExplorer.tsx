@@ -10,8 +10,176 @@ import {
   ChevronRight,
   ChevronDown,
   FolderOpen,
-  HardDrive
+  HardDrive,
+  X,
+  Maximize2,
+  Download,
+  Play,
+  Pause,
+  Image as ImageIcon
 } from 'lucide-react';
+
+const formatBytes = (bytes: number, decimals = 2) => {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+};
+
+const FilePreview = ({ fileHandle, onClose }: { fileHandle: FileSystemFileHandle | null, onClose: () => void }) => {
+  const [content, setContent] = useState<string | null>(null);
+  const [fileType, setFileType] = useState<'image' | 'text' | 'video' | 'audio' | 'binary' | 'loading' | 'none'>('none');
+  const [fileInfo, setFileInfo] = useState<File | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let objectUrl: string | null = null;
+
+    const loadFile = async () => {
+      if (!fileHandle) {
+        setFileType('none');
+        setFileInfo(null);
+        setContent(null);
+        return;
+      }
+
+      setFileType('loading');
+      setError(null);
+
+      try {
+        const file = await fileHandle.getFile();
+        setFileInfo(file);
+
+        const ext = file.name.split('.').pop()?.toLowerCase() || '';
+
+        if (file.type.startsWith('image/')) {
+          setFileType('image');
+          objectUrl = URL.createObjectURL(file);
+          setContent(objectUrl);
+        } else if (file.type.startsWith('video/')) {
+          setFileType('video');
+          objectUrl = URL.createObjectURL(file);
+          setContent(objectUrl);
+        } else if (file.type.startsWith('audio/')) {
+          setFileType('audio');
+          objectUrl = URL.createObjectURL(file);
+          setContent(objectUrl);
+        } else if (
+          file.type.startsWith('text/') ||
+          ['js', 'jsx', 'ts', 'tsx', 'json', 'css', 'html', 'md', 'txt', 'php', 'py', 'java', 'c', 'cpp', 'sql', 'xml', 'yml', 'env', 'gitignore'].includes(ext)
+        ) {
+          setFileType('text');
+          const text = await file.text();
+          // Limit text preview for performance
+          if (text.length > 50000) {
+            setContent(text.substring(0, 50000) + '\n... (File too large, truncated)');
+          } else {
+            setContent(text);
+          }
+        } else {
+          setFileType('binary');
+        }
+      } catch (err) {
+        console.error("Error reading file:", err);
+        setError("Gagal membaca file.");
+        setFileType('binary'); // Fallback
+      }
+    };
+
+    loadFile();
+
+    return () => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [fileHandle]);
+
+  if (!fileHandle) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center text-slate-500 p-8 border-l border-slate-800 bg-slate-900/50">
+        <FileCode className="w-16 h-16 opacity-20 mb-4" />
+        <p className="text-lg font-medium">Pilih file untuk preview</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-full flex flex-col bg-slate-900 border-l border-slate-800 animate-in slide-in-from-right duration-200">
+      {/* Header Preview */}
+      <div className="flex items-center justify-between p-4 border-b border-slate-800 bg-slate-800/50">
+        <div className="flex items-center gap-3 overflow-hidden">
+          <div className="p-2 bg-slate-700/50 rounded-lg shrink-0">
+            {/* Icon based on type */}
+            {fileType === 'image' ? <ImageIcon className="w-5 h-5 text-purple-400" /> :
+              fileType === 'video' ? <FileVideo className="w-5 h-5 text-red-400" /> :
+                fileType === 'audio' ? <FileMusic className="w-5 h-5 text-green-400" /> :
+                  <FileText className="w-5 h-5 text-blue-400" />
+            }
+          </div>
+          <div className="min-w-0">
+            <h3 className="font-semibold text-slate-200 truncate" title={fileHandle.name}>{fileHandle.name}</h3>
+            {fileInfo && <p className="text-xs text-slate-500">{formatBytes(fileInfo.size)}</p>}
+          </div>
+        </div>
+        <div className="flex items-center gap-1">
+          <button onClick={onClose} className="p-2 hover:bg-slate-700 rounded-lg text-slate-400 hover:text-white transition-colors">
+            <X size={18} />
+          </button>
+        </div>
+      </div>
+
+      {/* Content Preview */}
+      <div className="flex-1 overflow-auto p-4 relative bg-slate-950/50">
+        {fileType === 'loading' && (
+          <div className="absolute inset-0 flex items-center justify-center text-blue-400">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-current"></div>
+          </div>
+        )}
+
+        {error && (
+          <div className="text-red-400 bg-red-500/10 p-4 rounded-lg text-sm border border-red-500/20">
+            {error}
+          </div>
+        )}
+
+        {!error && fileType === 'image' && content && (
+          <div className="flex items-center justify-center min-w-full min-h-full">
+            <img src={content} alt="Preview" className="max-w-full max-h-full object-contain rounded-md shadow-lg" />
+          </div>
+        )}
+
+        {!error && fileType === 'video' && content && (
+          <div className="flex items-center justify-center min-w-full min-h-full">
+            <video controls src={content} className="max-w-full max-h-full rounded-md shadow-lg" />
+          </div>
+        )}
+
+        {!error && fileType === 'audio' && content && (
+          <div className="flex flex-col items-center justify-center min-w-full min-h-full gap-4">
+            <div className="w-24 h-24 bg-slate-800 rounded-full flex items-center justify-center">
+              <FileMusic className="w-12 h-12 text-slate-600" />
+            </div>
+            <audio controls src={content} className="w-full max-w-md" />
+          </div>
+        )}
+
+        {!error && fileType === 'text' && content && (
+          <pre className="text-xs font-mono text-slate-300 bg-slate-900 p-4 rounded-lg overflow-x-auto border border-slate-800 tab-4 leading-relaxed whitespace-pre">
+            <code>{content}</code>
+          </pre>
+        )}
+
+        {!error && fileType === 'binary' && (
+          <div className="flex flex-col items-center justify-center h-full text-slate-500 space-y-3">
+            <File className="w-16 h-16 opacity-20" />
+            <p>Preview tidak tersedia untuk tipe file ini.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
 // Komponen Utilitas untuk Icon File yang Unik
 const getFileIcon = (name: string) => {
@@ -27,7 +195,14 @@ const getFileIcon = (name: string) => {
 };
 
 // Komponen Node (File atau Folder)
-const FileSystemNode = ({ handle, level = 0 }: { handle: FileSystemHandle; level?: number }) => {
+interface FileSystemNodeProps {
+  handle: FileSystemHandle;
+  level?: number;
+  onSelect?: (handle: FileSystemFileHandle) => void;
+  selectedHandleName?: string;
+}
+
+const FileSystemNode = ({ handle, level = 0, onSelect, selectedHandleName }: FileSystemNodeProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [children, setChildren] = useState<FileSystemHandle[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -70,6 +245,9 @@ const FileSystemNode = ({ handle, level = 0 }: { handle: FileSystemHandle; level
       if (nextState) {
         await fetchChildren();
       }
+    } else {
+      // Handle select file
+      onSelect?.(handle as FileSystemFileHandle);
     }
   };
 
@@ -83,7 +261,9 @@ const FileSystemNode = ({ handle, level = 0 }: { handle: FileSystemHandle; level
           flex items-center py-1.5 px-2 cursor-pointer 
           hover:bg-slate-700/50 transition-colors border-l-2 border-transparent
           ${isExpanded ? 'border-l-blue-500 bg-slate-800' : ''}
-        `}
+          ${handle.kind === 'file' && selectedHandleName === handle.name ? 'bg-blue-500/10 border-l-blue-400' : ''}
+        `
+        }
         style={{ paddingLeft }}
         onClick={toggleExpand}
       >
@@ -119,7 +299,13 @@ const FileSystemNode = ({ handle, level = 0 }: { handle: FileSystemHandle; level
             <div className="pl-8 py-1 text-xs text-slate-600 italic">Folder kosong</div>
           ) : (
             children.map((childHandle) => (
-              <FileSystemNode key={childHandle.name} handle={childHandle} level={level + 1} />
+              <FileSystemNode
+                key={childHandle.name}
+                handle={childHandle}
+                level={level + 1}
+                onSelect={onSelect}
+                selectedHandleName={selectedHandleName}
+              />
             ))
           )}
         </div>
@@ -138,6 +324,7 @@ const FileSystemNode = ({ handle, level = 0 }: { handle: FileSystemHandle; level
 export default function FolderExplorer() {
   const [rootHandle, setRootHandle] = useState<FileSystemDirectoryHandle | null>(null);
   const [error, setError] = useState('');
+  const [selectedFile, setSelectedFile] = useState<FileSystemFileHandle | null>(null);
 
   const handleOpenFolder = async () => {
     try {
@@ -197,14 +384,28 @@ export default function FolderExplorer() {
             </p>
           </div>
         ) : (
-          <div className="bg-slate-900 rounded-xl border border-slate-800 shadow-xl overflow-hidden max-w-4xl mx-auto min-h-[500px]">
-            <div className="p-3 border-b border-slate-800 bg-slate-800/50 text-xs font-mono text-slate-400 flex items-center gap-2">
-              <span className="bg-slate-700 px-1.5 rounded">ROOT</span>
-              {rootHandle.name}
+          <div className="flex h-[600px] bg-slate-900 rounded-xl border border-slate-800 shadow-xl overflow-hidden max-w-6xl mx-auto">
+            {/* Left: File Tree */}
+            <div className={`${selectedFile ? 'w-1/3' : 'w-full'} flex flex-col border-r border-slate-800 transition-all duration-300`}>
+              <div className="p-3 border-b border-slate-800 bg-slate-800/50 text-xs font-mono text-slate-400 flex items-center gap-2 shrink-0">
+                <span className="bg-slate-700 px-1.5 rounded">ROOT</span>
+                <span className="truncate">{rootHandle.name}</span>
+              </div>
+              <div className="p-2 overflow-y-auto flex-1 file-explorer-scrollbar">
+                <FileSystemNode
+                  handle={rootHandle}
+                  onSelect={setSelectedFile}
+                  selectedHandleName={selectedFile?.name}
+                />
+              </div>
             </div>
-            <div className="p-2 overflow-x-auto">
-              <FileSystemNode handle={rootHandle} />
-            </div>
+
+            {/* Right: Preview */}
+            {selectedFile && (
+              <div className="w-2/3">
+                <FilePreview fileHandle={selectedFile} onClose={() => setSelectedFile(null)} />
+              </div>
+            )}
           </div>
         )}
       </main>

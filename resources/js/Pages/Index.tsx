@@ -33,7 +33,7 @@ export default function Index() {
                     </div>
                     <div className="flex gap-4 items-center">
                         <div className="w-8 h-8 md:w-10 md:h-10 bg-white border-4 border-black rounded-full flex items-center justify-center shadow-neo hover:shadow-neo-hover hover:translate-x-[2px] hover:translate-y-[2px] transition-all overflow-hidden">
-                            <img src="/images/avatar-placeholder.webp" className="w-6 h-6 md:w-8 md:h-8" />
+                            <img src="/assets/images/avatar-placeholder.webp" className="w-6 h-6 md:w-8 md:h-8" />
                         </div>
                         <div className="hidden md:block font-mono text-xs font-bold bg-neo-yellow border-2 border-black px-2 py-1 shadow-neo-sm">
                             STATUS: ONLINE
@@ -51,7 +51,7 @@ export default function Index() {
                             <div className="absolute inset-0 bg-black translate-x-[6px] translate-y-[6px] rounded-xl"></div>
                             <div className="absolute inset-0 bg-white border-4 border-black rounded-xl flex flex-col items-center justify-center gap-2 p-2 transition-transform transform group-hover:translate-x-[6px] group-hover:translate-y-[6px] group-active:bg-gray-100">
                                 <div className="bg-blue-200 rounded-lg border-2 border-black overflow-hidden">
-                                    <img src="/images/icons/class-chatting.webp" className="w-10 h-10 md:w-16 md:h-16" alt="Class Chatting icon" />
+                                    <img src="/assets/images/icons/class-chatting.webp" className="w-10 h-10 md:w-16 md:h-16" alt="Class Chatting icon" />
                                 </div>
                                 <span className="font-bold font-mono text-sm md:text-base truncate w-full text-center">
                                     Class Chatting - Tanpa Kuota
@@ -63,7 +63,7 @@ export default function Index() {
                             <div className="absolute inset-0 bg-black translate-x-[6px] translate-y-[6px] rounded-xl"></div>
                             <div className="absolute inset-0 bg-neo-yellow border-4 border-black rounded-xl flex flex-col items-center justify-center gap-2 p-2 transition-transform transform group-hover:translate-x-[6px] group-hover:translate-y-[6px]">
                                 <div className="bg-white rounded-lg border-2 border-black overflow-hidden">
-                                    <img src="/images/icons/class-chatting-ulangan-online.webp" className="w-10 h-10 md:w-16 md:h-16" alt="Class Chatting Ulangan Online icon" />
+                                    <img src="/assets/images/icons/class-chatting-ulangan-online.webp" className="w-10 h-10 md:w-16 md:h-16" alt="Class Chatting Ulangan Online icon" />
                                 </div>
                                 <span className="font-bold font-mono text-sm md:text-base truncate w-full text-center">
                                     Class Chatting Ulangan Online
@@ -75,7 +75,7 @@ export default function Index() {
                             <div className="absolute inset-0 bg-black translate-x-[6px] translate-y-[6px] rounded-xl"></div>
                             <div className="absolute inset-0 bg-white border-4 border-black rounded-xl flex flex-col items-center justify-center gap-2 p-2 transition-transform transform group-hover:translate-x-[6px] group-hover:translate-y-[6px]">
                                 <div className="bg-green-300 rounded-lg border-2 border-black overflow-hidden">
-                                    <img src="/images/icons/anak-indonesia-menghafal.webp" className="w-10 h-10 md:w-16 md:h-16" alt="Anak Indonesia Menghafal icon" />
+                                    <img src="/assets/images/icons/anak-indonesia-menghafal.webp" className="w-10 h-10 md:w-16 md:h-16" alt="Anak Indonesia Menghafal icon" />
                                 </div>
                                 <span className="font-bold font-mono text-sm md:text-base truncate w-full text-center">
                                     Anak Indonesia Menghafal
@@ -87,7 +87,7 @@ export default function Index() {
                             <div className="absolute inset-0 bg-black translate-x-[6px] translate-y-[6px] rounded-xl"></div>
                             <div className="absolute inset-0 bg-purple-300 border-4 border-black rounded-xl flex flex-col items-center justify-center gap-2 p-2 transition-transform transform group-hover:translate-x-[6px] group-hover:translate-y-[6px]">
                                 <div className="bg-white rounded-lg border-2 border-black overflow-hidden">
-                                    <img src="/images/icons/class-chatting-for-kids.webp" className="w-10 h-10 md:w-16 md:h-16" alt="Class Chatting For Kids icon" />
+                                    <img src="/assets/images/icons/class-chatting-for-kids.webp" className="w-10 h-10 md:w-16 md:h-16" alt="Class Chatting For Kids icon" />
                                 </div>
                                 <span className="font-bold font-mono text-sm md:text-base truncate w-full text-center">
                                     Class Chatting For Kids
@@ -99,7 +99,7 @@ export default function Index() {
                             <div className="absolute inset-0 bg-black translate-x-[6px] translate-y-[6px] rounded-xl"></div>
                             <div className="absolute inset-0 bg-white border-4 border-black rounded-xl flex flex-col items-center justify-center gap-2 p-2 transition-transform transform group-hover:translate-x-[6px] group-hover:translate-y-[6px] group-active:bg-gray-100">
                                 <div className="bg-blue-200 rounded-lg border-2 border-black overflow-hidden">
-                                    <img src="/images/icons/class-chatting-layar-lebar.webp" className="w-10 h-10 md:w-16 md:h-16" alt="Class Chatting Layar Lebar icon" />
+                                    <img src="/assets/images/icons/class-chatting-layar-lebar.webp" className="w-10 h-10 md:w-16 md:h-16" alt="Class Chatting Layar Lebar icon" />
                                 </div>
                                 <span className="font-bold font-mono text-sm md:text-base truncate w-full text-center">
                                     Class Chatting Layar Lebar

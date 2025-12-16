@@ -11,14 +11,19 @@ Route::get('/', function () {
 
 $adminPath = Config::get('app.admin_path');
 
-Route::group(['prefix' => $adminPath, 'as' => 'admin.'], function () {
-    Route::get('login', [AuthController::class, 'login'])->name('login')->middleware('guest');
+Route::get('login', [AuthController::class, 'login'])->name('login')->middleware('guest');
+Route::post('login', [AuthController::class, 'loginAction'])->middleware('guest');
+Route::delete('logout', [AuthController::class, 'logout'])->name('logout');
 
-    Route::post('login', [AuthController::class, 'loginAction'])->middleware('guest');
+Route::group(['prefix' => $adminPath, 'as' => 'admin.'], function () {
 
     Route::get('dashboard', function () {
         return Inertia::render('Admin/Index');
     })->name('dashboard');
+
+    Route::get('kode-aktivasi', function () {
+        return Inertia::render('Admin/KodeAktivasi/Index');
+    })->name('activation-code');
 });
 
 Route::group(['prefix' => 'learn-reading'], function () {

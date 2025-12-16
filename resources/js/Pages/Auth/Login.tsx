@@ -14,7 +14,7 @@ export default function Login() {
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        post(route('admin.login'), {
+        post(route('login'), {
             onError: (errors) => {
                 Object.values(errors).forEach((error) => {
                     toast.error(error);
@@ -26,7 +26,7 @@ export default function Login() {
     return (
         <>
             <Head title="Masuk" />
-            <div className="min-h-screen w-full bg-white relative">
+            <div className="min-h-screen w-full bg-background relative">
                 <div
                     className="absolute inset-0 z-0"
                     style={{
@@ -43,7 +43,7 @@ export default function Login() {
                 <div className="grid place-items-center min-w-screen min-h-screen p-4 relative z-[1] select-none">
                     <Card className="w-full max-w-md mx-auto p-4 bg-background">
                         <Card.Body>
-                            <img src="/images/icons/lestari-ilmu.webp" alt="" className="w-16 h-16 mb-4" />
+                            <img src="/assets/images/icons/lestari-ilmu.webp" alt="" className="w-16 h-16 mb-4" />
                             <Typography as="h2" type="h4" className="mb-2">
                                 Masuk
                             </Typography>

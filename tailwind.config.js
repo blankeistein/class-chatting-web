@@ -2,6 +2,7 @@
 import { mtConfig } from "@material-tailwind/react";
 
 export default {
+    darkMode: 'class',
     content: [
         "./resources/**/*.blade.php",
         "./resources/**/*.{js,ts,jsx,tsx}",

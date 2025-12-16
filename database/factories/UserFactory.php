@@ -31,7 +31,7 @@ class UserFactory extends Factory
             'remember_token' => Str::random(10),
             'role' => 'user',
             'is_active' => true,
-            'avatar' => '/images/avatar-placeholder.webp',
+            'avatar' => '/assets/images/avatar-placeholder.webp',
         ];
     }
 

@@ -1,4 +1,4 @@
-import { Head, usePage } from "@inertiajs/react";
+import { Head, Link, usePage } from "@inertiajs/react";
 import { FacebookIcon, GithubIcon, GlobeIcon, InstagramIcon, LinkedinIcon, TerminalIcon, YoutubeIcon } from "lucide-react";
 
 type AuthProps = {
@@ -8,12 +8,13 @@ type AuthProps = {
             name: string;
             email: string;
             role: string;
+            image: string;
         } | null;
     }
 }
 
 export default function Index() {
-    const props = usePage<AuthProps>().props;
+    const { auth } = usePage<AuthProps>().props;
 
     return (
         <>
@@ -32,9 +33,15 @@ export default function Index() {
                         <h1 className="text-2xl md:text-3xl font-black tracking-tighter uppercase">Lestari <span className="text-neo-yellow bg-black px-2">Ilmu</span></h1>
                     </div>
                     <div className="flex gap-4 items-center">
-                        <div className="w-8 h-8 md:w-10 md:h-10 bg-white border-4 border-black rounded-full flex items-center justify-center shadow-neo hover:shadow-neo-hover hover:translate-x-[2px] hover:translate-y-[2px] transition-all overflow-hidden">
-                            <img src="/assets/images/avatar-placeholder.webp" className="w-6 h-6 md:w-8 md:h-8" />
-                        </div>
+                        {
+                            auth.user && (
+                                <Link href={route('admin.dashboard')}>
+                                    <div className="w-8 h-8 md:w-10 md:h-10 bg-white border-4 border-black rounded-full flex items-center justify-center shadow-neo hover:shadow-neo-hover hover:translate-x-[2px] hover:translate-y-[2px] transition-all overflow-hidden">
+                                        <img src={auth.user?.image} className="w-6 h-6 md:w-8 md:h-8" />
+                                    </div>
+                                </Link>
+                            )
+                        }
                         <div className="hidden md:block font-mono text-xs font-bold bg-neo-yellow border-2 border-black px-2 py-1 shadow-neo-sm">
                             STATUS: ONLINE
                         </div>

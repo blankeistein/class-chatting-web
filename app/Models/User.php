@@ -36,4 +36,9 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function getImageAttribute($value)
+    {
+        return $value ? asset('storage/'.$value) : '/assets/images/avatar-placeholder.webp';
+    }
 }

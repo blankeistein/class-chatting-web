@@ -124,4 +124,6 @@ return [
     ],
 
     'admin_path' => env('ADMIN_PATH', 'admin'),
+
+    'development_email' => explode('|', env('DEVELOPMENT_EMAIL', 'admin@admin.com')),
 ];

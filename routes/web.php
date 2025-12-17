@@ -24,6 +24,10 @@ Route::group(['prefix' => $adminPath, 'as' => 'admin.'], function () {
     Route::get('kode-aktivasi', function () {
         return Inertia::render('Admin/KodeAktivasi/Index');
     })->name('activation-code');
+
+    Route::get('buku', function () {
+        return Inertia::render('Admin/Buku/Index');
+    })->name('books');
 });
 
 Route::group(['prefix' => 'learn-reading'], function () {

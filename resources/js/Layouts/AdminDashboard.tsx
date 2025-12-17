@@ -37,7 +37,7 @@ const Links: LinkType[] = [
   {
     icon: BookIcon,
     title: "Buku",
-    href: "#",
+    href: route('admin.books'),
   },
   {
     icon: VideoIcon,
@@ -74,7 +74,7 @@ function Sidebar() {
 
   return (
     <div className="p-2 max-w-[280px] hidden lg:block">
-      <Card className="h-full">
+      <Card className="h-full max-h-screen">
         <Card.Header className="flex items-center gap-4 mx-4 mb-0 mt-3 h-max">
           <img src="/assets/images/icons/lestari-ilmu.webp" alt="logo" className="h-8 w-8" />
 
@@ -85,8 +85,8 @@ function Sidebar() {
             App Lestari Ilmu
           </Typography>
         </Card.Header>
-        <hr className="mt-4 border-surface" />
-        <Card.Body className="p-4">
+        {/* <hr className="mt-4 border-surface" /> */}
+        <Card.Body className="p-4 mt-2">
           <NavList />
         </Card.Body>
       </Card>
@@ -139,8 +139,8 @@ function TopNavbar() {
 
   return (
     <>
-      <div className="p-2 mx-auto w-full">
-        <Navbar>
+      <div className="p-2 mx-auto w-full sticky top-0">
+        <Navbar className="bg-background/50 backdrop-blur-lg">
           <div className="flex items-center gap-2">
             <IconButton
               size="sm"
@@ -179,7 +179,7 @@ function TopNavbar() {
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="max-h-screen bg-background flex">
       <Sidebar />
       <div className="flex-1 overflow-auto">
         <TopNavbar />

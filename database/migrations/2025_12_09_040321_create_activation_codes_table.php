@@ -20,6 +20,7 @@ return new class extends Migration
             $table->smallInteger('tier')->default(0);
             $table->integer('times_activated')->default(0);
             $table->integer('max_activated')->nullable();
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
 
             $table->softDeletes();

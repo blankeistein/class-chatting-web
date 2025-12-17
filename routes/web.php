@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\BookController;
 use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Route;
@@ -25,9 +26,7 @@ Route::group(['prefix' => $adminPath, 'as' => 'admin.'], function () {
         return Inertia::render('Admin/KodeAktivasi/Index');
     })->name('activation-code');
 
-    Route::get('buku', function () {
-        return Inertia::render('Admin/Buku/Index');
-    })->name('books');
+    Route::get('buku', [BookController::class, 'index'])->name('books');
 });
 
 Route::group(['prefix' => 'learn-reading'], function () {

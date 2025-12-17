@@ -3,23 +3,35 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Log;
+use App\Http\Resources\BookResource;
+use App\Models\Book;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class BookController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        // Dasar Penggunaan
-        Log::channel('activation')->warning("ATTEMPT FAILED | Code: {$code} not found.", [
-            'user_id' => $userId,
-            'ip_address' => $request->ip(),
-        ]);
+        $perPage = $request->input('per_page', 25);
+        $search = $request->input('search');
+        $sortBy = $request->input('sort_by', 'created_at');
+        $sortDirection = $request->input('sort_direction', 'desc');
 
-        Log::channel('activation')->info("SUCCESS | Code: {$code} activated.", [
-            'user_id' => $userId,
-            'activated_book' => $activationCode->activated_book_id,
-        ]);
+        $books = Book::query()
+            ->when($search, function ($query, $search) {
+                $query->where('title', 'like', "%{$search}%");
+            })
+            ->when(in_array($sortBy, ['title', 'created_at', 'updated_at']), function ($query) use ($sortBy, $sortDirection) {
+                $query->orderBy($sortBy, $sortDirection === 'asc' ? 'asc' : 'desc');
+            }, function ($query) {
+                $query->latest();
+            })
+            ->paginate($perPage)
+            ->withQueryString();
 
-        return view('admin.book.index');
+        return Inertia::render('Admin/Buku/Index', [
+            'books' => BookResource::collection($books),
+            'filters' => $request->only(['search', 'per_page', 'sort_by', 'sort_direction']),
+        ]);
     }
 }

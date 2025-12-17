@@ -283,13 +283,13 @@ export default function Index() {
                       </td>
                       <td className={classes}>
                         <div className="flex items-center gap-2">
-                          <IconButton variant="ghost" size="sm" onClick={() => handleCopyCode(item.code)} className="hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400">
+                          <IconButton variant="ghost" size="sm" onClick={() => handleCopyCode(item.code)} color="info">
                             <CopyIcon className="h-4 w-4" />
                           </IconButton>
-                          <IconButton variant="ghost" size="sm" className="hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400">
+                          <IconButton variant="ghost" size="sm" color="error">
                             <Trash2Icon className="h-4 w-4" />
                           </IconButton>
-                          <IconButton variant="ghost" size="sm" className="dark:text-slate-400">
+                          <IconButton variant="ghost" size="sm" color="primary">
                             <MoreVerticalIcon className="h-4 w-4" />
                           </IconButton>
                         </div>

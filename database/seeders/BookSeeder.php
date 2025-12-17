@@ -27,7 +27,6 @@ class BookSeeder extends Seeder
             Book::create([
                 'uuid' => Str::uuid(),
                 'title' => "Buku Pelajaran Kelas $i SD",
-                'cover_image' => "covers/book-$i.jpg",
             ]);
         }
 

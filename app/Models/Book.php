@@ -19,4 +19,9 @@ class Book extends Model
     {
         return $this->morphToMany(ActivationCode::class, 'model', 'activation_items')->withTimestamps();
     }
+
+    public function getThumbnailAttribute()
+    {
+        return $this->cover_image ? asset('storage/'.$this->cover_image) : asset('assets/images/book-thumbnail.webp');
+    }
 }

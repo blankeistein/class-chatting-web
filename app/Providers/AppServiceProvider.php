@@ -4,12 +4,12 @@ namespace App\Providers;
 
 use App\Models\Book;
 use App\Models\User;
+use Dedoc\Scramble\RouteRegistrar;
+use Dedoc\Scramble\Scramble;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
-use Scramble\RouteRegistrar;
-use Scramble\Scramble;
 
 class AppServiceProvider extends ServiceProvider
 {

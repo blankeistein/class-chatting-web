@@ -19,7 +19,8 @@ import { route } from "ziggy-js";
 type LinkType = {
   icon: React.ForwardRefExoticComponent<React.SVGProps<SVGSVGElement>>;
   title: string;
-  href: string;
+  href?: string;
+  routeName?: string;
   badge?: number;
 }
 
@@ -27,32 +28,36 @@ const Links: LinkType[] = [
   {
     icon: LayoutDashboardIcon,
     title: "Dashboard",
-    href: route('admin.dashboard'),
+    routeName: "admin.dashboard",
   },
   {
     icon: TicketIcon,
     title: "Kode Aktivasi",
-    href: route('admin.activation-code'),
+    routeName: "admin.activation-code",
   },
   {
     icon: BookIcon,
     title: "Buku",
-    href: route('admin.books'),
+    routeName: 'admin.books',
   },
   {
     icon: VideoIcon,
     title: "Video",
     href: "#",
+    routeName: undefined
   },
 ];
 
 const NavList = () => {
-  const page = usePage();
-
   return (
     <List>
-      {Links.map(({ icon: Icon, title, href, badge }) => (
-        <List.Item key={title} as={Link} href={href} selected={href.includes(page.url)}>
+      {Links.map(({ icon: Icon, title, href, routeName, badge }) => (
+        <List.Item
+          key={title}
+          as={Link}
+          href={routeName ? route(routeName) : href || '#'}
+          selected={routeName ? route().current(routeName + '*') : false}
+        >
           <List.ItemStart>
             <Icon className="h-[18px] w-[18px]" />
           </List.ItemStart>
@@ -85,7 +90,6 @@ function Sidebar() {
             App Lestari Ilmu
           </Typography>
         </Card.Header>
-        {/* <hr className="mt-4 border-surface" /> */}
         <Card.Body className="p-4 mt-2">
           <NavList />
         </Card.Body>

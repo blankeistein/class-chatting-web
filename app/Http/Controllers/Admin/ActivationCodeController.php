@@ -21,15 +21,22 @@ class ActivationCodeController extends Controller
         $search = $request->input('search');
         $sortBy = $request->input('sort_by', 'created_at');
         $sortDirection = $request->input('sort_direction', 'desc');
+        $bookId = $request->input('book_id');
 
         $activationCodes = ActivationCode::query()
-            ->with('user')
+            ->with(['user', 'items.model'])
             ->when($search, function ($query, $search) {
                 $query->where('code', 'like', "%{$search}%")
                     ->orWhereHas('user', function ($query) use ($search) {
                         $query->where('name', 'like', "%{$search}%")
                             ->orWhere('email', 'like', "%{$search}%");
                     });
+            })
+            ->when($bookId, function ($query, $bookId) {
+                $query->whereHas('items', function ($query) use ($bookId) {
+                    $query->where('model_id', $bookId)
+                        ->where('model_type', Book::class);
+                });
             })
             ->when(in_array($sortBy, ['code', 'created_at', 'updated_at', 'times_activated', 'max_activated']), function ($query) use ($sortBy, $sortDirection) {
                 $query->orderBy($sortBy, $sortDirection === 'asc' ? 'asc' : 'desc');
@@ -39,9 +46,13 @@ class ActivationCodeController extends Controller
             ->paginate($perPage)
             ->withQueryString();
 
+        $selectedBookData = $bookId ? Book::find($bookId, ['id', 'title']) : null;
+
         return Inertia::render('Admin/KodeAktivasi/Index', [
             'activationCodes' => ActivationCodeResource::collection($activationCodes),
-            'filters' => $request->only(['search', 'per_page', 'sort_by', 'sort_direction']),
+            'books' => Book::latest()->limit(20)->get(['id', 'title']),
+            'selectedBookData' => $selectedBookData,
+            'filters' => $request->only(['search', 'per_page', 'sort_by', 'sort_direction', 'book_id']),
         ]);
     }
 

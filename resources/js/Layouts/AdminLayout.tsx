@@ -11,7 +11,7 @@ import {
   Navbar,
   Typography,
 } from "@material-tailwind/react";
-import { ArchiveIcon, BellIcon, BookIcon, LayoutDashboardIcon, LogOutIcon, MailIcon, MenuIcon, MoonIcon, PiIcon, PinIcon, SunIcon, TicketIcon, Trash2Icon, UserCircle2Icon, VideoIcon, XIcon } from "lucide-react";
+import { ArchiveIcon, BellIcon, BookIcon, GithubIcon, LayoutDashboardIcon, LogOutIcon, MailIcon, MenuIcon, MoonIcon, PiIcon, PinIcon, SunIcon, TicketIcon, Trash2Icon, UserCircle2Icon, VideoIcon, XIcon } from "lucide-react";
 import { useTheme } from "../Contexts/ThemeContext";
 import { Link, router, usePage } from "@inertiajs/react";
 import { route } from "ziggy-js";
@@ -193,6 +193,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="flex-1 overflow-auto">
         <TopNavbar />
         {children}
+        <footer className="p-2 flex items-center justify-between border-t border-surface mt-auto">
+          <Typography className="text-sm text-surface-foreground/60">
+            &copy; {new Date().getFullYear()} All rights reserved.
+          </Typography>
+          <IconButton
+            variant="ghost"
+            size="sm"
+            as="a"
+            href="https://github.com/blankeistein"
+            target="_blank"
+          >
+            <GithubIcon className="h-4 w-4" />
+          </IconButton>
+        </footer>
       </div>
     </div>
   );

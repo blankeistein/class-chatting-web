@@ -30,6 +30,15 @@ class ActivationCodeResource extends JsonResource
             'type' => $this->type,
             'times_activated' => $this->times_activated,
             'max_activated' => $this->max_activated,
+            'items' => $this->items->map(fn ($item) => [
+                'id' => $item->id,
+                'model_id' => $item->model_id,
+                'model_type' => $item->model_type,
+                'model' => $item->model ? [
+                    'id' => $item->model->id,
+                    'title' => $item->model->title,
+                ] : null,
+            ]),
             'created_at' => $this->created_at->toIso8601String(),
             'updated_at' => $this->updated_at->toIso8601String(),
         ];

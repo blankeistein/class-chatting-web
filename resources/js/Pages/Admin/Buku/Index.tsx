@@ -132,7 +132,7 @@ export default function Index({ books: paginatedBooks, filters }: { books: any, 
     const delayDebounceFn = setTimeout(() => {
       if (searchTerm !== (filters.search || "")) {
         router.get(
-          route('admin.books'),
+          route('admin.books.index'),
           { search: searchTerm, per_page: perPage, sort_by: sortBy, sort_direction: sortDirection },
           { preserveState: true, replace: true }
         );

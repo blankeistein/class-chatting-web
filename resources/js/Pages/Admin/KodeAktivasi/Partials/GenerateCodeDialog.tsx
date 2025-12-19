@@ -268,8 +268,7 @@ export default function GenerateCodeDialog({ open, setOpen }: GenerateCodeDialog
                   </Typography>
                   <Input
                     value={customCode}
-                    onChange={(e) => setCustomCode(e.target.value.toUpperCase())}
-                    className="uppercase"
+                    onChange={(e) => setCustomCode(e.target.value)}
                     placeholder="CONTOH: KODEPESERTA2024"
                   />
                   <Typography variant="small" className="mt-2 text-[10px] text-slate-500 italic">

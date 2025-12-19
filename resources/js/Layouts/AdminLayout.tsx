@@ -146,7 +146,7 @@ function TopNavbar() {
 
   return (
     <>
-      <div className="p-2 mx-auto w-full sticky top-0">
+      <div className="p-2 mx-auto w-full sticky top-0 z-50">
         <Navbar className="bg-background/50 backdrop-blur-lg">
           <div className="flex items-center gap-2">
             <IconButton

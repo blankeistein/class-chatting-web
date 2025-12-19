@@ -273,7 +273,7 @@ export default function Index({ activationCodes, filters }: { activationCodes: P
                         <Chip
                           variant="ghost"
                           size="sm"
-                          color={item.type === 'public' ? "info" : "secondary"}
+                          color={item.type === 'public' ? "info" : "success"}
                           className="capitalize"
                         >
                           <Chip.Label>{item.type === 'public' ? 'Public' : 'Individual'}</Chip.Label>

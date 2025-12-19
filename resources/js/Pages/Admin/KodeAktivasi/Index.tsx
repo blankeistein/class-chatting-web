@@ -117,7 +117,7 @@ export default function Index({ activationCodes, filters }: { activationCodes: P
   };
 
   const getStatus = (item: ActivationCode) => {
-    if (item.times_activated >= item.max_activated) return "used";
+    if (item.max_activated && item.times_activated >= item.max_activated) return "used";
     if (item.times_activated > 0) return "active";
     return "available";
   };

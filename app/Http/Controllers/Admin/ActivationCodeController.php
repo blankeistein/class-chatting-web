@@ -53,8 +53,8 @@ class ActivationCodeController extends Controller
             'mode' => 'required|in:random,custom',
             'type' => 'required|in:single,public',
             'max_activated' => 'nullable|integer|min:1',
-            'code_length' => 'required_if:mode,random|integer|min:4|max:64',
-            'custom_code' => 'required_if:mode,custom|string|unique:activation_codes,code',
+            'code_length' => 'required_if:mode,random|nullable|integer|min:4|max:64',
+            'custom_code' => 'required_if:mode,custom|nullable|string|unique:activation_codes,code',
             'book_ids' => 'required|array|min:1',
             'book_ids.*' => 'exists:books,id',
         ], [

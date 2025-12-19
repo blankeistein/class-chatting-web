@@ -15,7 +15,6 @@ return new class extends Migration
             $table->id();
             $table->foreignId('activation_code_id')->constrained()->cascadeOnDelete();
             $table->morphs('model');
-            $table->timestamps();
 
             $table->unique(['activation_code_id', 'model_id', 'model_type'], 'activation_items_unique');
         });

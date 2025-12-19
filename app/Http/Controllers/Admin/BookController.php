@@ -34,4 +34,27 @@ class BookController extends Controller
             'filters' => $request->only(['search', 'per_page', 'sort_by', 'sort_direction']),
         ]);
     }
+
+    public function selection(Request $request)
+    {
+        $search = $request->input('search');
+        
+        $books = Book::query()
+            ->when($search, function($query, $search) {
+                $query->where('title', 'like', "%{$search}%");
+            })
+            ->latest()
+            ->limit(20) // Batasi biar gak berat, ntar pake search aja
+            ->get(['id', 'title']);
+
+        return response()->json($books);
+    }
+
+    public function destroy($id)
+    {
+        $book = Book::findOrFail($id);
+        $book->delete();
+
+        return redirect()->back()->with('success', 'Buku berhasil dihapus.');
+    }
 }

@@ -8,7 +8,7 @@ import {
   Input,
   Select,
 } from "@material-tailwind/react";
-import DashboardLayout from "@/Layouts/AdminDashboard";
+import AdminLayout from "@/Layouts/AdminLayout";
 import { Head, router } from "@inertiajs/react";
 import {
   SearchIcon,
@@ -203,6 +203,19 @@ export default function Index({ books: paginatedBooks, filters }: { books: any, 
                     </Input.Icon>
                   </Input>
                 </div>
+                <div className="w-full md:w-32">
+                  <Select
+                    value={perPage.toString()}
+                    onValueChange={(val) => val && handlePerPageChange(val)}
+                  >
+                    <Select.Trigger className="dark:text-white" placeholder="Items" />
+                    <Select.List>
+                      <Select.Option value="25">25 per hal</Select.Option>
+                      <Select.Option value="50">50 per hal</Select.Option>
+                      <Select.Option value="100">100 per hal</Select.Option>
+                    </Select.List>
+                  </Select>
+                </div>
                 <div className="w-full md:w-48">
                   <Select
                     value={`${sortBy}|${sortDirection}`}
@@ -219,19 +232,7 @@ export default function Index({ books: paginatedBooks, filters }: { books: any, 
                     </Select.List>
                   </Select>
                 </div>
-                <div className="w-full md:w-32">
-                  <Select
-                    value={perPage.toString()}
-                    onValueChange={(val) => val && handlePerPageChange(val)}
-                  >
-                    <Select.Trigger className="dark:text-white" placeholder="Items" />
-                    <Select.List>
-                      <Select.Option value="25">25 per hal</Select.Option>
-                      <Select.Option value="50">50 per hal</Select.Option>
-                      <Select.Option value="100">100 per hal</Select.Option>
-                    </Select.List>
-                  </Select>
-                </div>
+
               </div>
 
               <div className="flex items-center gap-1 border-l border-slate-200 pl-4 ml-auto dark:border-slate-700">
@@ -298,27 +299,28 @@ export default function Index({ books: paginatedBooks, filters }: { books: any, 
             </Typography>
           </div>
         )}
-      </div>
-      {/* Pagination Controls */}
-      <div className="mt-8 flex justify-center gap-2">
-        {(paginatedBooks.meta?.links || paginatedBooks.links).map((link: any, key: number) => (
-          <Button
-            key={key}
-            variant={link.active ? "solid" : "ghost"}
-            size="sm"
-            color={link.active ? "primary" : "secondary"}
-            className={`flex items-center gap-2 ${!link.url ? "opacity-50 cursor-not-allowed" : ""}`}
-            onClick={() => link.url && router.get(link.url, { search: searchTerm, per_page: perPage, sort_by: sortBy, sort_direction: sortDirection }, { preserveState: true })}
-            dangerouslySetInnerHTML={{ __html: link.label }}
-            disabled={!link.url}
-          >
-          </Button>
-        ))}
+
+        {/* Pagination Controls */}
+        <div className="mt-8 flex justify-center gap-2">
+          {(paginatedBooks.meta?.links || paginatedBooks.links).map((link: any, key: number) => (
+            <Button
+              key={key}
+              variant={link.active ? "solid" : "ghost"}
+              size="sm"
+              color={link.active ? "primary" : "secondary"}
+              className={`flex items-center gap-2 ${!link.url ? "opacity-50 cursor-not-allowed" : ""}`}
+              onClick={() => link.url && router.get(link.url, { search: searchTerm, per_page: perPage, sort_by: sortBy, sort_direction: sortDirection }, { preserveState: true })}
+              dangerouslySetInnerHTML={{ __html: link.label }}
+              disabled={!link.url}
+            >
+            </Button>
+          ))}
+        </div>
       </div>
     </>
   );
 }
 
 Index.layout = (page: React.ReactNode) => {
-  return <DashboardLayout>{page}</DashboardLayout>;
+  return <AdminLayout>{page}</AdminLayout>;
 };

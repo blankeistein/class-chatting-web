@@ -11,10 +11,11 @@ import {
   Navbar,
   Typography,
 } from "@material-tailwind/react";
-import { ArchiveIcon, BookIcon, LayoutDashboardIcon, LogOutIcon, MailIcon, MenuIcon, MoonIcon, PiIcon, PinIcon, SunIcon, TicketIcon, Trash2Icon, UserCircle2Icon, VideoIcon, XIcon } from "lucide-react";
+import { ArchiveIcon, BellIcon, BookIcon, LayoutDashboardIcon, LogOutIcon, MailIcon, MenuIcon, MoonIcon, PiIcon, PinIcon, SunIcon, TicketIcon, Trash2Icon, UserCircle2Icon, VideoIcon, XIcon } from "lucide-react";
 import { useTheme } from "../Contexts/ThemeContext";
 import { Link, router, usePage } from "@inertiajs/react";
 import { route } from "ziggy-js";
+import { AuthProps } from "@/types/global";
 
 type LinkType = {
   icon: React.ForwardRefExoticComponent<React.SVGProps<SVGSVGElement>>;
@@ -33,12 +34,12 @@ const Links: LinkType[] = [
   {
     icon: TicketIcon,
     title: "Kode Aktivasi",
-    routeName: "admin.activation-code",
+    routeName: "admin.activation-code.index",
   },
   {
     icon: BookIcon,
     title: "Buku",
-    routeName: 'admin.books',
+    routeName: 'admin.books.index',
   },
   {
     icon: VideoIcon,
@@ -99,11 +100,13 @@ function Sidebar() {
 }
 
 function ProfileMenu() {
+  const props = usePage<AuthProps>().props;
+
   return (
     <Menu>
       <Menu.Trigger
         as={Avatar}
-        src="https://raw.githubusercontent.com/creativetimofficial/public-assets/master/ct-assets/team-4.jpg"
+        src={props.auth.user?.image}
         alt="profile-picture"
         size="sm"
         className="border border-primary p-0.5 cursor-pointer"
@@ -161,11 +164,13 @@ function TopNavbar() {
             </IconButton>
 
             <div className="flex gap-4 items-center ml-auto">
+              <IconButton variant="ghost">
+                <BellIcon className="h-4 w-4" />
+              </IconButton>
               <IconButton variant="ghost" onClick={toggleTheme}>
                 {theme === 'dark' ? <SunIcon className="h-4 w-4" /> : <MoonIcon className="h-4 w-4" />}
               </IconButton>
               <ProfileMenu />
-
             </div>
           </div>
         </Navbar>
@@ -181,9 +186,9 @@ function TopNavbar() {
   );
 }
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="max-h-screen bg-background flex">
+    <div className="h-screen bg-background flex">
       <Sidebar />
       <div className="flex-1 overflow-auto">
         <TopNavbar />

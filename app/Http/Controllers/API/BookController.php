@@ -15,6 +15,7 @@ class BookController extends Controller
     public function index()
     {
         $books = Book::all();
+
         return BookResource::collection($books);
     }
 
@@ -67,7 +68,7 @@ class BookController extends Controller
             ]);
         }
 
-        if ($code->number_of_activations >= $code->activation_limit) {
+        if ($code->max_activated !== null && $code->times_activated >= $code->max_activated) {
             return response()->json([
                 'status' => 'error',
                 'error_code' => 113,

@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class ActivationItem extends Model
 {
+    public $timestamps = false;
+
     protected $guarded = ['id'];
 
     public function activationCode(): BelongsTo

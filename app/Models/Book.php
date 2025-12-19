@@ -24,4 +24,8 @@ class Book extends Model
     {
         return $this->cover_image ? asset('storage/'.$this->cover_image) : asset('assets/images/book-thumbnail.webp');
     }
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'user_books')->withTimestamps();
+    }
 }

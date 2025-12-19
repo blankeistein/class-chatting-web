@@ -1,17 +1,6 @@
+import { AuthProps } from "@/types/global";
 import { Head, Link, usePage } from "@inertiajs/react";
 import { FacebookIcon, GithubIcon, GlobeIcon, InstagramIcon, LinkedinIcon, TerminalIcon, YoutubeIcon } from "lucide-react";
-
-type AuthProps = {
-    auth: {
-        user: {
-            id: number;
-            name: string;
-            email: string;
-            role: string;
-            image: string;
-        } | null;
-    }
-}
 
 export default function Index() {
     const { auth } = usePage<AuthProps>().props;

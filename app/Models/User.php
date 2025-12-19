@@ -41,4 +41,9 @@ class User extends Authenticatable
     {
         return $value ? asset('storage/'.$value) : '/assets/images/avatar-placeholder.webp';
     }
+
+    public function books()
+    {
+        return $this->belongsToMany(Book::class, 'user_books')->withTimestamps();
+    }
 }

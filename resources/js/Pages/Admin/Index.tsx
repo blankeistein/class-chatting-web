@@ -9,13 +9,14 @@ import {
   IconButton,
   Button
 } from "@material-tailwind/react";
-import DashboardLayout from "@/Layouts/AdminDashboard";
+import AdminLayout from "@/Layouts/AdminLayout";
 import { Head } from "@inertiajs/react";
 import {
   BanknoteIcon,
   UsersIcon,
   BookOpenIcon,
   ActivityIcon,
+  LayersIcon,
   TrendingUpIcon,
   TrendingDownIcon,
   MoreVerticalIcon,
@@ -28,35 +29,35 @@ import {
 // Dummy Data
 const stats = [
   {
-    title: "Total Pendapatan",
-    value: "Rp 124.500.000",
+    title: "Total Buku",
+    value: "1,280",
     change: "+12.5%",
     trend: "up",
-    icon: BanknoteIcon,
+    icon: BookOpenIcon,
     color: "bg-blue-500",
   },
   {
-    title: "Pengguna Aktif",
-    value: "1,250",
+    title: "Pengguna Terdaftar",
+    value: "3,422",
     change: "+5.2%",
     trend: "up",
     icon: UsersIcon,
     color: "bg-orange-500",
   },
   {
-    title: "Buku Terjual",
-    value: "854",
-    change: "-2.4%",
-    trend: "down",
-    icon: BookOpenIcon,
+    title: "Total Kategori",
+    value: "24",
+    change: "+2",
+    trend: "up",
+    icon: LayersIcon,
     color: "bg-green-500",
   },
   {
-    title: "Kunjungan Hari Ini",
-    value: "3,422",
+    title: "Buku Terbit",
+    value: "854",
     change: "+8.1%",
     trend: "up",
-    icon: ActivityIcon,
+    icon: CheckCircle2Icon,
     color: "bg-purple-500",
   },
 ];
@@ -330,5 +331,5 @@ export default function Index() {
 }
 
 Index.layout = (page: React.ReactNode) => {
-  return <DashboardLayout>{page}</DashboardLayout>
+  return <AdminLayout>{page}</AdminLayout>
 }

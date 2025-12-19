@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\ActivationCodeController;
 use App\Http\Controllers\Admin\BookController;
 use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Config;
@@ -22,11 +23,9 @@ Route::group(['prefix' => $adminPath, 'as' => 'admin.'], function () {
         return Inertia::render('Admin/Index');
     })->name('dashboard');
 
-    Route::get('kode-aktivasi', function () {
-        return Inertia::render('Admin/KodeAktivasi/Index');
-    })->name('activation-code');
-
-    Route::get('buku', [BookController::class, 'index'])->name('books');
+    Route::get('books/selection', [BookController::class, 'selection'])->name('books.selection');
+    Route::resource('activation-code', ActivationCodeController::class);
+    Route::resource('books', BookController::class);
 });
 
 Route::group(['prefix' => 'learn-reading'], function () {

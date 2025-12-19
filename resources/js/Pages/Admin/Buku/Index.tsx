@@ -165,7 +165,7 @@ export default function Index({ books: paginatedBooks, filters }: { books: any, 
   return (
     <>
       <Head title="Manajemen Buku" />
-      <Toaster position="bottom-center" />
+      <Toaster position="top-center" />
 
       <div className="p-4 space-y-6">
         {/* Header Section */}

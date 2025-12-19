@@ -88,6 +88,7 @@ class ActivationCodeController extends Controller
                     'tier' => $request->tier,
                     'max_activated' => $request->max_activated,
                     'type' => $request->type,
+                    'created_by' => auth()->user()->id,
                 ]);
 
                 foreach ($request->book_ids as $bookId) {
@@ -117,5 +118,46 @@ class ActivationCodeController extends Controller
         $activationCode->delete();
 
         return redirect()->back()->with('success', 'Kode aktivasi berhasil dihapus.');
+    }
+
+    public function bulkDelete(Request $request)
+    {
+        $ids = $request->input('ids', []);
+        ActivationCode::whereIn('id', $ids)->delete();
+
+        return redirect()->back()->with('success', count($ids).' kode aktivasi berhasil dihapus.');
+    }
+
+    public function bulkExport(Request $request)
+    {
+        $ids = explode(',', $request->input('ids', ''));
+        $codes = ActivationCode::whereIn('id', $ids)->with(['user', 'items.model'])->get();
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="activation_codes_'.date('Y-m-d_H-i-s').'.csv"',
+        ];
+
+        $callback = function () use ($codes) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, ['ID', 'Code', 'Tier', 'Type', 'Limit', 'Activated By', 'Activated At', 'Books']);
+
+            foreach ($codes as $code) {
+                fputcsv($file, [
+                    $code->id,
+                    $code->code,
+                    $code->tier->label(),
+                    $code->type,
+                    $code->max_activated ?? 'Unlimited',
+                    $code->user->name ?? 'N/A',
+                    $code->activated_at ?? 'N/A',
+                    $code->items->pluck('model.title')->join(', '),
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }

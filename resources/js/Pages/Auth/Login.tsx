@@ -126,7 +126,7 @@ export default function Login() {
                 </div>
             </div>
 
-            <Toaster position="bottom-center" />
+            <Toaster position="top-center" />
         </>
     );
 }

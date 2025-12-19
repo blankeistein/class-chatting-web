@@ -11,7 +11,9 @@ import {
   Popover,
   List,
   ListItem,
+  Checkbox as MaterialCheckbox,
 } from "@material-tailwind/react";
+import Checkbox from "@/Components/Checkbox";
 import {
   PlusIcon,
   SearchIcon,
@@ -112,6 +114,7 @@ export default function Index({ activationCodes, filters, books, selectedBookDat
   const [bookSearch, setBookSearch] = useState("");
   const [isSearchingBooks, setIsSearchingBooks] = useState(false);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   const handleBookSearch = async (query: string) => {
     setBookSearch(query);
@@ -165,8 +168,12 @@ export default function Index({ activationCodes, filters, books, selectedBookDat
 
   const handleDelete = (id: number) => {
     if (confirm("Apakah Anda yakin ingin menghapus kode aktivasi ini?")) {
+      let toastId = toast.loading('Menghapus kode aktivasi...')
       router.delete(route('admin.activation-code.destroy', id), {
-        onSuccess: () => toast.success("Kode berhasil dihapus"),
+        onSuccess: () => {
+          toast.dismiss(toastId)
+          toast.success("Kode berhasil dihapus")
+        },
       });
     }
   };
@@ -196,10 +203,42 @@ export default function Index({ activationCodes, filters, books, selectedBookDat
     revoked: "error",
   };
 
+  const toggleSelect = (id: number) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === activationCodes.data.length && activationCodes.data.length > 0) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(activationCodes.data.map(item => item.id));
+    }
+  };
+
+  const handleBulkDelete = () => {
+    if (confirm(`Apakah Anda yakin ingin menghapus ${selectedIds.length} kode aktivasi ini?`)) {
+      router.delete(route('admin.activation-code.bulk-delete'), {
+        data: { ids: selectedIds },
+        onSuccess: () => {
+          setSelectedIds([]);
+          toast.success("Kode berhasil dihapus");
+        },
+      });
+    }
+  };
+
+  const handleBulkExport = () => {
+    const ids = selectedIds.join(',');
+    window.location.href = route('admin.activation-code.bulk-export', { ids });
+  };
+
+
   return (
     <>
       <Head title="Manajemen Kode Aktivasi" />
-      <Toaster position="bottom-center" />
+      <Toaster position="top-center" />
 
       <div className="p-4 space-y-6">
         {/* Header Section */}
@@ -221,6 +260,42 @@ export default function Index({ activationCodes, filters, books, selectedBookDat
           </Button>
         </div>
 
+        {/* Bulk Action Bar */}
+        {selectedIds.length > 0 && (
+          <Card className="w-[90%] lg:w-3/4 bg-slate-900 text-white p-3 flex flex-row items-center justify-between animate-in fade-in slide-in-from-top-4 duration-300 fixed bottom-8 z-30 left-1/2 -translate-x-1/2">
+            <div className="flex items-center gap-3">
+              <Checkbox
+                checked={selectedIds.length === activationCodes.data.length}
+                onChange={toggleSelectAll}
+                color="primary"
+              />
+              <Typography variant="small" className="font-bold text-white">
+                {selectedIds.length} Item Terpilih
+              </Typography>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="ghost"
+                color="secondary"
+                className="flex items-center gap-2 text-white"
+                onClick={handleBulkExport}
+              >
+                <CopyIcon className="h-4 w-4" /> Export CSV
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                color="error"
+                className="flex items-center gap-2"
+                onClick={handleBulkDelete}
+              >
+                <Trash2Icon className="h-4 w-4" /> Hapus Terpilih
+              </Button>
+            </div>
+          </Card>
+        )}
+
         {/* Filters and Stats */}
         <Card className="shadow-sm border border-slate-200 dark:border-slate-800 dark:bg-slate-900">
           <CardBody className="p-4">
@@ -236,14 +311,20 @@ export default function Index({ activationCodes, filters, books, selectedBookDat
                 <SearchIcon className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               </div>
 
-              {/* Searchable Book Filter */}
               <div className="w-full md:w-64">
                 <Popover placement="bottom-start" open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
-                  <Popover.Trigger as={Button} className="w-full flex justify-between items-center" color="default" onClick={() => setIsPopoverOpen(!isPopoverOpen)}>
-                    <span className="truncate">
-                      {selectedBook === "all" ? "Semua Buku" : selectedBook.title}
-                    </span>
-                    <ChevronDownIcon className="h-4 w-4 ml-2 opacity-50" />
+                  <Popover.Trigger>
+                    <Button
+                      variant="outline"
+                      className="w-full flex justify-between items-center text-left font-normal capitalize"
+                      color="secondary"
+                      onClick={() => setIsPopoverOpen(!isPopoverOpen)}
+                    >
+                      <span className="truncate">
+                        {selectedBook === "all" ? "Semua Buku" : selectedBook.title}
+                      </span>
+                      <ChevronDownIcon className="h-4 w-4 ml-2 opacity-50" />
+                    </Button>
                   </Popover.Trigger>
                   <Popover.Content className="p-0 border-slate-200 dark:border-slate-800 dark:bg-slate-900 shadow-xl z-[999] w-72">
                     <div className="p-2 border-b border-slate-100 dark:border-slate-800 relative">
@@ -332,6 +413,13 @@ export default function Index({ activationCodes, filters, books, selectedBookDat
             <table className="w-full min-w-max table-auto text-left">
               <thead>
                 <tr>
+                  <th className="border-y border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 p-4 w-10">
+                    <Checkbox
+                      checked={selectedIds.length === activationCodes.data.length && activationCodes.data.length > 0}
+                      onChange={toggleSelectAll}
+                      color="primary"
+                    />
+                  </th>
                   {["Kode Aktivasi", "User", "Tier", "Jenis", "Status", "Limit", "Dibuat", "Aksi"].map((head) => (
                     <th key={head} className="border-y border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 p-4">
                       <Typography variant="small" className="font-bold leading-none opacity-70 text-slate-500 dark:text-slate-300">
@@ -348,7 +436,14 @@ export default function Index({ activationCodes, filters, books, selectedBookDat
                   const status = getStatus(item);
 
                   return (
-                    <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                    <tr key={item.id} className={`hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${selectedIds.includes(item.id) ? 'bg-blue-50/30 dark:bg-blue-900/10' : ''}`}>
+                      <td className={classes}>
+                        <Checkbox
+                          checked={selectedIds.includes(item.id)}
+                          onChange={() => toggleSelect(item.id)}
+                          color="primary"
+                        />
+                      </td>
                       <td className={classes}>
                         <div className="flex items-center gap-3">
                           <TicketIcon className="h-4 w-4 text-slate-400" />
@@ -447,7 +542,7 @@ export default function Index({ activationCodes, filters, books, selectedBookDat
                 })}
                 {activationCodes.data.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="p-8 text-center text-slate-500">
+                    <td colSpan={9} className="p-8 text-center text-slate-500">
                       Tidak ada data kode aktivasi.
                     </td>
                   </tr>

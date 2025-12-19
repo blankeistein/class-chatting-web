@@ -23,8 +23,11 @@ Route::group(['prefix' => $adminPath, 'as' => 'admin.'], function () {
         return Inertia::render('Admin/Index');
     })->name('dashboard');
 
-    Route::get('books/selection', [BookController::class, 'selection'])->name('books.selection');
+    Route::get('activation-code/bulk-export', [ActivationCodeController::class, 'bulkExport'])->name('activation-code.bulk-export');
+    Route::delete('activation-code/bulk-delete', [ActivationCodeController::class, 'bulkDelete'])->name('activation-code.bulk-delete');
     Route::resource('activation-code', ActivationCodeController::class);
+
+    Route::get('books/selection', [BookController::class, 'selection'])->name('books.selection');
     Route::resource('books', BookController::class);
 });
 

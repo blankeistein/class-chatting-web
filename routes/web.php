@@ -17,6 +17,13 @@ Route::get('login', [AuthController::class, 'login'])->name('login')->middleware
 Route::post('login', [AuthController::class, 'loginAction'])->middleware('guest');
 Route::delete('logout', [AuthController::class, 'logout'])->name('logout');
 
+Route::middleware('auth')->group(function () {
+    Route::get('notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
+    Route::put('notifications/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::put('notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
+    Route::delete('notifications/{id}', [\App\Http\Controllers\NotificationController::class, 'destroy'])->name('notifications.destroy');
+});
+
 Route::group(['prefix' => $adminPath, 'as' => 'admin.'], function () {
 
     Route::get('dashboard', function () {

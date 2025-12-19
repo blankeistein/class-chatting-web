@@ -10,7 +10,8 @@ import {
   Button
 } from "@material-tailwind/react";
 import AdminLayout from "@/Layouts/AdminLayout";
-import { Head } from "@inertiajs/react";
+import { Head, router } from "@inertiajs/react";
+import { route } from "ziggy-js";
 import {
   BanknoteIcon,
   UsersIcon,

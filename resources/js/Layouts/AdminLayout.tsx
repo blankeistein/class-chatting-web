@@ -16,6 +16,7 @@ import { useTheme } from "../Contexts/ThemeContext";
 import { Link, router, usePage } from "@inertiajs/react";
 import { route } from "ziggy-js";
 import { AuthProps } from "@/types/global";
+import { NotificationMenu } from "../Components/NotificationMenu";
 
 type LinkType = {
   icon: React.ForwardRefExoticComponent<React.SVGProps<SVGSVGElement>>;
@@ -164,9 +165,7 @@ function TopNavbar() {
             </IconButton>
 
             <div className="flex gap-4 items-center ml-auto">
-              <IconButton variant="ghost">
-                <BellIcon className="h-4 w-4" />
-              </IconButton>
+              <NotificationMenu />
               <IconButton variant="ghost" onClick={toggleTheme}>
                 {theme === 'dark' ? <SunIcon className="h-4 w-4" /> : <MoonIcon className="h-4 w-4" />}
               </IconButton>

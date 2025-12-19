@@ -12,6 +12,8 @@ export type AuthProps = {
       email: string;
       role: string;
       image: string;
+      notifications: any[];
+      unread_notifications_count: number;
     } | null;
   }
 }

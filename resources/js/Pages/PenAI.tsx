@@ -14,8 +14,12 @@ import {
   Key,
   Settings,
   Save,
-  Hash
+  Hash,
+  Moon,
+  Sun,
+  Filter
 } from 'lucide-react';
+import { useTheme } from '../Contexts/ThemeContext';
 import {
   Button,
   IconButton,
@@ -28,6 +32,7 @@ import {
   Spinner,
   Chip
 } from "@material-tailwind/react";
+import { Head } from '@inertiajs/react';
 
 const MODEL_NAME = "gemini-2.5-flash-preview-09-2025";
 
@@ -66,9 +71,10 @@ const LoadingStep = ({ icon: Icon, text, status }: { icon: React.ComponentType<{
   );
 };
 
-interface ErrorItem { id: number; page: number; type: string; severity: string; original: string; suggestion: string; explanation: string; context: string }
+interface ErrorItem { id: number; page: number; type: string; severity: string; original: string; suggestion: string; explanation: string; context: string; isFixed?: boolean }
 
 export default function PenAI() {
+  const { theme, toggleTheme } = useTheme();
   // STATE
   const [view, setView] = useState<'upload' | 'analyzing' | 'results' | 'error'>('upload');
   const [apiKey, setApiKey] = useState(() => localStorage.getItem('gemini_api_key') || '');
@@ -80,6 +86,7 @@ export default function PenAI() {
   const [errors, setErrors] = useState<ErrorItem[]>([]);
   const [selectedError, setSelectedError] = useState<ErrorItem | null>(null);
   const [activeTab, setActiveTab] = useState<string>('all');
+  const [hideFixed, setHideFixed] = useState(false);
   const [analysisStep, setAnalysisStep] = useState<number>(0);
   const [errorMessage, setErrorMessage] = useState<string>('');
 
@@ -201,14 +208,24 @@ export default function PenAI() {
   const applyFix = (errorId: number) => {
     const error = errors.find(e => e.id === errorId);
     if (!error) return;
+
+    // Apply the correction to the text
     setText(prev => prev.replace(error.original, error.suggestion));
-    setErrors(prev => prev.filter(e => e.id !== errorId));
+
+    // Mark as fixed in the errors list
+    setErrors(prev => prev.map(e => e.id === errorId ? { ...e, isFixed: true } : e));
     setSelectedError(null);
   };
 
   const getFilteredErrors = () => {
-    if (activeTab === 'all') return errors;
-    return errors.filter(e => e.type === activeTab);
+    let filtered = errors;
+    if (activeTab !== 'all') {
+      filtered = filtered.filter(e => e.type === activeTab);
+    }
+    if (hideFixed) {
+      filtered = filtered.filter(e => !e.isFixed);
+    }
+    return filtered;
   };
 
   // --- UI COMPONENTS ---
@@ -278,7 +295,7 @@ export default function PenAI() {
   };
 
   const Header = () => (
-    <Navbar className="backdrop-blur-md border-b px-6 py-3 sticky top-0 z-50 rounded-none shadow-none">
+    <Navbar className="backdrop-blur-md border-b px-6 py-3 sticky top-0 z-50 rounded-none shadow-none bg-secondary/20">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3 cursor-pointer" onClick={() => setView('upload')}>
           <div className="bg-info p-2 rounded-xl shadow-lg shadow-info/20">
@@ -289,6 +306,13 @@ export default function PenAI() {
           </Typography>
         </div>
         <div className="flex items-center gap-3">
+          <IconButton
+            variant="ghost"
+            onClick={toggleTheme}
+            className="text-primary"
+          >
+            {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+          </IconButton>
           <IconButton
             variant="ghost"
             title="API Settings"
@@ -352,161 +376,182 @@ export default function PenAI() {
   );
 
   return (
-    <div className="min-h-screen bg-secondary selection:bg-info/30">
-      <Header />
-      <main className="relative">
-        {view === 'upload' && <UploadView />}
+    <>
+      <Head title="Pena AI" />
+      <div className="min-h-screen bg-secondary selection:bg-info/30">
+        <Header />
+        <main className="relative">
+          {view === 'upload' && <UploadView />}
 
-        {view === 'analyzing' && (
-          <div className="flex flex-col items-center justify-center min-h-[80vh]">
-            <div className="relative mb-12">
-              <div className="absolute inset-0 bg-info blur-[80px] opacity-20 rounded-full animate-pulse" />
-              <Spinner className="h-24 w-24 text-info" />
-            </div>
-            <Typography type="h3" className="mb-8 font-bold">Analyzing Content...</Typography>
-            <div className="w-full max-w-sm space-y-3">
-              <LoadingStep icon={FileText} text="Processing document data" status={analysisStep >= 1 ? (analysisStep > 1 ? 'completed' : 'active') : 'waiting'} />
-              <LoadingStep icon={UploadCloud} text="Communicating with Gemini AI" status={analysisStep >= 2 ? (analysisStep > 2 ? 'completed' : 'active') : 'waiting'} />
-              <LoadingStep icon={Wand2} text="Running proofreading algorithms" status={analysisStep >= 3 ? (analysisStep > 3 ? 'completed' : 'active') : 'waiting'} />
-            </div>
-          </div>
-        )}
-
-        {view === 'error' && (
-          <div className="flex flex-col items-center justify-center min-h-[80vh] px-4">
-            <Card className="max-w-md bg-error/10 border border-error/20 p-6 mb-8 text-center">
-              <AlertTriangle className="mx-auto text-error mb-4" size={40} />
-              <Typography type="h6" className="text-white font-bold mb-2">Analysis Failed</Typography>
-              <Typography type="small" className="text-slate-400">{errorMessage}</Typography>
-            </Card>
-            <div className="flex gap-4">
-              <Button variant="ghost" color="secondary" onClick={() => setShowSettings(true)}>Settings</Button>
-              <Button color="info" variant="solid" onClick={() => setView('upload')}>Try Again</Button>
-            </div>
-          </div>
-        )}
-
-        {view === 'results' && (
-          <div className="flex h-[calc(100vh-68px)]">
-            {/* PREVIEW */}
-            {fileUrl && (
-              <div className="flex-1 bg-slate-900 overflow-hidden relative border-r border-slate-800">
-                <iframe src={fileUrl} className="w-full h-full border-none" title="Original Document" />
-                <div className="absolute top-4 left-4 flex gap-2">
-                  <Chip variant="solid" color="info" className="rounded-md">
-                    <Chip.Label>Original Preview</Chip.Label>
-                  </Chip>
-                </div>
+          {view === 'analyzing' && (
+            <div className="flex flex-col items-center justify-center min-h-[80vh]">
+              <div className="relative mb-12">
+                <div className="absolute inset-0 bg-info blur-[80px] opacity-20 rounded-full animate-pulse" />
+                <Spinner className="h-24 w-24 text-info" />
               </div>
-            )}
+              <Typography type="h3" className="mb-8 font-bold">Analyzing Content...</Typography>
+              <div className="w-full max-w-sm space-y-3">
+                <LoadingStep icon={FileText} text="Processing document data" status={analysisStep >= 1 ? (analysisStep > 1 ? 'completed' : 'active') : 'waiting'} />
+                <LoadingStep icon={UploadCloud} text="Communicating with Gemini AI" status={analysisStep >= 2 ? (analysisStep > 2 ? 'completed' : 'active') : 'waiting'} />
+                <LoadingStep icon={Wand2} text="Running proofreading algorithms" status={analysisStep >= 3 ? (analysisStep > 3 ? 'completed' : 'active') : 'waiting'} />
+              </div>
+            </div>
+          )}
 
-            {/* ERROR LIST */}
-            <div className="w-[400px] flex flex-col bg-background">
-              <div className="p-6 border-b border-secondary">
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <Typography type="h5" className="font-bold flex items-center gap-2 text-primary">
-                      <Sparkles className="text-info" size={20} />
-                      Issues
-                    </Typography>
-                    <Typography type="small" className="text-primary/60">
-                      Found {errors.length} suggestions
-                    </Typography>
+          {view === 'error' && (
+            <div className="flex flex-col items-center justify-center min-h-[80vh] px-4">
+              <Card className="max-w-md bg-error/10 border border-error/20 p-6 mb-8 text-center">
+                <AlertTriangle className="mx-auto text-error mb-4" size={40} />
+                <Typography type="h6" className="text-white font-bold mb-2">Analysis Failed</Typography>
+                <Typography type="small" className="text-slate-400">{errorMessage}</Typography>
+              </Card>
+              <div className="flex gap-4">
+                <Button variant="ghost" color="secondary" onClick={() => setShowSettings(true)}>Settings</Button>
+                <Button color="info" variant="solid" onClick={() => setView('upload')}>Try Again</Button>
+              </div>
+            </div>
+          )}
+
+          {view === 'results' && (
+            <div className="flex h-[calc(100vh-68px)]">
+              {/* PREVIEW */}
+              {fileUrl && (
+                <div className="flex-1 bg-slate-900 overflow-hidden relative border-r border-slate-800">
+                  <iframe src={fileUrl} className="w-full h-full border-none" title="Original Document" />
+                  <div className="absolute top-4 left-4 flex gap-2">
+                    <Chip variant="solid" color="info" className="rounded-md">
+                      <Chip.Label>Original Preview</Chip.Label>
+                    </Chip>
                   </div>
-                  <IconButton variant="ghost" color="primary" onClick={() => setView('upload')} size="sm">
-                    <RefreshCw size={16} />
-                  </IconButton>
+                </div>
+              )}
+
+              {/* ERROR LIST */}
+              <div className="w-[400px] flex flex-col bg-background">
+                <div className="p-6 border-b border-secondary">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <Typography type="h5" className="font-bold flex items-center gap-2 text-primary">
+                        <Sparkles className="text-info" size={20} />
+                        Issues
+                      </Typography>
+                      <Typography type="small" className="text-primary/60">
+                        Found {errors.length} suggestions
+                      </Typography>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <IconButton
+                        variant={hideFixed ? "solid" : "ghost"}
+                        color={hideFixed ? "info" : "primary"}
+                        onClick={() => setHideFixed(!hideFixed)}
+                        size="sm"
+                        title={hideFixed ? "Tampilkan Semua" : "Sembunyikan yang diperbaiki"}
+                      >
+                        <Filter size={16} />
+                      </IconButton>
+                      <IconButton variant="ghost" color="primary" onClick={() => setView('upload')} size="sm">
+                        <RefreshCw size={16} />
+                      </IconButton>
+                    </div>
+                  </div>
+
+                  <Tabs value={activeTab} onValueChange={setActiveTab}>
+                    <Tabs.List>
+                      {['all', 'grammar', 'spelling', 'punctuation', 'clarity'].map((t) => (
+                        <Tabs.Trigger key={t} value={t} className="py-2 capitalize text-xs font-bold">
+                          {t}
+                        </Tabs.Trigger>
+                      ))}
+                      <Tabs.TriggerIndicator className="bg-info/10" />
+                    </Tabs.List>
+                  </Tabs>
                 </div>
 
-                <Tabs value={activeTab} onValueChange={setActiveTab}>
-                  <Tabs.List>
-                    {['all', 'grammar', 'spelling', 'punctuation', 'clarity'].map((t) => (
-                      <Tabs.Trigger key={t} value={t} className="py-2 capitalize text-xs font-bold">
-                        {t}
-                      </Tabs.Trigger>
-                    ))}
-                    <Tabs.TriggerIndicator className="bg-info/10" />
-                  </Tabs.List>
-                </Tabs>
-              </div>
-
-              <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                {getFilteredErrors().length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center text-center">
-                    <CheckCircle2 size={48} className="text-success mb-4" />
-                    <Typography className="text-primary">No issues found!</Typography>
-                  </div>
-                ) : (
-                  getFilteredErrors().map((err) => (
-                    <Card
-                      key={err.id}
-                      onClick={() => setSelectedError(err)}
-                      className={`cursor-pointer transition-all duration-200 border rounded-xl overflow-hidden ${selectedError?.id === err.id
-                        ? 'bg-info/5 border-info shadow-lg'
-                        : 'bg-background border-secondary hover:border-info'
-                        }`}
-                    >
-                      <div className="p-4">
-                        <div className="flex justify-between items-start mb-3">
-                          <div className="flex gap-2">
-                            <Chip
-                              size="sm"
-                              variant="ghost"
-                              color={err.type === 'grammar' ? 'error' : err.type === 'spelling' ? 'info' : 'warning'}
-                              className="text-[10px] uppercase font-black"
-                            >
-                              <Chip.Label>{err.type}</Chip.Label>
-                            </Chip>
-                            {err.page && (
+                <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                  {getFilteredErrors().length === 0 ? (
+                    <div className="h-full flex flex-col items-center justify-center text-center">
+                      <CheckCircle2 size={48} className="text-success mb-4" />
+                      <Typography className="text-primary">No issues found!</Typography>
+                    </div>
+                  ) : (
+                    getFilteredErrors().map((err) => (
+                      <Card
+                        key={err.id}
+                        onClick={() => setSelectedError(err)}
+                        className={`cursor-pointer transition-all duration-200 border rounded-xl overflow-hidden ${selectedError?.id === err.id
+                          ? (err.isFixed ? 'bg-success/10 border-success shadow-lg' : 'bg-info/5 border-info shadow-lg')
+                          : (err.isFixed ? 'bg-success/5 border-success/30 hover:border-success' : 'bg-background border-secondary hover:border-info')
+                          }`}
+                      >
+                        <div className="p-4">
+                          <div className="flex justify-between items-start mb-3">
+                            <div className="flex gap-2">
                               <Chip
                                 size="sm"
-                                variant="outline"
-                                color="secondary"
-                                className="text-[10px] uppercase border-surface text-primary"
+                                variant="ghost"
+                                color={err.type === 'grammar' ? 'error' : err.type === 'spelling' ? 'info' : 'warning'}
+                                className="text-[10px] uppercase font-black"
                               >
-                                <Chip.Label className="flex items-center gap-1">
-                                  <Hash size={10} /> Page {err.page}
-                                </Chip.Label>
+                                <Chip.Label>{err.type}</Chip.Label>
                               </Chip>
-                            )}
+                              {err.page && (
+                                <Chip
+                                  size="sm"
+                                  variant="outline"
+                                  color="secondary"
+                                  className="text-[10px] uppercase border-surface text-primary"
+                                >
+                                  <Chip.Label className="flex items-center gap-1">
+                                    <Hash size={10} /> Page {err.page}
+                                  </Chip.Label>
+                                </Chip>
+                              )}
+                            </div>
                           </div>
-                        </div>
 
-                        <div className="flex items-center gap-2 mb-3 bg-primary/10 p-2 rounded-lg">
-                          <Typography type="small" color="error" className="opacity-80 line-through truncate flex-1">
-                            {err.original}
+                          <div className="flex items-center gap-2 mb-3 bg-primary/10 p-2 rounded-lg">
+                            <Typography type="small" color="error" className="opacity-80 line-through truncate flex-1">
+                              {err.original}
+                            </Typography>
+                            <ChevronRight size={14} className="text-secondary/80 shrink-0" />
+                            <Typography type="small" color="success" className="font-bold flex-1">
+                              {err.suggestion}
+                            </Typography>
+                          </div>
+
+                          <Typography type="small" className="text-primary leading-snug mb-3">
+                            {err.explanation}
                           </Typography>
-                          <ChevronRight size={14} className="text-secondary/80 shrink-0" />
-                          <Typography type="small" color="success" className="font-bold flex-1">
-                            {err.suggestion}
-                          </Typography>
+
+                          {selectedError?.id === err.id && !err.isFixed && (
+                            <Button
+                              size="sm"
+                              color="success"
+                              variant="solid"
+                              className="flex items-center justify-center gap-2 w-full mt-2"
+                              onClick={(e) => { e.stopPropagation(); applyFix(err.id); }}
+                            >
+                              <CheckCircle2 size={14} /> Tandai sudah diperbaiki
+                            </Button>
+                          )}
+                          {err.isFixed && (
+                            <div className="flex items-center justify-center gap-2 w-full mt-2 py-2 text-success">
+                              <CheckCircle2 size={16} />
+                              <Typography type="small" color="success" className="font-bold">Selesai diperbaiki</Typography>
+                            </div>
+                          )}
                         </div>
-
-                        <Typography type="small" className="text-primary leading-snug mb-3">
-                          {err.explanation}
-                        </Typography>
-
-                        {selectedError?.id === err.id && (
-                          <Button
-                            size="sm"
-                            color="success"
-                            variant="solid"
-                            className="flex items-center justify-center gap-2 w-full mt-2"
-                            onClick={(e) => { e.stopPropagation(); applyFix(err.id); }}
-                          >
-                            <CheckCircle2 size={14} /> Tandai sudah diperbaiki
-                          </Button>
-                        )}
-                      </div>
-                    </Card>
-                  ))
-                )}
+                      </Card>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        )}
-      </main>
-      {showSettings && <ApiKeyModal />}
-    </div>
+          )}
+        </main>
+        {showSettings && <ApiKeyModal />}
+      </div>
+    </>
+
   );
 }

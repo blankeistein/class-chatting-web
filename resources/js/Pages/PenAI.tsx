@@ -17,7 +17,8 @@ import {
   Hash,
   Moon,
   Sun,
-  Filter
+  Filter,
+  XIcon
 } from 'lucide-react';
 import { useTheme } from '../Contexts/ThemeContext';
 import {
@@ -30,9 +31,15 @@ import {
   Dialog,
   Tabs,
   Spinner,
-  Chip
+  Chip,
+  Tooltip
 } from "@material-tailwind/react";
 import { Head } from '@inertiajs/react';
+import { Document, Page, pdfjs } from 'react-pdf';
+import 'react-pdf/dist/Page/AnnotationLayer.css';
+import 'react-pdf/dist/Page/TextLayer.css';
+
+pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 const MODEL_NAME = "gemini-2.5-flash-preview-09-2025";
 
@@ -76,12 +83,15 @@ interface ErrorItem { id: number; page: number; type: string; severity: string; 
 export default function PenAI() {
   const { theme, toggleTheme } = useTheme();
   // STATE
-  const [view, setView] = useState<'upload' | 'analyzing' | 'results' | 'error'>('upload');
+  const [view, setView] = useState<'upload' | 'preview' | 'analyzing' | 'results' | 'error'>('upload');
   const [apiKey, setApiKey] = useState(() => localStorage.getItem('gemini_api_key') || '');
   const [showSettings, setShowSettings] = useState(false);
 
   const [file, setFile] = useState<File | null>(null);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const [numPages, setNumPages] = useState<number>(0);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [previewText, setPreviewText] = useState<string>('');
   const [text, setText] = useState('');
   const [errors, setErrors] = useState<ErrorItem[]>([]);
   const [selectedError, setSelectedError] = useState<ErrorItem | null>(null);
@@ -122,7 +132,14 @@ export default function PenAI() {
       setFile(uploadedFile);
       const url = URL.createObjectURL(uploadedFile);
       setFileUrl(url);
-      await processFileWithGemini(uploadedFile);
+
+      if (uploadedFile.type === 'text/plain') {
+        const reader = new FileReader();
+        reader.onload = (e) => setPreviewText(e.target?.result as string);
+        reader.readAsText(uploadedFile);
+      }
+
+      setView('preview');
     }
   };
 
@@ -138,7 +155,7 @@ export default function PenAI() {
         You are a professional English Editor and Proofreader.
         Task:
         1. Extract the full text from the attached file exactly as it appears.
-        2. Analyze the text for grammar, spelling, punctuation, and clarity errors.
+        2. Analyze the text for grammar, spelling, punctuation, clarity and typo errors.
         3. Identify the page number where each error occurs based on the visual layout or context.
         4. Return a JSON object strictly following this schema:
         {
@@ -306,6 +323,13 @@ export default function PenAI() {
           </Typography>
         </div>
         <div className="flex items-center gap-3">
+          {
+            view === "results" && (
+              <Button variant="ghost" onClick={() => setView('upload')}>
+                Close PDF
+              </Button>
+            )
+          }
           <IconButton
             variant="ghost"
             onClick={toggleTheme}
@@ -338,7 +362,7 @@ export default function PenAI() {
       </div>
 
       <Card
-        className="w-full max-w-xl border-2 border-dashed border-primary hover:border-info transition-all duration-300 cursor-pointer group rounded-2xl"
+        className="w-full max-w-xl border-4 border-dashed border-primary hover:border-info transition-all duration-300 cursor-pointer group rounded-2xl"
         onDragOver={(e) => e.preventDefault()}
         onDrop={handleFileUpload}
       >
@@ -375,6 +399,119 @@ export default function PenAI() {
     </div>
   );
 
+  const PreviewView = () => (
+    <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="flex flex-col md:flex-row gap-8">
+        <div className="flex-1">
+          <Card className="grid-rows-[auto_1fr_auto] p-4 bg-background border-secondary max-h-[calc(100vh-200px)]">
+            <Typography type="h5" className="mb-4 font-bold self-start flex items-center gap-2">
+              <FileText className="text-info" />
+              Document Preview
+            </Typography>
+
+            {file?.type === 'application/pdf' ? (
+              <div className="bg-secondary p-4 rounded-lg h-[400px] w-full flex flex-col items-center overflow-auto custom-scrollbar">
+                <Document
+                  file={fileUrl}
+                  onLoadSuccess={({ numPages }) => setNumPages(numPages)}
+                  loading={<Spinner className="h-8 w-8 text-info" />}
+                  className="max-w-full"
+                >
+                  <Page
+                    pageNumber={currentPage}
+                    width={500}
+                    className="shadow-xl"
+                    renderAnnotationLayer={false}
+                    renderTextLayer={true}
+                  />
+                </Document>
+              </div>
+            ) : (
+              <div className="bg-primary/5 p-6 rounded-xl w-full font-mono text-sm whitespace-pre-wrap text-primary/80 border border-secondary max-h-[600px] overflow-y-auto custom-scrollbar">
+                {previewText || 'Reading file...'}
+              </div>
+            )}
+
+            {numPages > 1 && (
+              <div className="bg-background flex justify-center items-center gap-4 mt-6 p-2 rounded-full px-4">
+                <IconButton
+                  variant="ghost"
+                  size="sm"
+                  disabled={currentPage <= 1}
+                  onClick={() => setCurrentPage(p => p - 1)}
+                >
+                  <ChevronRight className="rotate-180" />
+                </IconButton>
+                <Typography type="small" className="font-bold">
+                  Page {currentPage} of {numPages}
+                </Typography>
+                <IconButton
+                  variant="ghost"
+                  size="sm"
+                  disabled={currentPage >= numPages}
+                  onClick={() => setCurrentPage(p => p + 1)}
+                >
+                  <ChevronRight />
+                </IconButton>
+              </div>
+            )}
+          </Card>
+        </div>
+
+        <div className="w-full md:w-72 space-y-4">
+          <Card className="p-6 bg-info/5 border-info/20">
+            <Typography type="h6" className="mb-2 font-bold flex items-center gap-2">
+              <Sparkles className="text-info" size={18} />
+              AI Analysis
+            </Typography>
+            <Typography type="small" className="mb-6 text-primary/70 inline-block">
+              Gemini will scan your document for grammar, spelling, and clarity issues.
+            </Typography>
+            <Button
+              color="info"
+              isFullWidth
+              className="flex items-center justify-center gap-2"
+              onClick={() => { if (file) processFileWithGemini(file); }}
+            >
+              <Wand2 size={18} /> Run Analysis
+            </Button>
+            <Button
+              variant="ghost"
+              color="primary"
+              isFullWidth
+              className="mt-2"
+              onClick={() => {
+                setFile(null);
+                setFileUrl(null);
+                setView('upload');
+              }}
+            >
+              Cancel
+            </Button>
+          </Card>
+
+          <Card className="p-4 border-secondary">
+            <Typography type="small" className="font-bold mb-2">File Info</Typography>
+            <div className="space-y-1">
+              <div className="flex justify-between text-[10px]">
+                <span className="text-primary/50">Name</span>
+                <span className="text-primary truncate ml-2 max-w-[120px]">{file?.name}</span>
+              </div>
+              <div className="flex justify-between text-[10px]">
+                <span className="text-primary/50">Size</span>
+                <span className="text-primary">{(file!.size / 1024 / 1024).toFixed(2)} MB</span>
+              </div>
+              <div className="flex justify-between text-[10px]">
+                <span className="text-primary/50">Type</span>
+                <span className="text-primary capitalize">{file!.type.split('/')[1]}</span>
+              </div>
+            </div>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <>
       <Head title="Pena AI" />
@@ -382,6 +519,7 @@ export default function PenAI() {
         <Header />
         <main className="relative">
           {view === 'upload' && <UploadView />}
+          {view === 'preview' && <PreviewView />}
 
           {view === 'analyzing' && (
             <div className="flex flex-col items-center justify-center min-h-[80vh]">
@@ -416,11 +554,54 @@ export default function PenAI() {
             <div className="flex h-[calc(100vh-68px)]">
               {/* PREVIEW */}
               {fileUrl && (
-                <div className="flex-1 bg-slate-900 overflow-hidden relative border-r border-slate-800">
-                  <iframe src={fileUrl} className="w-full h-full border-none" title="Original Document" />
-                  <div className="absolute top-4 left-4 flex gap-2">
+                <div className="flex-1 overflow-hidden relative border-r border-primary flex flex-col items-center p-4">
+                  <div className="w-full h-full overflow-auto custom-scrollbar bg-secondary rounded-xl p-4 flex flex-col items-center">
+                    {file?.type === 'application/pdf' ? (
+                      <Document
+                        file={fileUrl}
+                        onLoadSuccess={({ numPages }) => setNumPages(numPages)}
+                        loading={<Spinner className="h-8 w-8 text-info" />}
+                      >
+                        <Page
+                          pageNumber={currentPage}
+                          width={600}
+                          className="shadow-2xl"
+                          renderAnnotationLayer={false}
+                          renderTextLayer={true}
+                        />
+                      </Document>
+                    ) : (
+                      <iframe src={fileUrl} className="w-full h-full border-none" title="Original Document" />
+                    )}
+                  </div>
+
+                  {file?.type === 'application/pdf' && numPages > 1 && (
+                    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-background/80 backdrop-blur-md p-2 rounded-full px-4 shadow-xl border border-secondary z-50">
+                      <IconButton
+                        variant="ghost"
+                        size="sm"
+                        disabled={currentPage <= 1}
+                        onClick={() => setCurrentPage(p => p - 1)}
+                      >
+                        <ChevronRight className="rotate-180" />
+                      </IconButton>
+                      <Typography type="small" className="font-bold">
+                        Page {currentPage} of {numPages}
+                      </Typography>
+                      <IconButton
+                        variant="ghost"
+                        size="sm"
+                        disabled={currentPage >= numPages}
+                        onClick={() => setCurrentPage(p => p + 1)}
+                      >
+                        <ChevronRight />
+                      </IconButton>
+                    </div>
+                  )}
+
+                  <div className="absolute top-8 left-8 flex gap-2 pointer-events-none">
                     <Chip variant="solid" color="info" className="rounded-md">
-                      <Chip.Label>Original Preview</Chip.Label>
+                      <Chip.Label>Document View</Chip.Label>
                     </Chip>
                   </div>
                 </div>
@@ -449,9 +630,6 @@ export default function PenAI() {
                       >
                         <Filter size={16} />
                       </IconButton>
-                      <IconButton variant="ghost" color="primary" onClick={() => setView('upload')} size="sm">
-                        <RefreshCw size={16} />
-                      </IconButton>
                     </div>
                   </div>
 
@@ -477,7 +655,10 @@ export default function PenAI() {
                     getFilteredErrors().map((err) => (
                       <Card
                         key={err.id}
-                        onClick={() => setSelectedError(err)}
+                        onClick={() => {
+                          setCurrentPage(err.page);
+                          setSelectedError(err)
+                        }}
                         className={`cursor-pointer transition-all duration-200 border rounded-xl overflow-hidden ${selectedError?.id === err.id
                           ? (err.isFixed ? 'bg-success/10 border-success shadow-lg' : 'bg-info/5 border-info shadow-lg')
                           : (err.isFixed ? 'bg-success/5 border-success/30 hover:border-success' : 'bg-background border-secondary hover:border-info')

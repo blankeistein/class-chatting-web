@@ -30,6 +30,7 @@ class ActivationCodeResource extends JsonResource
             'type' => $this->type,
             'times_activated' => $this->times_activated,
             'max_activated' => $this->max_activated,
+            'is_active' => $this->is_active,
             'items' => $this->items->map(fn ($item) => [
                 'id' => $item->id,
                 'model_id' => $item->model_id,

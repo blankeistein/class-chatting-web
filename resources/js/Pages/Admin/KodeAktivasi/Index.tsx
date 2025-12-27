@@ -12,6 +12,7 @@ import {
   List,
   ListItem,
   Checkbox as MaterialCheckbox,
+  Menu,
 } from "@material-tailwind/react";
 import Checkbox from "@/Components/Checkbox";
 import {
@@ -25,6 +26,8 @@ import {
   ClockIcon,
   ChevronDownIcon,
   Loader2Icon,
+  MoreHorizontalIcon,
+  MoreVerticalIcon,
 } from "lucide-react";
 import { Head, router } from "@inertiajs/react";
 import AdminLayout from "@/Layouts/AdminLayout";
@@ -55,6 +58,7 @@ interface ActivationCode {
   type: string;
   times_activated: number;
   max_activated: number;
+  is_active: boolean;
   created_at: string;
   updated_at: string;
   items?: {
@@ -183,7 +187,17 @@ export default function Index({ activationCodes, filters, books, selectedBookDat
     toast.success("Kode disalin ke clipboard!");
   };
 
+  const handleToggleActive = (id: number) => {
+    router.patch(route('admin.activation-code.toggle-active', id), {}, {
+      preserveState: true,
+      onSuccess: () => {
+        toast.success("Status kode berhasil diubah");
+      }
+    });
+  };
+
   const getStatus = (item: ActivationCode) => {
+    if (!item.is_active) return "revoked";
     if (item.max_activated && item.times_activated >= item.max_activated) return "used";
     if (item.times_activated > 0) return "active";
     return "available";
@@ -532,9 +546,21 @@ export default function Index({ activationCodes, filters, books, selectedBookDat
                           <IconButton variant="ghost" size="sm" onClick={() => handleCopyCode(item.code)} color="secondary">
                             <CopyIcon className="h-4 w-4" />
                           </IconButton>
-                          <IconButton variant="ghost" size="sm" color="error" onClick={() => handleDelete(item.id)}>
-                            <Trash2Icon className="h-4 w-4" />
-                          </IconButton>
+                          <Menu placement="bottom-end">
+                            <Menu.Trigger as={IconButton} variant="ghost" size="sm">
+                              <MoreVerticalIcon />
+                            </Menu.Trigger>
+                            <Menu.Content>
+                              <Menu.Item onClick={() => handleToggleActive(item.id)} className={item.is_active ? "text-warning" : "text-success"}>
+                                {item.is_active ? <XCircleIcon className="h-4 w-4 mr-2" /> : <CheckCircleIcon className="h-4 w-4 mr-2" />}
+                                {item.is_active ? "Nonaktifkan" : "Aktifkan"}
+                              </Menu.Item>
+                              <Menu.Item onClick={() => handleDelete(item.id)} className="text-error">
+                                <Trash2Icon className="h-4 w-4 mr-2" />
+                                Hapus
+                              </Menu.Item>
+                            </Menu.Content>
+                          </Menu>
                         </div>
                       </td>
                     </tr>

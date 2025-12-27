@@ -120,6 +120,18 @@ class ActivationCodeController extends Controller
         return redirect()->back()->with('success', 'Kode aktivasi berhasil dihapus.');
     }
 
+    public function toggleActive($id)
+    {
+        $activationCode = ActivationCode::findOrFail($id);
+        $activationCode->update([
+            'is_active' => ! $activationCode->is_active,
+        ]);
+
+        $status = $activationCode->is_active ? 'diaktifkan' : 'dinonaktifkan';
+
+        return redirect()->back()->with('success', "Kode aktivasi berhasil {$status}.");
+    }
+
     public function bulkDelete(Request $request)
     {
         $ids = $request->input('ids', []);

@@ -21,10 +21,12 @@ class ActivationCode extends Model
         'tier',
         'times_activated',
         'max_activated',
+        'is_active',
     ];
 
     protected $casts = [
         'tier' => ActivationCodeTierEnum::class,
+        'is_active' => 'boolean',
     ];
 
     public function user(): BelongsTo

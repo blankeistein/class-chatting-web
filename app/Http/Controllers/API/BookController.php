@@ -68,6 +68,14 @@ class BookController extends Controller
             ]);
         }
 
+        if (! $code->is_active) {
+            return response()->json([
+                'status' => 'error',
+                'error_code' => 108,
+                'message' => 'Mohon maaf, Kode ini tidak aktif atau sudah dinonaktifkan. [108]',
+            ]);
+        }
+
         if ($code->max_activated !== null && $code->times_activated >= $code->max_activated) {
             return response()->json([
                 'status' => 'error',

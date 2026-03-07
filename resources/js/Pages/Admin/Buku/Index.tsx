@@ -7,6 +7,7 @@ import {
   IconButton,
   Input,
   Select,
+  Chip,
 } from "@material-tailwind/react";
 import AdminLayout from "@/Layouts/AdminLayout";
 import { Head, router } from "@inertiajs/react";
@@ -27,7 +28,9 @@ interface Book {
   uuid: string;
   title: string;
   cover_url: string;
-  order: number;
+  tags: string[] | null;
+  url: string | null;
+  version: number;
   created_at: string;
   updated_at: string;
 }
@@ -57,25 +60,46 @@ const BookRow = ({ book }: { book: Book }) => {
         </div>
       </td>
       <td className={classes}>
-        {new Date(book.created_at).toLocaleDateString("id-ID", {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        })}
+        <div className="flex flex-col gap-1">
+          <div className="flex flex-wrap gap-1">
+            {book.tags?.map((tag, i) => (
+              <Chip key={i} size="sm" variant="ghost" className="text-[9px] py-0.5 h-auto bg-slate-100 dark:bg-slate-800 dark:text-slate-400 capitalize">
+                <Chip.Label>{tag}</Chip.Label>
+              </Chip>
+            ))}
+          </div>
+          {book.url && (
+            <a href={book.url} target="_blank" rel="noopener noreferrer" className="text-primary text-[10px] hover:underline flex items-center gap-1">
+              <BookIcon className="w-2 h-2" /> Lihat Link
+            </a>
+          )}
+        </div>
       </td>
       <td className={classes}>
-        {new Date(book.updated_at).toLocaleDateString("id-ID", {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        })}
+        <Typography variant="small" className="font-bold text-slate-700 dark:text-slate-300">
+          v{book.version}
+        </Typography>
       </td>
       <td className={classes}>
         <div className="flex gap-2">
-          <IconButton variant="ghost" size="sm" title="Edit Buku">
+          <IconButton
+            variant="ghost"
+            size="sm"
+            title="Edit Buku"
+            onClick={() => router.get(route("admin.books.edit", book.id))}
+          >
             <EditIcon className="w-4 h-4 text-blue-500" />
           </IconButton>
-          <IconButton variant="ghost" size="sm" title="Hapus Buku">
+          <IconButton
+            variant="ghost"
+            size="sm"
+            title="Hapus Buku"
+            onClick={() => {
+              if (confirm('Apakah Anda yakin ingin menghapus buku ini?')) {
+                router.delete(route("admin.books.destroy", book.id));
+              }
+            }}
+          >
             <Trash2Icon className="w-4 h-4 text-red-500" />
           </IconButton>
         </div>
@@ -95,8 +119,14 @@ const BookCard = ({ book }: { book: Book }) => {
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
-            <div className="flex gap-2 justify-center pb-2">
-              <Button size="sm" className="flex items-center gap-2" color="secondary" isFullWidth={true}>
+            <div className="flex gap-2 justify-center pb-2 px-4">
+              <Button
+                size="sm"
+                className="flex items-center gap-2"
+                color="secondary"
+                isFullWidth={true}
+                onClick={() => router.get(route("admin.books.edit", book.id))}
+              >
                 <EditIcon className="w-3 h-3" /> Edit
               </Button>
             </div>
@@ -145,7 +175,7 @@ export default function Index({ books: paginatedBooks, filters }: { books: any, 
   const handlePerPageChange = (val: string) => {
     setPerPage(val);
     router.get(
-      route('admin.books'),
+      route('admin.books.index'),
       { search: searchTerm, per_page: val, sort_by: sortBy, sort_direction: sortDirection },
       { preserveState: true, replace: true }
     );
@@ -156,7 +186,7 @@ export default function Index({ books: paginatedBooks, filters }: { books: any, 
     setSortBy(field);
     setSortDirection(direction);
     router.get(
-      route('admin.books'),
+      route('admin.books.index'),
       { search: searchTerm, per_page: perPage, sort_by: field, sort_direction: direction },
       { preserveState: true, replace: true }
     );
@@ -179,7 +209,11 @@ export default function Index({ books: paginatedBooks, filters }: { books: any, 
             </Typography>
           </div>
           <div className="flex gap-2">
-            <Button className="flex items-center gap-2 bg-slate-900 dark:bg-white dark:text-slate-900" size="sm">
+            <Button
+              className="flex items-center gap-2 bg-slate-900 dark:bg-white dark:text-slate-900"
+              size="sm"
+              onClick={() => router.get(route("admin.books.create"))}
+            >
               <PlusIcon className="w-4 h-4" />
               Tambah Buku
             </Button>
@@ -267,9 +301,9 @@ export default function Index({ books: paginatedBooks, filters }: { books: any, 
                 <table className="w-full min-w-max table-auto text-left">
                   <thead>
                     <tr>
-                      {["Buku", "Terbit", "Update", "Aksi"].map((head) => (
+                      {["Buku", "Tags / URL", "Versi", "Aksi"].map((head) => (
                         <th key={head} className="border-y border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 p-4">
-                          <Typography variant="small" className="font-bold leading-none opacity-70 text-slate-500 dark:text-slate-300">
+                          <Typography variant="small" className="font-bold leading-none opacity-70 text-slate-500 dark:text-slate-300 text-center first:text-left">
                             {head}
                           </Typography>
                         </th>

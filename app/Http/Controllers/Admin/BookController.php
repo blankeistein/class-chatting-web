@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\BookResource;
 use App\Models\Book;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 class BookController extends Controller
@@ -35,12 +37,77 @@ class BookController extends Controller
         ]);
     }
 
+    public function create()
+    {
+        return Inertia::render('Admin/Buku/Create');
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'cover_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
+            'tags' => 'nullable|string',
+            'url' => 'nullable|url',
+            'version' => 'nullable|integer',
+        ]);
+
+        $data = $request->only(['title', 'tags', 'url', 'version']);
+        $data['uuid'] = (string) Str::uuid();
+
+        if ($request->hasFile('cover_image')) {
+            $path = $request->file('cover_image')->store('books', 'public');
+            $data['cover_image'] = $path;
+        }
+
+        Book::create($data);
+
+        return redirect()->route('admin.books.index')->with('success', 'Buku berhasil ditambahkan.');
+    }
+
+    public function edit($id)
+    {
+        $book = Book::findOrFail($id);
+
+        return Inertia::render('Admin/Buku/Edit', [
+            'book' => new BookResource($book),
+        ]);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $book = Book::findOrFail($id);
+
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'cover_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
+            'tags' => 'nullable|string',
+            'url' => 'nullable|url',
+            'version' => 'nullable|integer',
+        ]);
+
+        $data = $request->only(['title', 'tags', 'url', 'version']);
+
+        if ($request->hasFile('cover_image')) {
+            // Delete old image if exists
+            if ($book->cover_image) {
+                Storage::disk('public')->delete($book->cover_image);
+            }
+            $path = $request->file('cover_image')->store('books', 'public');
+            $data['cover_image'] = $path;
+        }
+
+        $book->update($data);
+
+        return redirect()->route('admin.books.index')->with('success', 'Buku berhasil diperbarui.');
+    }
+
     public function selection(Request $request)
     {
         $search = $request->input('search');
-        
+
         $books = Book::query()
-            ->when($search, function($query, $search) {
+            ->when($search, function ($query, $search) {
                 $query->where('title', 'like', "%{$search}%");
             })
             ->latest()

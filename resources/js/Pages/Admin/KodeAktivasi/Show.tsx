@@ -37,6 +37,7 @@ interface User {
 
 interface BookModel {
   id: number;
+  uuid: string;
   title: string;
 }
 
@@ -404,7 +405,7 @@ export default function Show({ activationCode }: { activationCode: { data: Activ
                         {item.model?.title || "Unknown Book"}
                       </Typography>
                       <Typography variant="small" className="text-[10px] text-slate-400">
-                        ID: {item.model_id}
+                        UUID: {item.model?.uuid}
                       </Typography>
                     </div>
                   </div>

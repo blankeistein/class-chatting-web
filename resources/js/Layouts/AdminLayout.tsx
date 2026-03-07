@@ -45,8 +45,12 @@ const Links: LinkType[] = [
   {
     icon: VideoIcon,
     title: "Video",
-    href: "#",
-    routeName: undefined
+    routeName: "admin.videos.index"
+  },
+  {
+    icon: UserCircle2Icon,
+    title: "User",
+    routeName: "admin.users.index"
   },
 ];
 

@@ -14,23 +14,31 @@ class Video extends Model
         'title',
         'slug',
         'description',
-        'user_id',
+        'uploaded_by',
         'thumbnail',
         'video_url',
         'storage_path',
+        'file_path',
         'provider',
         'metadata',
+        'tags',
     ];
+
+    public function getRouteKeyName()
+    {
+        return 'slug';
+    }
 
     protected $casts = [
         'metadata' => 'array',
+        'tags' => 'array',
     ];
 
     /**
-     * Get the user that owns the video.
+     * Get the user that uploaded the video.
      */
-    public function user(): BelongsTo
+    public function uploader(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'uploaded_by');
     }
 }

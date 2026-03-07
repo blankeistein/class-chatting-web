@@ -37,6 +37,7 @@ class ActivationCodeResource extends JsonResource
                 'model_type' => $item->model_type,
                 'model' => $item->model ? [
                     'id' => $item->model->id,
+                    'uuid' => $item->model->uuid,
                     'title' => $item->model->title,
                 ] : null,
             ]),

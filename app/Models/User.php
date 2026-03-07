@@ -22,7 +22,11 @@ class User extends Authenticatable
         'avatar',
         'phone',
         'role',
-        'is_status',
+        'is_active',
+    ];
+
+    protected $appends = [
+        'image',
     ];
 
     protected $hidden = [

@@ -24,79 +24,10 @@ import {
   ClockIcon,
   CheckCircle2Icon,
   XCircleIcon,
-  ArrowRightIcon
+  ArrowRightIcon,
+  Video,
+  TicketIcon
 } from "lucide-react";
-
-// Dummy Data
-const stats = [
-  {
-    title: "Total Buku",
-    value: "1,280",
-    change: "+12.5%",
-    trend: "up",
-    icon: BookOpenIcon,
-    color: "bg-blue-500",
-  },
-  {
-    title: "Pengguna Terdaftar",
-    value: "3,422",
-    change: "+5.2%",
-    trend: "up",
-    icon: UsersIcon,
-    color: "bg-orange-500",
-  },
-  {
-    title: "Total Kategori",
-    value: "24",
-    change: "+2",
-    trend: "up",
-    icon: LayersIcon,
-    color: "bg-green-500",
-  },
-  {
-    title: "Buku Terbit",
-    value: "854",
-    change: "+8.1%",
-    trend: "up",
-    icon: CheckCircle2Icon,
-    color: "bg-purple-500",
-  },
-];
-
-const recentTransactions = [
-  {
-    id: "#TRX-9821",
-    user: "Andi Saputra",
-    amount: "Rp 150.000",
-    status: "success",
-    date: "12 Des 2024",
-    img: "https://i.pravatar.cc/150?u=1",
-  },
-  {
-    id: "#TRX-9822",
-    user: "Budi Santoso",
-    amount: "Rp 75.000",
-    status: "pending",
-    date: "12 Des 2024",
-    img: "https://i.pravatar.cc/150?u=2",
-  },
-  {
-    id: "#TRX-9823",
-    user: "Citra Dewi",
-    amount: "Rp 320.000",
-    status: "failed",
-    date: "11 Des 2024",
-    img: "https://i.pravatar.cc/150?u=3",
-  },
-  {
-    id: "#TRX-9824",
-    user: "Dewi Lestari",
-    amount: "Rp 110.000",
-    status: "success",
-    date: "11 Des 2024",
-    img: "https://i.pravatar.cc/150?u=4",
-  },
-];
 
 const popularBooks = [
   { name: "Panduan Belajar Membaca", sales: 85, color: "blue" },
@@ -105,7 +36,45 @@ const popularBooks = [
   { name: "Sejarah Indonesia", sales: 30, color: "red" },
 ];
 
-export default function Index() {
+interface Stats {
+  total_books: number;
+  total_users: number;
+  total_videos: number;
+  total_activation_codes: number;
+}
+
+export default function Index({ stats }: { stats: Stats }) {
+  const statCards = [
+    {
+      title: "Total Buku",
+      value: stats.total_books.toLocaleString(),
+      icon: BookOpenIcon,
+      color: "bg-blue-500",
+      textColor: "text-blue-600",
+    },
+    {
+      title: "Pengguna Terdaftar",
+      value: stats.total_users.toLocaleString(),
+      icon: UsersIcon,
+      color: "bg-orange-500",
+      textColor: "text-orange-600",
+    },
+    {
+      title: "Total Video",
+      value: stats.total_videos.toLocaleString(),
+      icon: Video,
+      color: "bg-green-500",
+      textColor: "text-green-600",
+    },
+    {
+      title: "Total Aktivasi",
+      value: stats.total_activation_codes.toLocaleString(),
+      icon: TicketIcon,
+      color: "bg-purple-500",
+      textColor: "text-purple-600",
+    }
+  ];
+
   return (
     <>
       <Head title="Dashboard" />
@@ -122,19 +91,11 @@ export default function Index() {
               Ringkasan aktivitas dan performa aplikasi hari ini.
             </Typography>
           </div>
-          <div className="flex gap-2">
-            <Button size="sm" variant="outline" className="dark:text-white dark:border-white">
-              Download Report
-            </Button>
-            <Button size="sm" className="bg-slate-900 dark:bg-white dark:text-slate-900">
-              + Add Widget
-            </Button>
-          </div>
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {stats.map((stat, index) => (
+          {statCards.map((stat, index) => (
             <Card key={index} className="shadow-sm border border-slate-200 dark:border-slate-800 dark:bg-slate-900">
               <CardBody className="p-4">
                 <div className="flex items-start justify-between">
@@ -146,16 +107,9 @@ export default function Index() {
                       {stat.value}
                     </Typography>
                   </div>
-                  <div className={`p-2 rounded-lg ${stat.color} bg-opacity-10 text-${stat.color.split('-')[1]}-600`}>
+                  <div className={`p-2 rounded-lg ${stat.color} bg-opacity-10 ${stat.textColor}`}>
                     <stat.icon className="w-6 h-6" />
                   </div>
-                </div>
-                <div className="mt-4 flex items-center gap-2">
-                  <span className={`flex items-center text-xs font-medium ${stat.trend === 'up' ? 'text-green-500' : 'text-red-500'}`}>
-                    {stat.trend === 'up' ? <TrendingUpIcon className="w-3 h-3 mr-1" /> : <TrendingDownIcon className="w-3 h-3 mr-1" />}
-                    {stat.change}
-                  </span>
-                  <span className="text-xs text-slate-400">dari bulan lalu</span>
                 </div>
               </CardBody>
             </Card>
@@ -238,94 +192,6 @@ export default function Index() {
             </CardBody>
           </Card>
         </div>
-
-        {/* Recent Transactions Table */}
-        <Card className="shadow-sm border border-slate-200 dark:border-slate-800 dark:bg-slate-900">
-          <CardBody className="p-0 overflow-x-auto">
-            <div className="p-6 flex items-center justify-between">
-              <Typography variant="h5" className="font-bold text-slate-800 dark:text-white">
-                Transaksi Terakhir
-              </Typography>
-              <IconButton variant="ghost" size="sm" className="text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white">
-                <MoreVerticalIcon className="w-5 h-5" />
-              </IconButton>
-            </div>
-            <table className="w-full min-w-max table-auto text-left">
-              <thead>
-                <tr>
-                  {["Transaksi", "User", "Jumlah", "Status", "Tanggal", ""].map((head) => (
-                    <th key={head} className="border-y border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 p-4">
-                      <Typography variant="small" className="font-normal leading-none opacity-70 dark:text-slate-300">
-                        {head}
-                      </Typography>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {recentTransactions.map(({ id, user, amount, status, date, img }, index) => {
-                  const isLast = index === recentTransactions.length - 1;
-                  const classes = isLast ? "p-4" : "p-4 border-b border-slate-100 dark:border-slate-800";
-
-                  return (
-                    <tr key={id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                      <td className={classes}>
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-blue-500">
-                            <BanknoteIcon className="h-4 w-4" />
-                          </div>
-                          <Typography variant="small" className="font-bold dark:text-white">
-                            {id}
-                          </Typography>
-                        </div>
-                      </td>
-                      <td className={classes}>
-                        <div className="flex items-center gap-3">
-                          <Avatar src={img} alt={user} size="sm" />
-                          <Typography variant="small" className="font-normal dark:text-slate-300">
-                            {user}
-                          </Typography>
-                        </div>
-                      </td>
-                      <td className={classes}>
-                        <Typography variant="small" className="font-normal dark:text-slate-300">
-                          {amount}
-                        </Typography>
-                      </td>
-                      <td className={classes}>
-                        <div className="w-max">
-                          <Chip
-                            variant="ghost"
-                            size="sm"
-                            color={status === "success" ? "success" : status === "pending" ? "warning" : "error"}
-                          >
-                            <Chip.Icon>
-                              {
-                                status === "success" ? <CheckCircle2Icon className="h-4 w-4" /> :
-                                  status === "pending" ? <ClockIcon className="h-4 w-4" /> : <XCircleIcon className="h-4 w-4" />
-                              }
-                            </Chip.Icon>
-                            <Chip.Label>{status}</Chip.Label>
-                          </Chip>
-                        </div>
-                      </td>
-                      <td className={classes}>
-                        <Typography variant="small" className="font-normal dark:text-slate-300">
-                          {date}
-                        </Typography>
-                      </td>
-                      <td className={classes}>
-                        <IconButton variant="ghost" size="sm" className="dark:text-white">
-                          <MoreVerticalIcon className="h-4 w-4" />
-                        </IconButton>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </CardBody>
-        </Card>
       </div>
     </>
   );

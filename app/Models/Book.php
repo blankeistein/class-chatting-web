@@ -13,6 +13,15 @@ class Book extends Model
         'uuid',
         'title',
         'cover_image',
+        'tags',
+        'url',
+        'version',
+    ];
+
+    protected $appends = ['thumbnail'];
+
+    protected $casts = [
+        'tags' => 'array',
     ];
 
     public function activationCodes()

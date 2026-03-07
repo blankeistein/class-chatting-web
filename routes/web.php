@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\ActivationCodeController;
 use App\Http\Controllers\Admin\BookController;
+use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Route;
@@ -10,8 +11,6 @@ use Inertia\Inertia;
 Route::get('/', function () {
     return Inertia::render('Index');
 })->name('home');
-
-$adminPath = Config::get('app.admin_path');
 
 Route::get('login', [AuthController::class, 'login'])->name('login')->middleware('guest');
 Route::post('login', [AuthController::class, 'loginAction'])->middleware('guest');
@@ -22,21 +21,21 @@ Route::middleware('auth')->group(function () {
     Route::put('notifications/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.read');
     Route::put('notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
     Route::delete('notifications/{id}', [\App\Http\Controllers\NotificationController::class, 'destroy'])->name('notifications.destroy');
-});
 
-Route::group(['prefix' => $adminPath, 'as' => 'admin.'], function () {
+    Route::group(['prefix' => Config::get('app.admin_path'), 'as' => 'admin.', 'middleware' => 'admin'], function () {
+        Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    Route::get('dashboard', function () {
-        return Inertia::render('Admin/Index');
-    })->name('dashboard');
+        Route::get('activation-code/bulk-export', [ActivationCodeController::class, 'bulkExport'])->name('activation-code.bulk-export');
+        Route::delete('activation-code/bulk-delete', [ActivationCodeController::class, 'bulkDelete'])->name('activation-code.bulk-delete');
+        Route::patch('activation-code/{id}/toggle-active', [ActivationCodeController::class, 'toggleActive'])->name('activation-code.toggle-active');
+        Route::resource('activation-code', ActivationCodeController::class);
 
-    Route::get('activation-code/bulk-export', [ActivationCodeController::class, 'bulkExport'])->name('activation-code.bulk-export');
-    Route::delete('activation-code/bulk-delete', [ActivationCodeController::class, 'bulkDelete'])->name('activation-code.bulk-delete');
-    Route::patch('activation-code/{id}/toggle-active', [ActivationCodeController::class, 'toggleActive'])->name('activation-code.toggle-active');
-    Route::resource('activation-code', ActivationCodeController::class);
+        Route::get('books/selection', [BookController::class, 'selection'])->name('books.selection');
+        Route::resource('books', BookController::class);
 
-    Route::get('books/selection', [BookController::class, 'selection'])->name('books.selection');
-    Route::resource('books', BookController::class);
+        Route::resource('videos', \App\Http\Controllers\Admin\VideoController::class);
+        Route::resource('users', \App\Http\Controllers\Admin\UserController::class);
+    });
 });
 
 Route::group(['prefix' => 'learn-reading'], function () {

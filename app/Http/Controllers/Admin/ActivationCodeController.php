@@ -112,6 +112,15 @@ class ActivationCodeController extends Controller
         return $code;
     }
 
+    public function show($id)
+    {
+        $activationCode = ActivationCode::with(['user', 'items.model'])->findOrFail($id);
+
+        return Inertia::render('Admin/KodeAktivasi/Show', [
+            'activationCode' => new ActivationCodeResource($activationCode),
+        ]);
+    }
+
     public function destroy($id)
     {
         $activationCode = ActivationCode::findOrFail($id);

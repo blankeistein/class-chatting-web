@@ -24,8 +24,6 @@ import {
   Filter // ✨ New Icon
 } from 'lucide-react';
 
-// ... imports
-
 interface BookData {
   nameBook: string;
   coverBook: string;

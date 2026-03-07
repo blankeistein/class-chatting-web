@@ -104,7 +104,7 @@ function ProfileMenu() {
   const props = usePage<AuthProps>().props;
 
   return (
-    <Menu>
+    <Menu placement="bottom-end">
       <Menu.Trigger
         as={Avatar}
         src={props.auth.user?.image}
@@ -112,7 +112,7 @@ function ProfileMenu() {
         size="sm"
         className="border border-primary p-0.5 cursor-pointer"
       />
-      <Menu.Content>
+      <Menu.Content className="z-20">
         <Menu.Item>
           <UserCircle2Icon className="mr-2 h-[18px] w-[18px]" /> My Profile
         </Menu.Item>
@@ -147,7 +147,7 @@ function TopNavbar() {
 
   return (
     <>
-      <div className="p-2 mx-auto w-full sticky top-0 z-50">
+      <div className="p-2 mx-auto w-full sticky top-0 z-10">
         <Navbar className="bg-background/50 backdrop-blur-lg">
           <div className="flex items-center gap-2">
             <IconButton
@@ -186,10 +186,19 @@ function TopNavbar() {
 }
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  const contentRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const removeListener = router.on('navigate', () => {
+      contentRef.current?.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+    });
+    return removeListener;
+  }, []);
+
   return (
     <div className="h-screen bg-background flex">
       <Sidebar />
-      <div className="flex-1 overflow-auto">
+      <div ref={contentRef} className="flex-1 overflow-auto">
         <TopNavbar />
         {children}
         <footer className="p-2 flex items-center justify-between border-t border-surface mt-auto">

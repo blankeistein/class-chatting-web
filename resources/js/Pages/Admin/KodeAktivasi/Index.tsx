@@ -28,6 +28,7 @@ import {
   Loader2Icon,
   MoreHorizontalIcon,
   MoreVerticalIcon,
+  EyeIcon,
 } from "lucide-react";
 import { Head, router } from "@inertiajs/react";
 import AdminLayout from "@/Layouts/AdminLayout";
@@ -266,7 +267,7 @@ export default function Index({ activationCodes, filters, books, selectedBookDat
             </Typography>
           </div>
           <Button
-            className="flex items-center gap-3 bg-slate-900 dark:bg-white dark:text-slate-900"
+            className="flex items-center gap-2 bg-slate-900 dark:bg-white dark:text-slate-900"
             size="sm"
             onClick={() => setOpenGenerateDialog(true)}
           >
@@ -276,7 +277,7 @@ export default function Index({ activationCodes, filters, books, selectedBookDat
 
         {/* Bulk Action Bar */}
         {selectedIds.length > 0 && (
-          <Card className="w-[90%] lg:w-3/4 bg-slate-900 text-white p-3 flex flex-row items-center justify-between animate-in fade-in slide-in-from-top-4 duration-300 fixed bottom-8 z-30 left-1/2 -translate-x-1/2">
+          <Card className="w-[90%] lg:w-[600px] bg-slate-900 text-white p-3 flex flex-row items-center justify-between animate-in fade-in slide-in-from-top-4 duration-300 fixed bottom-8 z-30 left-1/2 -translate-x-1/2">
             <div className="flex items-center gap-3">
               <Checkbox
                 checked={selectedIds.length === activationCodes.data.length}
@@ -350,7 +351,9 @@ export default function Index({ activationCodes, filters, books, selectedBookDat
                       />
                       <SearchIcon className="h-4 w-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                       {isSearchingBooks && (
-                        <Loader2Icon className="h-4 w-4 absolute right-4 top-1/2 -translate-y-1/2 animate-spin text-primary" />
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                          <Loader2Icon className="h-4 w-4 animate-spin text-primary" />
+                        </div>
                       )}
                     </div>
                     <List className="max-h-60 overflow-y-auto p-1">
@@ -462,8 +465,14 @@ export default function Index({ activationCodes, filters, books, selectedBookDat
                         <div className="flex items-center gap-3">
                           <TicketIcon className="h-4 w-4 text-slate-400" />
                           <div className="flex flex-col">
-                            <Typography variant="small" className="font-bold text-slate-800 dark:text-white font-mono tracking-wider">
+                            <Typography
+                              variant="small"
+                              className="font-bold text-slate-800 dark:text-white tracking-wider cursor-pointer hover:text-primary transition-colors inline-flex items-center gap-1.5 group"
+                              onClick={() => handleCopyCode(item.code)}
+                              title="Klik untuk menyalin kode"
+                            >
                               {item.code}
+                              <CopyIcon className="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity" />
                             </Typography>
                             {item.items && item.items.length > 0 && (
                               <div className="flex flex-wrap gap-1 mt-1">
@@ -543,14 +552,15 @@ export default function Index({ activationCodes, filters, books, selectedBookDat
                       </td>
                       <td className={classes}>
                         <div className="flex items-center gap-2">
-                          <IconButton variant="ghost" size="sm" onClick={() => handleCopyCode(item.code)} color="secondary">
-                            <CopyIcon className="h-4 w-4" />
-                          </IconButton>
                           <Menu placement="bottom-end">
                             <Menu.Trigger as={IconButton} variant="ghost" size="sm">
                               <MoreVerticalIcon />
                             </Menu.Trigger>
                             <Menu.Content>
+                              <Menu.Item onClick={() => router.get(route('admin.activation-code.show', item.id))}>
+                                <EyeIcon className="h-4 w-4 mr-2" />
+                                Lihat Detail
+                              </Menu.Item>
                               <Menu.Item onClick={() => handleToggleActive(item.id)} className={item.is_active ? "text-warning" : "text-success"}>
                                 {item.is_active ? <XCircleIcon className="h-4 w-4 mr-2" /> : <CheckCircleIcon className="h-4 w-4 mr-2" />}
                                 {item.is_active ? "Nonaktifkan" : "Aktifkan"}

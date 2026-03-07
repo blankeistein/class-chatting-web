@@ -9,7 +9,7 @@ import {
   Checkbox,
   Radio,
 } from "@material-tailwind/react";
-import { XCircleIcon, SearchIcon, Loader2Icon, HashIcon, Edit3Icon } from "lucide-react";
+import { XCircleIcon, SearchIcon, Loader2Icon, HashIcon, Edit3Icon, Hammer, BookA } from "lucide-react";
 import { toast } from "react-hot-toast";
 import axios from "axios";
 import { router } from "@inertiajs/react";
@@ -127,10 +127,13 @@ export default function GenerateCodeDialog({ open, setOpen }: GenerateCodeDialog
   return (
     <Dialog open={open} onOpenChange={() => setOpen(!open)} size="md">
       <Dialog.Overlay>
-        <Dialog.Content className="grid grid-rows-[auto_1fr_auto] max-h-[90vh] overflow-hidden">
-          <div className="flex items-center justify-between mb-6">
+        <Dialog.Content className="grid grid-rows-[auto_1fr_auto] max-h-[90vh] overflow-hidden p-0">
+          <div className="flex items-center justify-between mb-6 px-4 pt-3">
             <div className="flex flex-col items-start gap-1">
-              <Typography variant="h5" className="font-bold">Generate Kode Baru</Typography>
+              <Typography variant="h5" className="font-bold flex items-center">
+                <BookA className="mr-2 h-5 w-5" />
+                Generate Kode Baru
+              </Typography>
               <Typography variant="small" className="font-normal text-slate-500">
                 Buat kode aktivasi baru.
               </Typography>
@@ -145,7 +148,7 @@ export default function GenerateCodeDialog({ open, setOpen }: GenerateCodeDialog
           </div>
 
           {/* Body */}
-          <div className="space-y-6 overflow-y-auto">
+          <div className="space-y-6 overflow-y-auto px-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Typography variant="small" className="mb-2 font-bold text-slate-700 dark:text-slate-300">
@@ -337,7 +340,7 @@ export default function GenerateCodeDialog({ open, setOpen }: GenerateCodeDialog
           </div>
 
           {/* Footer */}
-          <div className="flex justify-end space-x-2 mt-8">
+          <div className="flex justify-end space-x-2 mt-8 px-4 pb-3">
             <Button variant="ghost" color="secondary" onClick={() => setOpen(false)} disabled={isSubmitting}>
               Batal
             </Button>
@@ -346,7 +349,7 @@ export default function GenerateCodeDialog({ open, setOpen }: GenerateCodeDialog
               onClick={handleGenerate}
               disabled={isSubmitting}
             >
-              {isSubmitting && <Loader2Icon className="w-4 h-4 animate-spin" />}
+              {isSubmitting ? <Loader2Icon className="w-4 h-4 animate-spin" /> : <Hammer className="mr-2 h-4 w-4" />}
               Generate Kode
             </Button>
           </div>

@@ -29,37 +29,25 @@ class BookController extends Controller
             'uid' => 'required',
             'package_name' => 'required',
             'tier' => 'required',
-        ],
-            [
-                'code.required' => 'Mohon masukkan kode aktivasi! [104]',
-                'uid.required' => 'Mohon update aplikasi yang anda gunakan! [105]',
-                'package_name.required' => 'ID buku kosong. [103]',
-                'tier.required' => 'Mohon update aplikasi yang anda gunakan! [105]',
-            ]);
+        ], [
+            'code.required' => 'Mohon masukkan kode aktivasi! [104]',
+            'uid.required' => 'Mohon update aplikasi yang anda gunakan! [105]',
+            'package_name.required' => 'ID buku kosong. [103]',
+            'tier.required' => 'Mohon update aplikasi yang anda gunakan! [105]',
+        ]);
 
         if ($validator->fails()) {
             $field = array_key_first($validator->errors()->toArray());
-            switch ($field) {
-                case 'code':
-                    $errorCode = 104;
-                    break;
-                case 'uid':
-                    $errorCode = 105;
-                    break;
-                case 'package_name':
-                    $errorCode = 103;
-                    break;
-                case 'tier':
-                    $errorCode = 105;
-                    break;
-                default:
-                    $errorCode = 101;
-                    break;
-            }
+            $errorCodes = [
+                'code' => 104,
+                'uid' => 105,
+                'package_name' => 103,
+                'tier' => 105,
+            ];
 
             return response()->json([
                 'status' => 'error',
-                'error_code' => $errorCode,
+                'error_code' => $errorCodes[$field] ?? 101,
                 'message' => $validator->errors()->first(),
                 'version' => 1,
             ]);
@@ -67,6 +55,7 @@ class BookController extends Controller
 
         $validateData = $validator->validated();
 
+        // Testing Code Logic
         if ($validateData['code'] === 'lestariilmu') {
             if (in_array($validateData['api_key'], $this->tester)) {
                 return response()->json([
@@ -74,16 +63,17 @@ class BookController extends Controller
                     'error_code' => 200,
                     'message' => '[Anda adalah seorang Tester] Kode berhasil diaktifkan.',
                 ]);
-            } else {
-                return response()->json([
-                    'status' => 'error',
-                    'error_code' => 999,
-                    'message' => '[999] Anda tidak tergabung dengan team pengembang. Kode tidak bisa diaktivasi',
-                    'version' => 1,
-                ]);
             }
+
+            return response()->json([
+                'status' => 'error',
+                'error_code' => 999,
+                'message' => '[999] Anda tidak tergabung dengan team pengembang. Kode tidak bisa diaktivasi',
+                'version' => 1,
+            ]);
         }
 
+        // Security Check
         if ($validateData['api_key'] !== env('APP_API_KEY')) {
             return response()->json([
                 'status' => 'error',
@@ -93,6 +83,7 @@ class BookController extends Controller
             ]);
         }
 
+        // Activation Code Retrieval & General Validation
         $code = ActivationCode::where('code', $validateData['code'])->first();
 
         if (! $code) {
@@ -122,6 +113,7 @@ class BookController extends Controller
             ]);
         }
 
+        // Book Retrieval
         $book = Book::where('uuid', $validateData['package_name'])->first();
 
         if (! $book) {
@@ -133,22 +125,20 @@ class BookController extends Controller
             ]);
         }
 
-        $supportedBooks = $code->items->map(function ($item) {
-            return $item->model;
-        })->toArray();
+        // Restriction Check: Supported Books
+        $supportedBooksKey = $code->items->pluck('model.uuid')->filter()->toArray();
 
-        $supportedBooksKey = array_column($supportedBooks, 'uuid');
-
-        if (! in_array($validateData['package_name'], $supportedBooksKey) || empty($supportedBooks)) {
+        if (empty($supportedBooksKey) || ! in_array($validateData['package_name'], $supportedBooksKey)) {
             return response()->json([
                 'status' => 'error',
                 'error_code' => 108,
-                'message' => 'Kode yang anda masukkan tidak cocok untuk buku '.$book->title.'. Silahkan cek kode yang anda gunakan! [108A]',
+                'message' => "Kode yang anda masukkan tidak cocok untuk buku {$book->title}. Silahkan cek kode yang anda gunakan! [108A]",
                 'version' => 1,
             ]);
         }
 
-        if (! empty($validateData['tier']) && intval($validateData['tier']) !== intval($code->tier->value)) {
+        // Restriction Check: Tier
+        if (! empty($validateData['tier']) && intval($validateData['tier']) !== $code->tier->value) {
             return response()->json([
                 'status' => 'error',
                 'error_code' => 114,
@@ -157,16 +147,8 @@ class BookController extends Controller
             ]);
         }
 
-        if ($code->type === 'public') {
-            if (! $code->is_active) {
-                return response()->json([
-                    'status' => 'error',
-                    'error_code' => 112,
-                    'message' => 'Maaf Kode Aktivasi yang anda masukkan sudah melampaui batas masa pakai / kadaluarsa [112]',
-                    'version' => 1,
-                ]);
-            }
-        } else {
+        // Restriction Check: Type (Private/User-bound)
+        if ($code->type !== 'public') {
             if (! empty($code->user_id) && $code->user_id !== $validateData['uid']) {
                 return response()->json([
                     'status' => 'error',
@@ -182,13 +164,13 @@ class BookController extends Controller
                 return response()->json([
                     'status' => 'error',
                     'error_code' => 110,
-                    'message' => 'Maaf kode yang anda masukkan sudah aktif di buku '.$activated_book->title.' [110]',
+                    'message' => "Maaf kode yang anda masukkan sudah aktif di buku {$activated_book->title} [110]",
                     'version' => 1,
                 ]);
             }
         }
 
-        // Save
+        // Update Activation State
         $code->update([
             'user_id' => $validateData['uid'],
             'activate_in' => $book->id,
@@ -196,11 +178,10 @@ class BookController extends Controller
             'times_activated' => $code->times_activated + 1,
         ]);
 
-        if (! $code->max_activated) {
-            $message = 'Kode berhasil diaktifkan. Semoga harimu menyenangkan :)';
-        } else {
+        $message = 'Kode berhasil diaktifkan. Semoga harimu menyenangkan :)';
+        if ($code->max_activated) {
             $limit = $code->max_activated - $code->times_activated;
-            $message = "Kode berhasil diaktifkan. \nKode bisa diaktifkan $limit kali lagi";
+            $message = "Kode berhasil diaktifkan. \nKode bisa diaktifkan {$limit} kali lagi";
         }
 
         return response()->json([

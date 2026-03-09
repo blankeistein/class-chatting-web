@@ -51,4 +51,22 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Book::class, 'user_books')->withTimestamps();
     }
+
+    public function metadata()
+    {
+        return $this->hasMany(UserMetadata::class);
+    }
+
+    public function getMeta(string $key, mixed $default = null): mixed
+    {
+        return $this->metadata->firstWhere('key', $key)?->value ?? $default;
+    }
+
+    public function setMeta(string $key, mixed $value): void
+    {
+        $this->metadata()->updateOrCreate(
+            ['key' => $key],
+            ['value' => $value]
+        );
+    }
 }

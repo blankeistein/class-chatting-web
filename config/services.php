@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'firebase' => [
+        'webhook_secret' => env('FIREBASE_WEBHOOK_SECRET'),
+    ],
+
 ];

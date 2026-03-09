@@ -9,6 +9,7 @@ import {
   List,
   Menu,
   Navbar,
+  Tooltip,
   Typography,
 } from "@material-tailwind/react";
 import { ArchiveIcon, BellIcon, BookIcon, GithubIcon, LayoutDashboardIcon, LogOutIcon, MailIcon, MenuIcon, MoonIcon, PiIcon, PinIcon, SunIcon, TicketIcon, Trash2Icon, UserCircle2Icon, VideoIcon, XIcon } from "lucide-react";
@@ -54,50 +55,79 @@ const Links: LinkType[] = [
   },
 ];
 
-const NavList = () => {
+const NavList = ({ isCollapsed = false }: { isCollapsed?: boolean }) => {
   return (
     <List>
-      {Links.map(({ icon: Icon, title, href, routeName, badge }) => (
-        <List.Item
-          key={title}
-          as={Link}
-          href={routeName ? route(routeName) : href || '#'}
-          selected={routeName ? route().current(routeName + '*') : false}
-        >
-          <List.ItemStart>
-            <Icon className="h-[18px] w-[18px]" />
-          </List.ItemStart>
-          {title}
-          {badge && (
-            <List.ItemEnd>
-              <Chip size="sm" variant="ghost">
-                <Chip.Label>{badge}</Chip.Label>
-              </Chip>
-            </List.ItemEnd>
-          )}
-        </List.Item>
-      ))}
+      {Links.map(({ icon: Icon, title, href, routeName, badge }) => {
+        const isSelected = routeName ? route().current(routeName + '*') : false;
+
+        const listItem = (
+          <List.Item
+            key={title}
+            as={Link}
+            href={routeName ? route(routeName) : href || '#'}
+            selected={isSelected}
+            className={isCollapsed ? "aspect-square w-10 h-10 justify-center p-0 flex shrink-0" : ""}
+          >
+            {isCollapsed ? (
+              <Icon className="h-[20px] w-[20px]" />
+            ) : (
+              <>
+                <List.ItemStart>
+                  <Icon className="h-[18px] w-[18px]" />
+                </List.ItemStart>
+                {title}
+                {badge && (
+                  <List.ItemEnd>
+                    <Chip size="sm" variant="ghost">
+                      <Chip.Label>{badge}</Chip.Label>
+                    </Chip>
+                  </List.ItemEnd>
+                )}
+              </>
+            )}
+          </List.Item>
+        );
+
+        if (isCollapsed) {
+          return (
+            <Tooltip key={title} placement="right">
+              <Tooltip.Trigger>
+                {listItem}
+              </Tooltip.Trigger>
+              <Tooltip.Content>
+                {title}
+                <Tooltip.Arrow />
+              </Tooltip.Content>
+            </Tooltip>
+          );
+        }
+
+        return listItem;
+      })}
     </List>
   )
 }
 
-function Sidebar() {
+function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
 
   return (
-    <div className="p-2 max-w-[280px] hidden lg:block">
+    <div className={`p-2 transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-[280px]'} hidden lg:block overflow-hidden`}>
       <Card className="h-full max-h-screen">
-        <Card.Header className="flex items-center gap-4 mx-4 mb-0 mt-3 h-max">
-          <img src="/assets/images/icons/lestari-ilmu.webp" alt="logo" className="h-8 w-8" />
+        <Card.Header className={`flex items-center gap-4 mb-0 mt-3 h-max transition-all duration-300 ${isCollapsed ? 'mx-1 px-1 justify-center' : 'mx-4'}`}>
+          <img src="/assets/images/icons/lestari-ilmu.webp" alt="logo" className="h-8 w-8 flex-shrink-0" />
 
-          <Typography
-            type="h1"
-            className="block py-1 font-bold !text-lg text-surface-foreground"
-          >
-            App Lestari Ilmu
-          </Typography>
+          {!isCollapsed && (
+            <Typography
+              type="h1"
+              className="block py-1 font-bold !text-lg text-surface-foreground whitespace-nowrap overflow-hidden"
+            >
+              App Lestari Ilmu
+            </Typography>
+          )}
         </Card.Header>
-        <Card.Body className="p-4 mt-2">
-          <NavList />
+        <Card.Body className={`p-4 mt-2 ${isCollapsed ? 'px-2' : ''}`}>
+          <NavList isCollapsed={isCollapsed} />
         </Card.Body>
       </Card>
     </div>
@@ -130,7 +160,7 @@ function ProfileMenu() {
   );
 }
 
-function TopNavbar() {
+function TopNavbar({ onToggleSidebar }: { onToggleSidebar: () => void }) {
   const [openNav, setOpenNav] = useState(false);
 
   useEffect(() => {
@@ -168,6 +198,17 @@ function TopNavbar() {
               )}
             </IconButton>
 
+            {/* Desktop Toggle Button */}
+            <IconButton
+              size="sm"
+              variant="ghost"
+              color="secondary"
+              onClick={onToggleSidebar}
+              className="hidden lg:grid"
+            >
+              <MenuIcon className="h-4 w-4" />
+            </IconButton>
+
             <div className="flex gap-4 items-center ml-auto">
               <NotificationMenu />
               <IconButton variant="ghost" onClick={toggleTheme}>
@@ -181,7 +222,15 @@ function TopNavbar() {
       <Drawer open={openNav} onOpenChange={() => setOpenNav(!openNav)}>
         <Drawer.Overlay>
           <Drawer.Panel placement="left">
-            <NavList />
+            <div>
+              <div className="flex items-center gap-4 mb-4 px-2">
+                <img src="/assets/images/icons/lestari-ilmu.webp" alt="logo" className="h-8 w-8" />
+                <Typography type="h1" className="font-bold text-lg text-surface-foreground">
+                  App Lestari Ilmu
+                </Typography>
+              </div>
+              <NavList />
+            </div>
           </Drawer.Panel>
         </Drawer.Overlay>
       </Drawer>
@@ -191,6 +240,7 @@ function TopNavbar() {
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const contentRef = React.useRef<HTMLDivElement>(null);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   useEffect(() => {
     const removeListener = router.on('navigate', () => {
@@ -200,10 +250,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, []);
 
   return (
-    <div className="h-screen bg-background flex">
-      <Sidebar />
+    <div className="h-screen bg-background flex overflow-hidden">
+      <Sidebar isCollapsed={isCollapsed} />
       <div ref={contentRef} className="flex-1 overflow-auto">
-        <TopNavbar />
+        <TopNavbar onToggleSidebar={() => setIsCollapsed(!isCollapsed)} />
         {children}
         <footer className="p-2 flex items-center justify-between border-t border-surface mt-auto">
           <Typography className="text-sm text-surface-foreground/60">

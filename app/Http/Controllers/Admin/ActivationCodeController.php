@@ -7,38 +7,77 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\ActivationCodeResource;
 use App\Models\ActivationCode;
 use App\Models\Book;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Enum;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class ActivationCodeController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): Response
     {
-        $perPage = $request->input('per_page', 25);
+        $perPage = $request->integer('per_page', 25);
         $search = $request->input('search');
         $sortBy = $request->input('sort_by', 'created_at');
         $sortDirection = $request->input('sort_direction', 'desc');
         $bookId = $request->input('book_id');
+        $tier = $request->input('tier');
+        $status = $request->input('status');
+        $type = $request->input('type');
+        $activationState = $request->input('activation_state');
+
+        $tierValues = array_map(fn (ActivationCodeTierEnum $tierOption): int => $tierOption->value, ActivationCodeTierEnum::cases());
 
         $activationCodes = ActivationCode::query()
             ->with(['user', 'items.model'])
             ->when($search, function ($query, $search) {
-                $query->where('code', 'like', "%{$search}%")
-                    ->orWhereHas('user', function ($query) use ($search) {
-                        $query->where('name', 'like', "%{$search}%")
-                            ->orWhere('email', 'like', "%{$search}%");
-                    });
+                $query->where(function ($searchQuery) use ($search) {
+                    $searchQuery->where('code', 'like', "%{$search}%")
+                        ->orWhereHas('user', function ($userQuery) use ($search) {
+                            $userQuery->where('name', 'like', "%{$search}%")
+                                ->orWhere('email', 'like', "%{$search}%");
+                        });
+                });
             })
             ->when($bookId, function ($query, $bookId) {
-                $query->whereHas('items', function ($query) use ($bookId) {
-                    $query->where('model_id', $bookId)
+                $query->whereHas('items', function ($itemQuery) use ($bookId) {
+                    $itemQuery->where('model_id', $bookId)
                         ->where('model_type', Book::class);
                 });
             })
-            ->when(in_array($sortBy, ['code', 'created_at', 'updated_at', 'times_activated', 'max_activated']), function ($query) use ($sortBy, $sortDirection) {
+            ->when(in_array((int) $tier, $tierValues, true), function ($query) use ($tier) {
+                $query->where('tier', (int) $tier);
+            })
+            ->when(in_array($type, ['public', 'single'], true), function ($query) use ($type) {
+                $query->where('type', $type);
+            })
+            ->when($activationState === 'activated', function ($query) {
+                $query->where('times_activated', '>', 0);
+            })
+            ->when($activationState === 'not_activated', function ($query) {
+                $query->where('times_activated', 0);
+            })
+            ->when($status, function ($query, $status) {
+                match ($status) {
+                    'revoked' => $query->where('is_active', false),
+                    'used' => $query->where('is_active', true)
+                        ->whereNotNull('max_activated')
+                        ->whereColumn('times_activated', '>=', 'max_activated'),
+                    'active' => $query->where('is_active', true)
+                        ->where('times_activated', '>', 0)
+                        ->where(function ($statusQuery) {
+                            $statusQuery->whereNull('max_activated')
+                                ->orWhereColumn('times_activated', '<', 'max_activated');
+                        }),
+                    'available' => $query->where('is_active', true)
+                        ->where('times_activated', 0),
+                    default => null,
+                };
+            })
+            ->when(in_array($sortBy, ['code', 'created_at', 'updated_at', 'times_activated', 'max_activated'], true), function ($query) use ($sortBy, $sortDirection) {
                 $query->orderBy($sortBy, $sortDirection === 'asc' ? 'asc' : 'desc');
             }, function ($query) {
                 $query->latest();
@@ -52,11 +91,12 @@ class ActivationCodeController extends Controller
             'activationCodes' => ActivationCodeResource::collection($activationCodes),
             'books' => Book::latest()->limit(20)->get(['id', 'title']),
             'selectedBookData' => $selectedBookData,
-            'filters' => $request->only(['search', 'per_page', 'sort_by', 'sort_direction', 'book_id']),
+            'tierOptions' => ActivationCodeTierEnum::labels(),
+            'filters' => $request->only(['search', 'per_page', 'sort_by', 'sort_direction', 'book_id', 'tier', 'status', 'type', 'activation_state']),
         ]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $request->validate([
             'tier' => ['required', new Enum(ActivationCodeTierEnum::class)],
@@ -112,7 +152,7 @@ class ActivationCodeController extends Controller
         return $code;
     }
 
-    public function show($id)
+    public function show($id): Response
     {
         $activationCode = ActivationCode::with(['user', 'items.model'])->findOrFail($id);
 
@@ -121,7 +161,7 @@ class ActivationCodeController extends Controller
         ]);
     }
 
-    public function destroy($id)
+    public function destroy($id): RedirectResponse
     {
         $activationCode = ActivationCode::findOrFail($id);
         $activationCode->delete();
@@ -129,7 +169,7 @@ class ActivationCodeController extends Controller
         return redirect()->back()->with('success', 'Kode aktivasi berhasil dihapus.');
     }
 
-    public function toggleActive($id)
+    public function toggleActive($id): RedirectResponse
     {
         $activationCode = ActivationCode::findOrFail($id);
         $activationCode->update([
@@ -141,7 +181,7 @@ class ActivationCodeController extends Controller
         return redirect()->back()->with('success', "Kode aktivasi berhasil {$status}.");
     }
 
-    public function bulkDelete(Request $request)
+    public function bulkDelete(Request $request): RedirectResponse
     {
         $ids = $request->input('ids', []);
         ActivationCode::whereIn('id', $ids)->delete();

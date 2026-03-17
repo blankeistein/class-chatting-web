@@ -11,7 +11,6 @@ import {
   Popover,
   List,
   ListItem,
-  Checkbox as MaterialCheckbox,
   Menu,
 } from "@material-tailwind/react";
 import Checkbox from "@/Components/Checkbox";
@@ -26,9 +25,9 @@ import {
   ClockIcon,
   ChevronDownIcon,
   Loader2Icon,
-  MoreHorizontalIcon,
   MoreVerticalIcon,
   EyeIcon,
+  RotateCcwIcon,
 } from "lucide-react";
 import { Head, router } from "@inertiajs/react";
 import AdminLayout from "@/Layouts/AdminLayout";
@@ -69,7 +68,7 @@ interface ActivationCode {
     model?: {
       id: number;
       title: string;
-    }
+    };
   }[];
 }
 
@@ -101,31 +100,71 @@ interface PaginatedData<T> {
   meta: Meta;
 }
 
-export default function Index({ activationCodes, filters, books, selectedBookData }: {
-  activationCodes: PaginatedData<ActivationCode>,
-  filters: any,
-  books: BookItem[],
-  selectedBookData?: BookItem | null
+export default function Index({
+  activationCodes,
+  filters,
+  books,
+  selectedBookData,
+  tierOptions,
+}: {
+  activationCodes: PaginatedData<ActivationCode>;
+  filters: Record<string, string | number | undefined>;
+  books: BookItem[];
+  selectedBookData?: BookItem | null;
+  tierOptions: Record<string, string>;
 }) {
   const [openGenerateDialog, setOpenGenerateDialog] = useState(false);
-  const [searchTerm, setSearchTerm] = useState(filters.search || "");
-  const [perPage, setPerPage] = useState(filters.per_page || "25");
-  const [sortBy, setSortBy] = useState(filters.sort_by || "created_at");
-  const [sortDirection, setSortDirection] = useState(filters.sort_direction || "desc");
+  const [searchTerm, setSearchTerm] = useState((filters.search || "").toString());
+  const [perPage, setPerPage] = useState((filters.per_page || "25").toString());
+  const [sortBy, setSortBy] = useState((filters.sort_by || "created_at").toString());
+  const [sortDirection, setSortDirection] = useState((filters.sort_direction || "desc").toString());
   const [selectedBook, setSelectedBook] = useState<BookItem | "all">(selectedBookData || "all");
+  const [selectedTier, setSelectedTier] = useState((filters.tier || "").toString());
+  const [selectedStatus, setSelectedStatus] = useState((filters.status || "").toString());
+  const [selectedType, setSelectedType] = useState((filters.type || "").toString());
+  const [selectedActivationState, setSelectedActivationState] = useState((filters.activation_state || "").toString());
 
-  // Searchable Book Filter State
   const [bookList, setBookList] = useState<BookItem[]>(books);
   const [bookSearch, setBookSearch] = useState("");
   const [isSearchingBooks, setIsSearchingBooks] = useState(false);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
+  const hasActiveFilters = Boolean(
+    searchTerm ||
+    selectedTier ||
+    selectedStatus ||
+    selectedType ||
+    selectedActivationState ||
+    selectedBook !== "all",
+  );
+
+  const buildQueryParams = (overrides: Record<string, string | number | undefined> = {}) => ({
+    search: searchTerm || undefined,
+    per_page: perPage,
+    sort_by: sortBy,
+    sort_direction: sortDirection,
+    book_id: selectedBook === "all" ? undefined : selectedBook.id,
+    tier: selectedTier || undefined,
+    status: selectedStatus || undefined,
+    type: selectedType || undefined,
+    activation_state: selectedActivationState || undefined,
+    ...overrides,
+  });
+
+  const visitIndex = (overrides: Record<string, string | number | undefined> = {}) => {
+    router.get(route("admin.activation-code.index"), buildQueryParams(overrides), {
+      preserveState: true,
+      replace: true,
+    });
+  };
+
   const handleBookSearch = async (query: string) => {
     setBookSearch(query);
     setIsSearchingBooks(true);
+
     try {
-      const resp = await axios.get(route('admin.books.selection'), { params: { search: query } });
+      const resp = await axios.get(route("admin.books.selection"), { params: { search: query } });
       setBookList(resp.data);
     } catch (err) {
       console.error(err);
@@ -137,47 +176,51 @@ export default function Index({ activationCodes, filters, books, selectedBookDat
   const selectBook = (book: BookItem | "all") => {
     setSelectedBook(book);
     setIsPopoverOpen(false);
-    const bookId = book === "all" ? undefined : book.id;
-    router.get(route('admin.activation-code.index'), {
-      search: searchTerm,
-      per_page: perPage,
-      sort_by: sortBy,
-      sort_direction: sortDirection,
-      book_id: bookId,
-    }, { preserveState: true });
+    visitIndex({ book_id: book === "all" ? undefined : book.id });
   };
 
   const handleSearch = () => {
-    router.get(route('admin.activation-code.index'), {
-      search: searchTerm,
-      per_page: perPage,
-      sort_by: sortBy,
-      sort_direction: sortDirection,
-      book_id: selectedBook === "all" ? undefined : (selectedBook as BookItem).id,
-    }, { preserveState: true });
+    visitIndex();
   };
 
   const handleSortChange = (val: string | undefined) => {
-    if (!val) return;
+    if (!val) {
+      return;
+    }
+
     const [field, direction] = val.split("|");
     setSortBy(field);
     setSortDirection(direction);
-    router.get(route('admin.activation-code.index'), {
-      search: searchTerm,
-      per_page: perPage,
-      sort_by: field,
-      sort_direction: direction,
-      book_id: selectedBook === "all" ? undefined : (selectedBook as BookItem).id,
-    }, { preserveState: true });
+    visitIndex({ sort_by: field, sort_direction: direction });
+  };
+
+  const handleResetFilters = () => {
+    setSearchTerm("");
+    setSelectedBook("all");
+    setSelectedTier("");
+    setSelectedStatus("");
+    setSelectedType("");
+    setSelectedActivationState("");
+    setBookSearch("");
+    setBookList(books);
+    visitIndex({
+      search: undefined,
+      book_id: undefined,
+      tier: undefined,
+      status: undefined,
+      type: undefined,
+      activation_state: undefined,
+    });
   };
 
   const handleDelete = (id: number) => {
     if (confirm("Apakah Anda yakin ingin menghapus kode aktivasi ini?")) {
-      let toastId = toast.loading('Menghapus kode aktivasi...')
-      router.delete(route('admin.activation-code.destroy', id), {
+      const toastId = toast.loading("Menghapus kode aktivasi...");
+
+      router.delete(route("admin.activation-code.destroy", id), {
         onSuccess: () => {
-          toast.dismiss(toastId)
-          toast.success("Kode berhasil dihapus")
+          toast.dismiss(toastId);
+          toast.success("Kode berhasil dihapus");
         },
       });
     }
@@ -189,18 +232,27 @@ export default function Index({ activationCodes, filters, books, selectedBookDat
   };
 
   const handleToggleActive = (id: number) => {
-    router.patch(route('admin.activation-code.toggle-active', id), {}, {
+    router.patch(route("admin.activation-code.toggle-active", id), {}, {
       preserveState: true,
       onSuccess: () => {
         toast.success("Status kode berhasil diubah");
-      }
+      },
     });
   };
 
   const getStatus = (item: ActivationCode) => {
-    if (!item.is_active) return "revoked";
-    if (item.max_activated && item.times_activated >= item.max_activated) return "used";
-    if (item.times_activated > 0) return "active";
+    if (!item.is_active) {
+      return "revoked";
+    }
+
+    if (item.max_activated && item.times_activated >= item.max_activated) {
+      return "used";
+    }
+
+    if (item.times_activated > 0) {
+      return "active";
+    }
+
     return "available";
   };
 
@@ -219,22 +271,20 @@ export default function Index({ activationCodes, filters, books, selectedBookDat
   };
 
   const toggleSelect = (id: number) => {
-    setSelectedIds(prev =>
-      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
-    );
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]));
   };
 
   const toggleSelectAll = () => {
     if (selectedIds.length === activationCodes.data.length && activationCodes.data.length > 0) {
       setSelectedIds([]);
     } else {
-      setSelectedIds(activationCodes.data.map(item => item.id));
+      setSelectedIds(activationCodes.data.map((item) => item.id));
     }
   };
 
   const handleBulkDelete = () => {
     if (confirm(`Apakah Anda yakin ingin menghapus ${selectedIds.length} kode aktivasi ini?`)) {
-      router.delete(route('admin.activation-code.bulk-delete'), {
+      router.delete(route("admin.activation-code.bulk-delete"), {
         data: { ids: selectedIds },
         onSuccess: () => {
           setSelectedIds([]);
@@ -245,19 +295,17 @@ export default function Index({ activationCodes, filters, books, selectedBookDat
   };
 
   const handleBulkExport = () => {
-    const ids = selectedIds.join(',');
-    window.location.href = route('admin.activation-code.bulk-export', { ids });
+    const ids = selectedIds.join(",");
+    window.location.href = route("admin.activation-code.bulk-export", { ids });
   };
-
 
   return (
     <>
       <Head title="Manajemen Kode Aktivasi" />
       <Toaster position="top-center" />
 
-      <div className="p-4 space-y-6">
-        {/* Header Section */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="space-y-6 p-4">
+        <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
           <div>
             <Typography variant="h4" className="font-bold text-slate-800 dark:text-white">
               Kode Aktivasi
@@ -275,9 +323,8 @@ export default function Index({ activationCodes, filters, books, selectedBookDat
           </Button>
         </div>
 
-        {/* Bulk Action Bar */}
         {selectedIds.length > 0 && (
-          <Card className="w-[90%] lg:w-[600px] bg-slate-900 text-white p-3 flex flex-row items-center justify-between animate-in fade-in slide-in-from-top-4 duration-300 fixed bottom-8 z-30 left-1/2 -translate-x-1/2">
+          <Card className="fixed bottom-8 left-1/2 z-30 flex w-[90%] -translate-x-1/2 animate-in flex-row items-center justify-between gap-3 bg-slate-900 p-3 text-white duration-300 fade-in slide-in-from-top-4 lg:w-[600px]">
             <div className="flex items-center gap-3">
               <Checkbox
                 checked={selectedIds.length === activationCodes.data.length}
@@ -311,19 +358,18 @@ export default function Index({ activationCodes, filters, books, selectedBookDat
           </Card>
         )}
 
-        {/* Filters and Stats */}
-        <Card className="shadow-sm border border-slate-200 dark:border-slate-800 dark:bg-slate-900">
-          <CardBody className="p-4">
+        <Card className="border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <CardBody className="space-y-4 p-4">
             <div className="flex flex-wrap items-center gap-4">
-              <div className="w-full md:w-72 relative">
+              <div className="relative w-full md:w-72">
                 <Input
                   placeholder="Cari kode atau user..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onKeyUp={(e) => e.key === "Enter" && handleSearch()}
-                  className="dark:text-white pl-10"
+                  className="pl-10 dark:text-white"
                 />
-                <SearchIcon className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               </div>
 
               <div className="w-full md:w-64">
@@ -331,25 +377,25 @@ export default function Index({ activationCodes, filters, books, selectedBookDat
                   <Popover.Trigger>
                     <Button
                       variant="outline"
-                      className="w-full flex justify-between items-center text-left font-normal capitalize"
+                      className="flex w-full items-center justify-between text-left font-normal capitalize"
                       color="secondary"
                       onClick={() => setIsPopoverOpen(!isPopoverOpen)}
                     >
                       <span className="truncate">
                         {selectedBook === "all" ? "Semua Buku" : selectedBook.title}
                       </span>
-                      <ChevronDownIcon className="h-4 w-4 ml-2 opacity-50" />
+                      <ChevronDownIcon className="ml-2 h-4 w-4 opacity-50" />
                     </Button>
                   </Popover.Trigger>
-                  <Popover.Content className="p-0 border-slate-200 dark:border-slate-800 dark:bg-slate-900 shadow-xl z-[999] w-72">
-                    <div className="p-2 border-b border-slate-100 dark:border-slate-800 relative">
+                  <Popover.Content className="z-[999] w-72 border-slate-200 p-0 shadow-xl dark:border-slate-800 dark:bg-slate-900">
+                    <div className="relative border-b border-slate-100 p-2 dark:border-slate-800">
                       <Input
                         placeholder="Cari buku..."
                         value={bookSearch}
                         onChange={(e) => handleBookSearch(e.target.value)}
-                        className="dark:text-white pl-10"
+                        className="pl-10 dark:text-white"
                       />
-                      <SearchIcon className="h-4 w-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <SearchIcon className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                       {isSearchingBooks && (
                         <div className="absolute right-4 top-1/2 -translate-y-1/2">
                           <Loader2Icon className="h-4 w-4 animate-spin text-primary" />
@@ -357,18 +403,11 @@ export default function Index({ activationCodes, filters, books, selectedBookDat
                       )}
                     </div>
                     <List className="max-h-60 overflow-y-auto p-1">
-                      <ListItem
-                        className="text-sm py-2"
-                        onClick={() => selectBook("all")}
-                      >
+                      <ListItem className="py-2 text-sm" onClick={() => selectBook("all")}>
                         Semua Buku
                       </ListItem>
                       {bookList.map((book) => (
-                        <ListItem
-                          key={book.id}
-                          className="text-sm py-2"
-                          onClick={() => selectBook(book)}
-                        >
+                        <ListItem key={book.id} className="py-2 text-sm" onClick={() => selectBook(book)}>
                           <span className="truncate">{book.title}</span>
                         </ListItem>
                       ))}
@@ -384,16 +423,10 @@ export default function Index({ activationCodes, filters, books, selectedBookDat
 
               <div className="w-full md:w-32">
                 <Select
-                  value={perPage.toString()}
+                  value={perPage}
                   onValueChange={(val) => {
                     setPerPage(val);
-                    router.get(route('admin.activation-code.index'), {
-                      search: searchTerm,
-                      per_page: val,
-                      sort_by: sortBy,
-                      sort_direction: sortDirection,
-                      book_id: selectedBook === "all" ? undefined : selectedBook.id
-                    }, { preserveState: true });
+                    visitIndex({ per_page: val });
                   }}
                 >
                   <Select.Trigger className="dark:text-white" placeholder="25" />
@@ -407,10 +440,7 @@ export default function Index({ activationCodes, filters, books, selectedBookDat
               </div>
 
               <div className="w-full md:w-48">
-                <Select
-                  value={`${sortBy}|${sortDirection}`}
-                  onValueChange={handleSortChange}
-                >
+                <Select value={`${sortBy}|${sortDirection}`} onValueChange={handleSortChange}>
                   <Select.Trigger className="dark:text-white" placeholder="Urutkan" />
                   <Select.List>
                     <Select.Option value="created_at|desc">Terbaru</Select.Option>
@@ -420,17 +450,122 @@ export default function Index({ activationCodes, filters, books, selectedBookDat
                   </Select.List>
                 </Select>
               </div>
+
+              <Button color="primary" className="flex items-center gap-2" onClick={handleSearch}>
+                <SearchIcon className="h-4 w-4" /> Terapkan
+              </Button>
+
+              {hasActiveFilters && (
+                <Button
+                  variant="ghost"
+                  color="secondary"
+                  className="flex items-center gap-2"
+                  onClick={handleResetFilters}
+                >
+                  <RotateCcwIcon className="h-4 w-4" /> Reset
+                </Button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <div>
+                <Typography variant="small" className="mb-1 font-medium text-slate-500 dark:text-slate-400">
+                  Tier
+                </Typography>
+                <Select
+                  value={selectedTier || undefined}
+                  onValueChange={(value) => {
+                    const nextValue = value || "";
+                    setSelectedTier(nextValue);
+                    visitIndex({ tier: nextValue || undefined });
+                  }}
+                >
+                  <Select.Trigger className="dark:text-white" placeholder="Semua Tier" />
+                  <Select.List>
+                    <Select.Option value="">Semua Tier</Select.Option>
+                    {Object.entries(tierOptions).map(([value, label]) => (
+                      <Select.Option key={value} value={value}>
+                        {label}
+                      </Select.Option>
+                    ))}
+                  </Select.List>
+                </Select>
+              </div>
+
+              <div>
+                <Typography variant="small" className="mb-1 font-medium text-slate-500 dark:text-slate-400">
+                  Status Kode
+                </Typography>
+                <Select
+                  value={selectedStatus || undefined}
+                  onValueChange={(value) => {
+                    const nextValue = value || "";
+                    setSelectedStatus(nextValue);
+                    visitIndex({ status: nextValue || undefined });
+                  }}
+                >
+                  <Select.Trigger className="dark:text-white" placeholder="Semua Status" />
+                  <Select.List>
+                    <Select.Option value="">Semua Status</Select.Option>
+                    <Select.Option value="available">Available</Select.Option>
+                    <Select.Option value="active">Active</Select.Option>
+                    <Select.Option value="used">Used</Select.Option>
+                    <Select.Option value="revoked">Revoked</Select.Option>
+                  </Select.List>
+                </Select>
+              </div>
+
+              <div>
+                <Typography variant="small" className="mb-1 font-medium text-slate-500 dark:text-slate-400">
+                  Jenis Kode
+                </Typography>
+                <Select
+                  value={selectedType || undefined}
+                  onValueChange={(value) => {
+                    const nextValue = value || "";
+                    setSelectedType(nextValue);
+                    visitIndex({ type: nextValue || undefined });
+                  }}
+                >
+                  <Select.Trigger className="dark:text-white" placeholder="Semua Jenis" />
+                  <Select.List>
+                    <Select.Option value="">Semua Jenis</Select.Option>
+                    <Select.Option value="public">Public</Select.Option>
+                    <Select.Option value="single">Single</Select.Option>
+                  </Select.List>
+                </Select>
+              </div>
+
+              <div>
+                <Typography variant="small" className="mb-1 font-medium text-slate-500 dark:text-slate-400">
+                  Sudah Aktif
+                </Typography>
+                <Select
+                  value={selectedActivationState || undefined}
+                  onValueChange={(value) => {
+                    const nextValue = value || "";
+                    setSelectedActivationState(nextValue);
+                    visitIndex({ activation_state: nextValue || undefined });
+                  }}
+                >
+                  <Select.Trigger className="dark:text-white" placeholder="Semua Kondisi" />
+                  <Select.List>
+                    <Select.Option value="">Semua Kondisi</Select.Option>
+                    <Select.Option value="activated">Sudah Aktif</Select.Option>
+                    <Select.Option value="not_activated">Belum Aktif</Select.Option>
+                  </Select.List>
+                </Select>
+              </div>
             </div>
           </CardBody>
         </Card>
 
-        {/* Codes Table */}
-        <Card className="shadow-sm border border-slate-200 dark:border-slate-800 dark:bg-slate-900">
+        <Card className="border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div className="overflow-x-auto">
             <table className="w-full min-w-max table-auto text-left">
               <thead>
                 <tr>
-                  <th className="border-y border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 p-4 w-10">
+                  <th className="w-10 border-y border-slate-100 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-800/50">
                     <Checkbox
                       checked={selectedIds.length === activationCodes.data.length && activationCodes.data.length > 0}
                       onChange={toggleSelectAll}
@@ -438,7 +573,7 @@ export default function Index({ activationCodes, filters, books, selectedBookDat
                     />
                   </th>
                   {["Kode Aktivasi", "User", "Tier", "Jenis", "Status", "Limit", "Dibuat", "Aksi"].map((head) => (
-                    <th key={head} className="border-y border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 p-4">
+                    <th key={head} className="border-y border-slate-100 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-800/50">
                       <Typography variant="small" className="font-bold leading-none opacity-70 text-slate-500 dark:text-slate-300">
                         {head}
                       </Typography>
@@ -449,11 +584,14 @@ export default function Index({ activationCodes, filters, books, selectedBookDat
               <tbody>
                 {activationCodes.data.map((item, index) => {
                   const isLast = index === activationCodes.data.length - 1;
-                  const classes = isLast ? "p-4" : "p-4 border-b border-slate-100 dark:border-slate-800";
+                  const classes = isLast ? "p-4" : "border-b border-slate-100 p-4 dark:border-slate-800";
                   const status = getStatus(item);
 
                   return (
-                    <tr key={item.id} className={`hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${selectedIds.includes(item.id) ? 'bg-blue-50/30 dark:bg-blue-900/10' : ''}`}>
+                    <tr
+                      key={item.id}
+                      className={`transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50 ${selectedIds.includes(item.id) ? "bg-blue-50/30 dark:bg-blue-900/10" : ""}`}
+                    >
                       <td className={classes}>
                         <Checkbox
                           checked={selectedIds.includes(item.id)}
@@ -467,26 +605,28 @@ export default function Index({ activationCodes, filters, books, selectedBookDat
                           <div className="flex flex-col">
                             <Typography
                               variant="small"
-                              className="font-bold text-slate-800 dark:text-white tracking-wider cursor-pointer hover:text-primary transition-colors inline-flex items-center gap-1.5 group"
+                              className="group inline-flex cursor-pointer items-center gap-1.5 font-bold tracking-wider text-slate-800 transition-colors hover:text-primary dark:text-white"
                               onClick={() => handleCopyCode(item.code)}
                               title="Klik untuk menyalin kode"
                             >
                               {item.code}
-                              <CopyIcon className="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity" />
+                              <CopyIcon className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-60" />
                             </Typography>
                             {item.items && item.items.length > 0 && (
-                              <div className="flex flex-wrap gap-1 mt-1">
+                              <div className="mt-1 flex flex-wrap gap-1">
                                 {item.items.slice(0, 2).map((it) => (
-                                  <span key={it.id} className="text-[9px] px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-slate-500 max-w-[150px] truncate">
-                                    {it.model?.title || 'Unknown Book'}
+                                  <span
+                                    key={it.id}
+                                    className="max-w-[150px] truncate rounded bg-slate-100 px-1.5 py-0.5 text-[9px] text-slate-500 dark:bg-slate-800"
+                                  >
+                                    {it.model?.title || "Unknown Book"}
                                   </span>
                                 ))}
-                                {
-                                  item.items.length > 2 &&
-                                  <span className="text-[9px] px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-slate-500 max-w-[150px] truncate">
+                                {item.items.length > 2 && (
+                                  <span className="max-w-[150px] truncate rounded bg-slate-100 px-1.5 py-0.5 text-[9px] text-slate-500 dark:bg-slate-800">
                                     ...
                                   </span>
-                                }
+                                )}
                               </div>
                             )}
                           </div>
@@ -503,7 +643,7 @@ export default function Index({ activationCodes, filters, books, selectedBookDat
                             </Typography>
                           </div>
                         ) : (
-                          <Typography variant="small" className="text-slate-400 italic">
+                          <Typography variant="small" className="italic text-slate-400">
                             Belum digunakan
                           </Typography>
                         )}
@@ -517,28 +657,31 @@ export default function Index({ activationCodes, filters, books, selectedBookDat
                         <Chip
                           variant="ghost"
                           size="sm"
-                          color={item.type === 'public' ? "info" : "success"}
+                          color={item.type === "public" ? "info" : "success"}
                           className="capitalize"
                         >
-                          <Chip.Label>{item.type === 'public' ? 'Public' : 'Individual'}</Chip.Label>
+                          <Chip.Label>{item.type === "public" ? "Public" : "Single"}</Chip.Label>
                         </Chip>
                       </td>
                       <td className={classes}>
-                        <Chip
-                          variant="ghost"
-                          size="sm"
-                          color={statusIconsColor[status] as any}
-                          className="capitalize"
-                        >
-                          <Chip.Icon>
-                            {statusIcons[status]}
-                          </Chip.Icon>
-                          <Chip.Label>{status}</Chip.Label>
-                        </Chip>
+                        <div className="space-y-2">
+                          <Chip
+                            variant="ghost"
+                            size="sm"
+                            color={statusIconsColor[status] as never}
+                            className="capitalize"
+                          >
+                            <Chip.Icon>{statusIcons[status]}</Chip.Icon>
+                            <Chip.Label>{status}</Chip.Label>
+                          </Chip>
+                          <Typography variant="small" className="text-xs text-slate-500 dark:text-slate-400">
+                            {item.times_activated > 0 ? "Sudah aktif" : "Belum aktif"}
+                          </Typography>
+                        </div>
                       </td>
                       <td className={classes}>
                         <Typography variant="small" className="font-normal text-slate-600 dark:text-slate-400">
-                          {item.times_activated} / {item.max_activated ?? "∞"}
+                          {item.times_activated} / {item.max_activated ?? "Tanpa batas"}
                         </Typography>
                       </td>
                       <td className={classes}>
@@ -557,16 +700,19 @@ export default function Index({ activationCodes, filters, books, selectedBookDat
                               <MoreVerticalIcon />
                             </Menu.Trigger>
                             <Menu.Content>
-                              <Menu.Item onClick={() => router.get(route('admin.activation-code.show', item.id))}>
-                                <EyeIcon className="h-4 w-4 mr-2" />
+                              <Menu.Item onClick={() => router.get(route("admin.activation-code.show", item.id))}>
+                                <EyeIcon className="mr-2 h-4 w-4" />
                                 Lihat Detail
                               </Menu.Item>
-                              <Menu.Item onClick={() => handleToggleActive(item.id)} className={item.is_active ? "text-warning" : "text-success"}>
-                                {item.is_active ? <XCircleIcon className="h-4 w-4 mr-2" /> : <CheckCircleIcon className="h-4 w-4 mr-2" />}
+                              <Menu.Item
+                                onClick={() => handleToggleActive(item.id)}
+                                className={item.is_active ? "text-warning" : "text-success"}
+                              >
+                                {item.is_active ? <XCircleIcon className="mr-2 h-4 w-4" /> : <CheckCircleIcon className="mr-2 h-4 w-4" />}
                                 {item.is_active ? "Nonaktifkan" : "Aktifkan"}
                               </Menu.Item>
                               <Menu.Item onClick={() => handleDelete(item.id)} className="text-error">
-                                <Trash2Icon className="h-4 w-4 mr-2" />
+                                <Trash2Icon className="mr-2 h-4 w-4" />
                                 Hapus
                               </Menu.Item>
                             </Menu.Content>
@@ -588,22 +734,15 @@ export default function Index({ activationCodes, filters, books, selectedBookDat
           </div>
         </Card>
 
-        {/* Pagination Controls */}
         <div className="mt-8 flex justify-center gap-2">
-          {activationCodes.meta.links.map((link: any, key: number) => (
+          {activationCodes.meta.links.map((link, key) => (
             <Button
               key={key}
               variant={link.active ? "solid" : "ghost"}
               size="sm"
               color={link.active ? "primary" : "secondary"}
-              className={`flex items-center gap-2 ${!link.url ? "opacity-50 cursor-not-allowed" : ""}`}
-              onClick={() => link.url && router.get(link.url, {
-                search: searchTerm,
-                per_page: perPage,
-                sort_by: sortBy,
-                sort_direction: sortDirection,
-                book_id: selectedBook === "all" ? undefined : selectedBook.id
-              }, { preserveState: true })}
+              className={`flex items-center gap-2 ${!link.url ? "cursor-not-allowed opacity-50" : ""}`}
+              onClick={() => link.url && router.get(link.url, buildQueryParams(), { preserveState: true, replace: true })}
               dangerouslySetInnerHTML={{ __html: link.label }}
               disabled={!link.url}
             />
@@ -611,7 +750,6 @@ export default function Index({ activationCodes, filters, books, selectedBookDat
         </div>
       </div>
 
-      {/* Generate Dialog */}
       <GenerateCodeDialog open={openGenerateDialog} setOpen={setOpenGenerateDialog} />
     </>
   );
@@ -620,3 +758,4 @@ export default function Index({ activationCodes, filters, books, selectedBookDat
 Index.layout = (page: React.ReactNode) => {
   return <AdminLayout>{page}</AdminLayout>;
 };
+

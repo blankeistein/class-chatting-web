@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {
   Avatar,
+  Button,
   Card,
   Chip,
   Collapse,
@@ -92,7 +93,7 @@ const NavList = ({ isCollapsed = false }: { isCollapsed?: boolean }) => {
         if (isCollapsed) {
           return (
             <Tooltip key={title} placement="right">
-              <Tooltip.Trigger>
+              <Tooltip.Trigger as="div" className="aspect-square w-10 h-10 ">
                 {listItem}
               </Tooltip.Trigger>
               <Tooltip.Content>

@@ -87,6 +87,7 @@ export default function Login() {
                                         value={data.password}
                                         onChange={(e) => setData('password', e.target.value)}
                                         placeholder="********"
+                                        autoComplete="off"
                                     >
                                         <Input.Icon
                                             as={IconButton}

@@ -1,33 +1,61 @@
 import React, { useRef, useState } from "react";
 import {
+  Button,
   Card,
   CardBody,
-  Typography,
-  Button,
-  Input,
-  Textarea,
-  Progress,
-  IconButton,
-  Dialog,
   Chip,
+  Dialog,
+  IconButton,
+  Input,
+  Progress,
+  Textarea,
+  Typography,
 } from "@material-tailwind/react";
 import AdminLayout from "@/Layouts/AdminLayout";
 import { Head, router, useForm } from "@inertiajs/react";
-import { ArrowLeftIcon, SaveIcon, UploadCloudIcon, VideoIcon, ImageIcon, CameraIcon, XIcon, Tag } from "lucide-react";
+import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  CameraIcon,
+  CheckCircleIcon,
+  ImageIcon,
+  SaveIcon,
+  Tag,
+  UploadCloudIcon,
+  VideoIcon,
+} from "lucide-react";
 import { toast, Toaster } from "react-hot-toast";
 
+const STEPS = [
+  {
+    id: 1,
+    title: "Informasi",
+    description: "Judul, deskripsi, dan tag video.",
+  },
+  {
+    id: 2,
+    title: "Video",
+    description: "Upload file utama dan cek preview.",
+  },
+  {
+    id: 3,
+    title: "Thumbnail",
+    description: "Pilih cover lalu review sebelum simpan.",
+  },
+] as const;
+
 export default function Create() {
-  const [isDragging, setIsDragging] = useState(false);
+  const [currentStep, setCurrentStep] = useState<(typeof STEPS)[number]["id"]>(1);
+  const [isVideoDragging, setIsVideoDragging] = useState(false);
   const [isThumbDragging, setIsThumbDragging] = useState(false);
   const [isCaptureModalOpen, setIsCaptureModalOpen] = useState(false);
   const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
   const [thumbPreviewUrl, setThumbPreviewUrl] = useState<string | null>(null);
+  const [currentTag, setCurrentTag] = useState("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const thumbInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-
-  const [currentTag, setCurrentTag] = useState("");
 
   const { data, setData, post, processing, errors, progress } = useForm({
     title: "",
@@ -38,24 +66,72 @@ export default function Create() {
   });
 
   React.useEffect(() => {
-    if (data.video) {
-      const url = URL.createObjectURL(data.video);
-      setVideoPreviewUrl(url);
-      return () => URL.revokeObjectURL(url);
-    } else {
+    if (!data.video) {
       setVideoPreviewUrl(null);
+      return;
     }
+
+    const url = URL.createObjectURL(data.video);
+    setVideoPreviewUrl(url);
+
+    return () => URL.revokeObjectURL(url);
   }, [data.video]);
 
   React.useEffect(() => {
-    if (data.thumbnail) {
-      const url = URL.createObjectURL(data.thumbnail);
-      setThumbPreviewUrl(url);
-      return () => URL.revokeObjectURL(url);
-    } else {
+    if (!data.thumbnail) {
       setThumbPreviewUrl(null);
+      return;
     }
+
+    const url = URL.createObjectURL(data.thumbnail);
+    setThumbPreviewUrl(url);
+
+    return () => URL.revokeObjectURL(url);
   }, [data.thumbnail]);
+
+  const activeVideoName = data.video?.name || "Belum ada video dipilih";
+  const activeVideoSize = data.video ? `${(data.video.size / (1024 * 1024)).toFixed(2)} MB` : "Pilih video untuk melihat preview";
+
+  const goToStep = (step: (typeof STEPS)[number]["id"]) => {
+    setCurrentStep(step);
+  };
+
+  const goNext = () => {
+    if (currentStep === 1 && !data.title.trim()) {
+      toast.error("Judul video perlu diisi dulu.");
+      return;
+    }
+
+    if (currentStep === 2 && !data.video) {
+      toast.error("Pilih file video sebelum lanjut.");
+      return;
+    }
+
+    setCurrentStep((step) => Math.min(step + 1, STEPS.length) as (typeof STEPS)[number]["id"]);
+  };
+
+  const goBack = () => {
+    setCurrentStep((step) => Math.max(step - 1, 1) as (typeof STEPS)[number]["id"]);
+  };
+
+  const handleVideoDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsVideoDragging(true);
+  };
+
+  const handleVideoDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsVideoDragging(false);
+  };
+
+  const handleVideoDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsVideoDragging(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      setData("video", e.dataTransfer.files[0]);
+    }
+  };
 
   const handleThumbDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -77,52 +153,48 @@ export default function Create() {
   };
 
   const captureThumbnail = () => {
-    if (videoRef.current) {
-      const video = videoRef.current;
-      const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        canvas.toBlob((blob) => {
-          if (blob) {
-            const file = new File([blob], "captured-thumbnail.jpg", { type: "image/jpeg" });
-            setData("thumbnail", file);
-            toast.success("Thumbnail berhasil diambil dari video.");
-            setIsCaptureModalOpen(false);
-          }
-        }, "image/jpeg", 0.9);
-      }
+    if (!videoRef.current) {
+      return;
     }
-  };
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
+    const previewVideo = videoRef.current;
+    const canvas = document.createElement("canvas");
+    canvas.width = previewVideo.videoWidth;
+    canvas.height = previewVideo.videoHeight;
 
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      setData("video", e.dataTransfer.files[0]);
+    const context = canvas.getContext("2d");
+    if (!context) {
+      return;
     }
+
+    context.drawImage(previewVideo, 0, 0, canvas.width, canvas.height);
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          toast.error("Browser gagal membuat thumbnail WebP.");
+          return;
+        }
+
+        const file = new File([blob], "captured-thumbnail.webp", { type: "image/webp" });
+        setData("thumbnail", file);
+        toast.success("Thumbnail WebP berhasil diambil dari video.");
+        setIsCaptureModalOpen(false);
+      },
+      "image/webp",
+      0.7,
+    );
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
     post(route("admin.videos.store"), {
       onSuccess: () => {
         toast.success("Video berhasil diunggah.");
       },
-      onError: () => toast.error("Gagal mengunggah video."),
+      onError: () => {
+        toast.error("Gagal mengunggah video.");
+      },
     });
   };
 
@@ -130,15 +202,20 @@ export default function Create() {
     if (e.key === "Enter" || e.key === ",") {
       e.preventDefault();
       const newTag = currentTag.trim();
+
       if (newTag && !data.tags.includes(newTag)) {
         setData("tags", [...data.tags, newTag]);
       }
+
       setCurrentTag("");
     }
   };
 
   const handleRemoveTag = (tagToRemove: string) => {
-    setData("tags", data.tags.filter(tag => tag !== tagToRemove));
+    setData(
+      "tags",
+      data.tags.filter((tag) => tag !== tagToRemove),
+    );
   };
 
   return (
@@ -146,284 +223,440 @@ export default function Create() {
       <Head title="Unggah Video Baru" />
       <Toaster position="top-center" />
 
-      <div className="p-4 space-y-6">
-        <div className="flex items-center gap-4">
-          <IconButton
-            variant="ghost"
-            onClick={() => router.get(route("admin.videos.index"))}
-            className="rounded-full flex-shrink-0"
-          >
-            <ArrowLeftIcon className="w-5 h-5 dark:text-white" />
-          </IconButton>
-          <div>
-            <Typography variant="h4" className="text-xl font-bold text-slate-800 dark:text-white">
-              Unggah Video Baru
-            </Typography>
+      <div className="space-y-6 p-4">
+        <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+          <div className="flex items-center gap-3">
+            <IconButton
+              variant="ghost"
+              color="secondary"
+              onClick={() => router.get(route("admin.videos.index"))}
+              className="rounded-full"
+            >
+              <ArrowLeftIcon className="h-5 w-5 dark:text-white" />
+            </IconButton>
+            <div>
+              <Typography variant="h4" className="font-bold text-slate-800 dark:text-white">
+                Unggah Video Baru
+              </Typography>
+              <Typography className="text-slate-500 dark:text-slate-400">
+                Ikuti langkah berikut untuk menyiapkan video sebelum dipublikasikan.
+              </Typography>
+            </div>
           </div>
         </div>
 
-        <Card className="shadow-sm border border-slate-200 dark:border-slate-800 dark:bg-slate-900 overflow-hidden max-w-3xl mx-auto">
-          <CardBody className="p-6">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-1">
-                <Typography as="label" htmlFor="title" type="small" color="default" className="font-semibold dark:text-white">
-                  Judul Video
-                </Typography>
-                <Input
-                  id="title"
-                  placeholder="Masukkan judul video (contoh: Belajar Matematika Dasar)"
-                  value={data.title}
-                  onChange={(e) => setData("title", e.target.value)}
-                  isError={!!errors.title}
-                  className="dark:text-white"
-                />
-                {errors.title && (
-                  <Typography type="small" color="error" className="mt-1 block">
-                    {errors.title}
-                  </Typography>
-                )}
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[300px_minmax(0,1fr)]">
+          <Card className="border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <CardBody className="space-y-4 p-5">
+              <Typography variant="h6" className="font-bold text-slate-800 dark:text-white">
+                Langkah Upload
+              </Typography>
+              <div className="space-y-3">
+                {STEPS.map((step) => {
+                  const isActive = currentStep === step.id;
+                  const isCompleted = currentStep > step.id;
+
+                  return (
+                    <button
+                      key={step.id}
+                      type="button"
+                      onClick={() => goToStep(step.id)}
+                      className={`flex w-full items-start gap-3 rounded-2xl border p-4 text-left transition-all ${isActive
+                        ? "border-primary bg-primary/10 dark:bg-primary/15"
+                        : "border-slate-200 bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900"
+                        }`}
+                    >
+                      <div className={`mt-0.5 flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${isCompleted
+                        ? "bg-primary text-white"
+                        : isActive
+                          ? "bg-primary/15 text-primary"
+                          : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+                        }`}>
+                        {isCompleted ? <CheckCircleIcon className="h-4 w-4" /> : step.id}
+                      </div>
+                      <div>
+                        <Typography className="font-semibold text-slate-800 dark:text-white">
+                          {step.title}
+                        </Typography>
+                        <Typography className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                          {step.description}
+                        </Typography>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
 
-              <div className="space-y-1">
-                <Typography as="label" htmlFor="description" type="small" color="default" className="font-semibold dark:text-white">
-                  Deskripsi
+              <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/50">
+                <Typography className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  Progress
                 </Typography>
-                <Textarea
-                  id="description"
-                  placeholder="Tuliskan deskripsi lengkap mengenai isi video ini..."
-                  value={data.description}
-                  onChange={(e) => setData("description", e.target.value)}
-                  isError={!!errors.description}
-                  className="dark:text-white min-h-[120px]"
-                />
-                {errors.description && (
-                  <Typography type="small" color="error" className="mt-1 block">
-                    {errors.description}
-                  </Typography>
-                )}
+                <Typography className="mt-1 font-medium text-slate-800 dark:text-white">
+                  Langkah {currentStep} dari {STEPS.length}
+                </Typography>
               </div>
+            </CardBody>
+          </Card>
 
-              <div className="space-y-1">
-                <Typography as="label" htmlFor="tags" type="small" color="default" className="font-semibold dark:text-white">
-                  Tags (Opsional)
-                </Typography>
-                <div className="flex flex-col gap-2">
-                  <Input
-                    id="tags"
-                    placeholder="Ketik tag lalu tekan Enter (misal: edukasi, tutorial)"
-                    value={currentTag}
-                    onChange={(e) => setCurrentTag(e.target.value)}
-                    onKeyDown={handleAddTag}
-                    className="dark:text-white"
-                  />
-                  {data.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-2">
+          <form onSubmit={handleSubmit}>
+            {currentStep === 1 && (
+              <Card className="border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                <CardBody className="space-y-6 p-6">
+                  <div>
+                    <Typography variant="h5" className="font-bold text-slate-800 dark:text-white">
+                      Informasi Dasar
+                    </Typography>
+                    <Typography className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                      Isi informasi utama video sebelum memilih file yang akan diunggah.
+                    </Typography>
+                  </div>
+
+                  <div className="space-y-1">
+                    <Typography as="label" htmlFor="title" type="small" color="default" className="font-semibold dark:text-white">
+                      Judul Video
+                    </Typography>
+                    <Input
+                      id="title"
+                      placeholder="Masukkan judul video"
+                      value={data.title}
+                      onChange={(e) => setData("title", e.target.value)}
+                      isError={!!errors.title}
+                      className="dark:text-white"
+                    />
+                    {errors.title && (
+                      <Typography type="small" color="error" className="mt-1 block">
+                        {errors.title}
+                      </Typography>
+                    )}
+                  </div>
+
+                  <div className="space-y-1">
+                    <Typography as="label" htmlFor="description" type="small" color="default" className="font-semibold dark:text-white">
+                      Deskripsi
+                    </Typography>
+                    <Textarea
+                      id="description"
+                      placeholder="Tuliskan deskripsi video ini"
+                      value={data.description}
+                      onChange={(e) => setData("description", e.target.value)}
+                      isError={!!errors.description}
+                      className="min-h-[180px] dark:text-white"
+                    />
+                    {errors.description && (
+                      <Typography type="small" color="error" className="mt-1 block">
+                        {errors.description}
+                      </Typography>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Typography as="label" htmlFor="tags" type="small" color="default" className="font-semibold dark:text-white">
+                      Tags
+                    </Typography>
+                    <Input
+                      id="tags"
+                      placeholder="Ketik tag lalu tekan Enter"
+                      value={currentTag}
+                      onChange={(e) => setCurrentTag(e.target.value)}
+                      onKeyDown={handleAddTag}
+                      className="dark:text-white"
+                    />
+                    <div className="flex flex-wrap gap-2">
                       {data.tags.map((tag) => (
                         <Chip key={tag}>
-                          <Chip.Icon><Tag className="h-full w-full" /></Chip.Icon>
+                          <Chip.Icon>
+                            <Tag className="h-full w-full" />
+                          </Chip.Icon>
                           <Chip.Label>{tag}</Chip.Label>
                           <Chip.DismissTrigger onClick={() => handleRemoveTag(tag)} />
                         </Chip>
                       ))}
                     </div>
-                  )}
-                  {errors.tags && (
+                    {errors.tags && (
+                      <Typography type="small" color="error" className="mt-1 block">
+                        {errors.tags}
+                      </Typography>
+                    )}
+                  </div>
+                </CardBody>
+              </Card>
+            )}
+
+            {currentStep === 2 && (
+              <Card className="border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                <CardBody className="space-y-6 p-6">
+                  <div>
+                    <Typography variant="h5" className="font-bold text-slate-800 dark:text-white">
+                      Upload Video
+                    </Typography>
+                    <Typography className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                      Tambahkan file utama, lalu cek preview sebelum lanjut ke thumbnail.
+                    </Typography>
+                  </div>
+
+                  <div
+                    className={`rounded-2xl border-2 border-dashed p-5 transition-all duration-300 ${isVideoDragging
+                      ? "border-primary bg-primary/10 dark:bg-primary/20"
+                      : "border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/40"
+                      }`}
+                    onDragOver={handleVideoDragOver}
+                    onDragLeave={handleVideoDragLeave}
+                    onDrop={handleVideoDrop}
+                  >
+                    <input
+                      ref={fileInputRef}
+                      id="video"
+                      type="file"
+                      accept="video/mp4,video/quicktime,video/x-msvideo"
+                      className="hidden"
+                      onChange={(e) => setData("video", e.target.files?.[0] || null)}
+                    />
+
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                      <div className="flex items-start gap-4">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                          <VideoIcon className="h-6 w-6" />
+                        </div>
+                        <div className="min-w-0">
+                          <Typography className="font-semibold text-slate-800 dark:text-white">
+                            {activeVideoName}
+                          </Typography>
+                          <Typography className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                            {data.video ? "File video siap diunggah saat formulir disimpan." : "Belum memilih file video."}
+                          </Typography>
+                          <Typography className="mt-2 text-xs text-slate-400 dark:text-slate-500">
+                            {activeVideoSize}
+                          </Typography>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          color="secondary"
+                          className="flex items-center gap-2"
+                          onClick={() => fileInputRef.current?.click()}
+                        >
+                          <UploadCloudIcon className="h-4 w-4" />
+                          Pilih Video
+                        </Button>
+                        {data.video && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            color="secondary"
+                            onClick={() => setData("video", null)}
+                          >
+                            Batalkan Pilihan
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+
+                    <Typography className="mt-4 text-xs text-slate-500 dark:text-slate-400">
+                      Drag & drop video ke area ini atau pilih manual. Format: MP4, MOV, AVI. Maks 100MB.
+                    </Typography>
+                  </div>
+
+                  {errors.video && (
                     <Typography type="small" color="error" className="mt-1 block">
-                      {errors.tags}
+                      {errors.video}
                     </Typography>
                   )}
-                </div>
-              </div>
 
-              <div className="space-y-1">
-                <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
-                  <Typography as="label" type="small" color="default" className="font-semibold dark:text-white">
-                    Thumbnail / Cover Video (Opsional, Max 5MB)
-                  </Typography>
-                  {videoPreviewUrl && (
-                    <Button
-                      size="sm"
-                      color="info"
-                      variant="outline"
-                      className="flex items-center gap-2"
-                      onClick={() => setIsCaptureModalOpen(true)}
-                      type="button"
-                    >
-                      <CameraIcon className="w-4 h-4" />
-                      Ambil Frame dari Video
-                    </Button>
-                  )}
-                </div>
-
-                <div
-                  className={`mt-1 flex flex-col items-center justify-center w-full min-h-[160px] border-2 border-dashed rounded-xl cursor-pointer transition-all duration-300 relative overflow-hidden ${isThumbDragging
-                    ? 'border-primary bg-primary/10 dark:bg-primary/20'
-                    : 'border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800'
-                    }`}
-                  onDragOver={handleThumbDragOver}
-                  onDragLeave={handleThumbDragLeave}
-                  onDrop={handleThumbDrop}
-                  onClick={() => thumbInputRef.current?.click()}
-                >
-                  <input
-                    ref={thumbInputRef}
-                    id="thumbnail"
-                    type="file"
-                    accept="image/jpeg,image/png,image/jpg"
-                    className="hidden"
-                    onChange={(e) => setData("thumbnail", e.target.files?.[0] || null)}
-                  />
-
-                  {thumbPreviewUrl ? (
-                    <div className="flex flex-col items-center justify-center w-full h-full p-2">
-                      <img src={thumbPreviewUrl} alt="Thumbnail Preview" className="max-h-[200px] object-contain rounded-lg shadow-sm" />
-                      <Typography variant="small" className="text-primary mt-3 flex items-center justify-center gap-1 font-medium bg-white/80 dark:bg-slate-900/80 px-3 py-1 rounded-full absolute bottom-4">
-                        Klik atau drag untuk mengganti gambar
-                      </Typography>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center gap-2 p-4 text-center">
-                      <div className="w-12 h-12 bg-slate-200 dark:bg-slate-700 rounded-full flex items-center justify-center">
-                        <ImageIcon className="w-6 h-6 text-slate-500 dark:text-slate-400" />
+                  <div className="overflow-hidden rounded-2xl border border-slate-200 bg-black shadow-inner dark:border-slate-800">
+                    {videoPreviewUrl ? (
+                      <video
+                        ref={videoRef}
+                        src={videoPreviewUrl}
+                        controls
+                        className="aspect-video w-full bg-black"
+                        crossOrigin="anonymous"
+                      />
+                    ) : (
+                      <div className="flex aspect-video items-center justify-center bg-slate-950 text-slate-500">
+                        <div className="text-center">
+                          <VideoIcon className="mx-auto h-10 w-10" />
+                          <Typography className="mt-3 text-sm text-slate-400">
+                            Preview video akan muncul di sini.
+                          </Typography>
+                        </div>
                       </div>
-                      <Typography className="font-semibold text-slate-800 dark:text-white mt-2">
-                        Pilih gambar atau drag & drop ke sini
-                      </Typography>
-                      <Typography variant="small" className="text-slate-500">
-                        JPG, PNG. Maks 5MB.
-                      </Typography>
+                    )}
+                  </div>
+                </CardBody>
+              </Card>
+            )}
+
+            {currentStep === 3 && (
+              <div className="space-y-6">
+                <Card className="border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                  <CardBody className="space-y-6 p-6">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <Typography variant="h5" className="font-bold text-slate-800 dark:text-white">
+                          Thumbnail dan Review
+                        </Typography>
+                        <Typography className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                          Tambahkan cover dan pastikan semua data sudah benar sebelum upload.
+                        </Typography>
+                      </div>
+                      {videoPreviewUrl && (
+                        <Button
+                          size="sm"
+                          color="info"
+                          variant="outline"
+                          className="flex items-center gap-2"
+                          onClick={() => setIsCaptureModalOpen(true)}
+                          type="button"
+                        >
+                          <CameraIcon className="h-4 w-4" />
+                          Ambil Frame
+                        </Button>
+                      )}
                     </div>
-                  )}
-                </div>
 
-                {errors.thumbnail && (
-                  <Typography type="small" color="error" className="mt-1 block">
-                    {errors.thumbnail}
-                  </Typography>
-                )}
-              </div>
+                    <div
+                      className={`relative overflow-hidden rounded-2xl border-2 border-dashed transition-all duration-300 ${isThumbDragging
+                        ? "border-primary bg-primary/10 dark:bg-primary/20"
+                        : "border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/40"
+                        }`}
+                      onDragOver={handleThumbDragOver}
+                      onDragLeave={handleThumbDragLeave}
+                      onDrop={handleThumbDrop}
+                      onClick={() => thumbInputRef.current?.click()}
+                    >
+                      <input
+                        ref={thumbInputRef}
+                        id="thumbnail"
+                        type="file"
+                        accept="image/jpeg,image/png,image/jpg,image/webp"
+                        className="hidden"
+                        onChange={(e) => setData("thumbnail", e.target.files?.[0] || null)}
+                      />
 
-              <div className="space-y-1">
-                <Typography as="label" type="small" color="default" className="font-semibold dark:text-white">
-                  File Video (MP4, Max 100MB)
-                </Typography>
-
-                <div
-                  className={`mt-1 flex flex-col items-center justify-center w-full min-h-[160px] border-2 border-dashed rounded-xl cursor-pointer transition-all duration-300 ${isDragging
-                    ? 'border-primary bg-primary/10 dark:bg-primary/20'
-                    : 'border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800'
-                    }`}
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={handleDrop}
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <input
-                    ref={fileInputRef}
-                    id="video"
-                    type="file"
-                    accept="video/mp4,video/quicktime,video/x-msvideo"
-                    className="hidden"
-                    onChange={(e) => setData("video", e.target.files?.[0] || null)}
-                  />
-
-                  {data.video ? (
-                    <div className="flex flex-col items-center gap-4 p-4 text-center w-full" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center justify-between p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm w-full">
-                        <div className="flex items-center gap-4 min-w-0">
-                          <div className="w-10 h-10 bg-primary/10 rounded flex items-center justify-center flex-shrink-0">
-                            <VideoIcon className="w-5 h-5 text-primary" />
-                          </div>
-                          <div className="text-left min-w-0">
-                            <Typography className="font-semibold text-slate-800 dark:text-white truncate">
-                              {data.video.name}
-                            </Typography>
-                            <Typography variant="small" className="text-slate-500">
-                              {(data.video.size / (1024 * 1024)).toFixed(2)} MB
-                            </Typography>
+                      {thumbPreviewUrl ? (
+                        <div className="relative p-3">
+                          <img
+                            src={thumbPreviewUrl}
+                            alt="Thumbnail Preview"
+                            className="aspect-video w-full rounded-xl border border-slate-200 object-cover dark:border-slate-700"
+                          />
+                          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 rounded-full bg-white/90 px-4 py-1 text-xs font-medium text-slate-800 shadow-sm dark:bg-slate-900/90 dark:text-white">
+                            Klik untuk ganti thumbnail
                           </div>
                         </div>
-                        <Button size="sm" variant="ghost" color="primary" onClick={() => fileInputRef.current?.click()}>
-                          Ganti
-                        </Button>
-                      </div>
-
-                      {videoPreviewUrl && (
-                        <div className="w-full mt-2 flex justify-center max-w-full">
-                          <video
-                            src={videoPreviewUrl}
-                            controls
-                            className="max-h-[300px] rounded-xl bg-black border border-slate-200 dark:border-slate-800"
-                          />
+                      ) : (
+                        <div className="flex min-h-[220px] flex-col items-center justify-center gap-3 p-6 text-center">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-200 dark:bg-slate-700">
+                            <ImageIcon className="h-6 w-6 text-slate-500 dark:text-slate-400" />
+                          </div>
+                          <Typography className="font-semibold text-slate-800 dark:text-white">
+                            Tambahkan thumbnail
+                          </Typography>
+                          <Typography className="text-sm text-slate-500 dark:text-slate-400">
+                            JPG, PNG, atau WEBP. Hasil akhir akan disimpan sebagai WEBP kualitas 70%.
+                          </Typography>
                         </div>
                       )}
                     </div>
-                  ) : (
-                    <div className="flex flex-col items-center gap-2 p-4 text-center">
-                      <div className="w-12 h-12 bg-slate-200 dark:bg-slate-700 rounded-full flex items-center justify-center">
-                        <UploadCloudIcon className="w-6 h-6 text-slate-500 dark:text-slate-400" />
-                      </div>
-                      <Typography className="font-semibold text-slate-800 dark:text-white mt-2">
-                        Pilih file atau drag & drop ke sini
-                      </Typography>
-                      <Typography variant="small" className="text-slate-500">
-                        MP4, MOV, atau AVI. Maks 100MB.
-                      </Typography>
-                    </div>
-                  )}
-                </div>
 
-                {errors.video && (
-                  <Typography type="small" color="error" className="mt-1 block">
-                    {errors.video}
-                  </Typography>
+                    {errors.thumbnail && (
+                      <Typography type="small" color="error" className="mt-1 block">
+                        {errors.thumbnail}
+                      </Typography>
+                    )}
+                  </CardBody>
+                </Card>
+
+                <Card className="border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                  <CardBody className="space-y-4 p-6">
+                    <Typography variant="h6" className="font-bold text-slate-800 dark:text-white">
+                      Ringkasan Upload
+                    </Typography>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/50 sm:col-span-2">
+                        <Typography className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                          Judul
+                        </Typography>
+                        <Typography className="mt-1 font-medium text-slate-800 dark:text-white">
+                          {data.title || "Belum diisi"}
+                        </Typography>
+                      </div>
+                      <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/50">
+                        <Typography className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                          Video
+                        </Typography>
+                        <Typography className="mt-1 font-medium text-slate-800 dark:text-white">
+                          {data.video ? "Siap diunggah" : "Belum ada file"}
+                        </Typography>
+                      </div>
+                      <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/50">
+                        <Typography className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                          Thumbnail
+                        </Typography>
+                        <Typography className="mt-1 font-medium text-slate-800 dark:text-white">
+                          {data.thumbnail ? "Sudah dipilih" : "Opsional"}
+                        </Typography>
+                      </div>
+                    </div>
+                  </CardBody>
+                </Card>
+
+                {progress && (
+                  <Card className="border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                    <CardBody className="space-y-3 p-5">
+                      <div className="flex items-center justify-between gap-3">
+                        <Typography className="font-medium text-slate-800 dark:text-white">
+                          Mengunggah video
+                        </Typography>
+                        <Typography className="text-sm text-slate-500 dark:text-slate-400">
+                          {progress.percentage}%
+                        </Typography>
+                      </div>
+                      <Progress value={progress.percentage} color="primary" />
+                    </CardBody>
+                  </Card>
                 )}
               </div>
+            )}
 
-              {progress && (
-                <div className="w-full mt-4 bg-slate-50 dark:bg-slate-800 p-4 rounded-lg border border-slate-100 dark:border-slate-700">
-                  <Typography variant="small" className="mb-2 dark:text-white font-medium flex justify-between">
-                    <span>Mengunggah file...</span>
-                    <span>{progress.percentage}%</span>
-                  </Typography>
-                  <Progress value={progress.percentage} color="primary" />
-                </div>
+            <div className="mt-6 flex flex-col-reverse justify-between gap-3 border-t border-slate-200 pt-5 sm:flex-row dark:border-slate-800">
+              <Button
+                type="button"
+                variant="ghost"
+                color="secondary"
+                onClick={currentStep === 1 ? () => router.get(route("admin.videos.index")) : goBack}
+                className="flex items-center justify-center gap-2"
+              >
+                <ArrowLeftIcon className="h-4 w-4" />
+                {currentStep === 1 ? "Batal" : "Kembali"}
+              </Button>
+
+              {currentStep < STEPS.length ? (
+                <Button type="button" color="primary" onClick={goNext} className="flex items-center justify-center gap-2">
+                  Lanjut
+                  <ArrowRightIcon className="h-4 w-4" />
+                </Button>
+              ) : (
+                <Button type="submit" color="primary" disabled={processing} className="flex items-center justify-center gap-2">
+                  <SaveIcon className="h-4 w-4" />
+                  {processing ? "Mengunggah..." : "Simpan Video"}
+                </Button>
               )}
-
-              <div className="flex justify-end pt-4 border-t border-slate-100 dark:border-slate-800 mt-6 gap-2">
-                <Button
-                  variant="ghost"
-                  color="secondary"
-                  type="button"
-                  onClick={() => router.get(route("admin.videos.index"))}
-                  className="mr-2"
-                >
-                  Batal
-                </Button>
-                <Button
-                  type="submit"
-                  color="primary"
-                  disabled={processing}
-                  className="flex items-center gap-2"
-                >
-                  {processing ? "Menyimpan..." : (
-                    <>
-                      <SaveIcon className="w-4 h-4" /> Simpan Video
-                    </>
-                  )}
-                </Button>
-              </div>
-            </form>
-          </CardBody>
-        </Card>
+            </div>
+          </form>
+        </div>
       </div>
 
-      {/* Capture Modal */}
       <Dialog open={isCaptureModalOpen} onOpenChange={() => setIsCaptureModalOpen(false)} size="lg">
         <Dialog.Overlay>
-          <Dialog.Content className="dark:border-slate-800 p-0 border-0 shadow-lg shadow-black/10">
-            <div className="p-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
-              <Typography type="h6" className="dark:text-white">Ambil Thumbnail dari Video</Typography>
+          <Dialog.Content className="border-0 p-0 shadow-lg shadow-black/10 dark:border-slate-800">
+            <div className="flex items-center justify-between border-b border-slate-100 p-4 dark:border-slate-700">
+              <Typography type="h6" className="dark:text-white">
+                Ambil Thumbnail dari Video
+              </Typography>
               <IconButton variant="ghost" size="sm" onClick={() => setIsCaptureModalOpen(false)}>
                 <span className="sr-only">Tutup</span>
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
@@ -431,7 +664,7 @@ export default function Create() {
             </div>
 
             {videoPreviewUrl && (
-              <div className="w-full flex justify-center bg-black">
+              <div className="flex w-full justify-center bg-black max-h-[70vh] overflow-auto">
                 <video
                   ref={videoRef}
                   src={videoPreviewUrl}
@@ -442,19 +675,19 @@ export default function Create() {
               </div>
             )}
 
-            <div className="p-4 bg-slate-50 dark:bg-slate-900 border-t border-slate-100 dark:border-slate-700">
-              <div className="flex flex-col sm:flex-row w-full justify-between items-center gap-4">
+            <div className="border-t border-slate-100 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900">
+              <div className="flex w-full flex-col items-center justify-between gap-4 sm:flex-row">
                 <Typography variant="small" className="text-slate-600 dark:text-slate-400">
-                  Geser video ke frame yang tepat lalu klik "Simpan Frame"
+                  Geser video ke frame yang tepat lalu klik "Simpan Frame".
                 </Typography>
                 <Button
                   size="md"
                   color="primary"
-                  className="flex items-center gap-2 flex-shrink-0"
+                  className="flex flex-shrink-0 items-center gap-2"
                   onClick={captureThumbnail}
                   type="button"
                 >
-                  <CameraIcon className="w-4 h-4" />
+                  <CameraIcon className="h-4 w-4" />
                   Simpan Frame
                 </Button>
               </div>

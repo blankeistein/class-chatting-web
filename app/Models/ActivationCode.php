@@ -21,6 +21,7 @@ class ActivationCode extends Model
         'tier',
         'times_activated',
         'max_activated',
+        'created_by',
         'is_active',
     ];
 

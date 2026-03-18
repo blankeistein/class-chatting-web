@@ -184,6 +184,11 @@ class BookController extends Controller
             $message = "Kode berhasil diaktifkan. \nKode bisa diaktifkan {$limit} kali lagi";
         }
 
+        Log::channel('activation-code')->info('Activation code activated', [
+            'user_id' => $validateData['uid'],
+            'code' => $validateData['code'],
+        ]);
+
         return response()->json([
             'status' => 'success',
             'message' => $message,

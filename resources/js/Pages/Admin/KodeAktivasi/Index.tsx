@@ -324,7 +324,7 @@ export default function Index({
         </div>
 
         {selectedIds.length > 0 && (
-          <Card className="fixed bottom-8 left-1/2 z-30 flex w-[90%] -translate-x-1/2 animate-in flex-row items-center justify-between gap-3 bg-slate-900 p-3 text-white duration-300 fade-in slide-in-from-top-4 lg:w-[600px]">
+          <Card color="secondary" className="fixed bottom-8 left-1/2 z-30 flex w-[90%] -translate-x-1/2 animate-in flex-row items-center justify-between gap-3 p-3 text-white duration-300 fade-in slide-in-from-top-4 lg:w-[600px]">
             <div className="flex items-center gap-3">
               <Checkbox
                 checked={selectedIds.length === activationCodes.data.length}
@@ -450,21 +450,6 @@ export default function Index({
                   </Select.List>
                 </Select>
               </div>
-
-              <Button color="primary" className="flex items-center gap-2" onClick={handleSearch}>
-                <SearchIcon className="h-4 w-4" /> Terapkan
-              </Button>
-
-              {hasActiveFilters && (
-                <Button
-                  variant="ghost"
-                  color="secondary"
-                  className="flex items-center gap-2"
-                  onClick={handleResetFilters}
-                >
-                  <RotateCcwIcon className="h-4 w-4" /> Reset
-                </Button>
-              )}
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -556,6 +541,23 @@ export default function Index({
                   </Select.List>
                 </Select>
               </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button color="primary" className="flex items-center gap-2" onClick={handleSearch}>
+                <SearchIcon className="h-4 w-4" /> Terapkan
+              </Button>
+
+              {hasActiveFilters && (
+                <Button
+                  variant="ghost"
+                  color="secondary"
+                  className="flex items-center gap-2"
+                  onClick={handleResetFilters}
+                >
+                  <RotateCcwIcon className="h-4 w-4" /> Reset
+                </Button>
+              )}
             </div>
           </CardBody>
         </Card>

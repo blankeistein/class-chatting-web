@@ -79,7 +79,7 @@ export default function Index({ stats }: { stats: Stats }) {
     <>
       <Head title="Dashboard" />
 
-      <div className="p-4 space-y-6">
+      <div className="p-4 space-y-6 min-h-[calc(100vh-8rem)]">
 
         {/* Welcome Section */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
@@ -116,82 +116,6 @@ export default function Index({ stats }: { stats: Stats }) {
           ))}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-          {/* Main Chart Section (Simulated) */}
-          <Card className="col-span-1 lg:col-span-2 shadow-sm border border-slate-200 dark:border-slate-800 dark:bg-slate-900">
-            <CardBody className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <Typography variant="h5" className="font-bold text-slate-800 dark:text-white">
-                    Analisis Penjualan
-                  </Typography>
-                  <Typography className="text-sm text-slate-500 dark:text-slate-400">
-                    Performa penjualan dalam 7 hari terakhir
-                  </Typography>
-                </div>
-                <Button size="sm" variant="ghost" className="flex items-center gap-2 dark:text-white">
-                  Lihat Detail <ArrowRightIcon className="w-4 h-4" />
-                </Button>
-              </div>
-
-              {/* CSS Bar Chart Simulation */}
-              <div className="h-64 flex items-end justify-between gap-2 mt-8">
-                {[45, 78, 55, 90, 65, 88, 40, 60, 95, 75, 50, 70].map((height, i) => (
-                  <div key={i} className="w-full flex flex-col items-center gap-2 group cursor-pointer">
-                    <div className="relative w-full bg-slate-100 dark:bg-slate-800 rounded-t-sm h-full flex items-end overflow-hidden">
-                      <div
-                        style={{ height: `${height}%` }}
-                        className="w-full bg-blue-500 dark:bg-blue-600 rounded-t-sm transition-all duration-500 hover:bg-blue-600 dark:hover:bg-blue-500"
-                      ></div>
-                    </div>
-                    <span className="text-xs text-slate-400 group-hover:text-blue-500">
-                      {i + 1} Des
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </CardBody>
-          </Card>
-
-          {/* Popular Products / Activity */}
-          <Card className="col-span-1 shadow-sm border border-slate-200 dark:border-slate-800 dark:bg-slate-900">
-            <CardBody className="p-6">
-              <Typography variant="h5" className="font-bold text-slate-800 dark:text-white mb-6">
-                Buku Terpopuler
-              </Typography>
-              <div className="space-y-6">
-                {popularBooks.map((book, idx) => (
-                  <div key={idx}>
-                    <div className="flex justify-between items-center mb-2">
-                      <Typography className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                        {book.name}
-                      </Typography>
-                      <Typography className="text-xs font-bold text-slate-500 dark:text-slate-400">
-                        {book.sales}%
-                      </Typography>
-                    </div>
-                    <Progress value={book.sales} color={book.color as any} size="sm" className="bg-slate-100 dark:bg-slate-800" />
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800">
-                <div className="flex items-center justify-between">
-                  <div className="flex -space-x-4">
-                    <Avatar shape="circular" size="sm" alt="user 1" className="border-2 border-white dark:border-slate-900 hover:z-10 focus:z-10" src="https://i.pravatar.cc/150?u=1" />
-                    <Avatar shape="circular" size="sm" alt="user 2" className="border-2 border-white dark:border-slate-900 hover:z-10 focus:z-10" src="https://i.pravatar.cc/150?u=2" />
-                    <Avatar shape="circular" size="sm" alt="user 3" className="border-2 border-white dark:border-slate-900 hover:z-10 focus:z-10" src="https://i.pravatar.cc/150?u=3" />
-                    <div className="w-8 h-8 rounded-full border-2 border-white dark:border-slate-900 bg-slate-200 dark:bg-slate-700 text-xs font-bold flex items-center justify-center text-slate-600 dark:text-slate-300 relative hover:z-10 focus:z-10">
-                      +5
-                    </div>
-                  </div>
-                  <Typography className="text-xs text-slate-500">Pelanggan baru minggu ini</Typography>
-                </div>
-              </div>
-            </CardBody>
-          </Card>
-        </div>
       </div>
     </>
   );

@@ -1,22 +1,23 @@
 <?php
 
 use App\Models\Setting;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 
-if (!function_exists('setting')) {
-    function setting($key, $default = null)
+if (! function_exists('setting')) {
+    /**
+     * Retrieve an application setting value from cache or database.
+     */
+    function setting(string $key, mixed $default = null): mixed
     {
-        if (Cache::has('settings')) {
-            $settings = Cache::get('settings');
+        $settings = Cache::get('settings');
+
+        if ($settings instanceof Collection) {
             return $settings->get($key, $default);
         }
 
-        $setting = Setting::where('key', $key)->first();
-
-        if ($setting) {
-            return $setting->value;
-        }
-
-        return $default;
+        return Setting::query()
+            ->where('key', $key)
+            ->value('value') ?? $default;
     }
 }

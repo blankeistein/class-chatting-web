@@ -13,7 +13,7 @@ import {
   Tooltip,
   Typography,
 } from "@material-tailwind/react";
-import { ArchiveIcon, BellIcon, BookIcon, ChevronDownIcon, GithubIcon, LayoutDashboardIcon, LogOutIcon, MailIcon, MenuIcon, MoonIcon, PiIcon, PinIcon, SunIcon, TicketIcon, Trash2Icon, UserCircle2Icon, VideoIcon, XIcon } from "lucide-react";
+import { ArchiveIcon, BellIcon, BookIcon, ChevronDownIcon, GithubIcon, LayoutDashboardIcon, LogOutIcon, MailIcon, MapPinnedIcon, MenuIcon, MoonIcon, PiIcon, PinIcon, SunIcon, TicketIcon, Trash2Icon, UserCircle2Icon, VideoIcon, XIcon } from "lucide-react";
 import { useTheme } from "../Contexts/ThemeContext";
 import { Link, router, usePage } from "@inertiajs/react";
 import { route } from "ziggy-js";
@@ -46,6 +46,11 @@ const Links: LinkType[] = [
     icon: TicketIcon,
     title: "Kode Aktivasi",
     routeName: "admin.activation-code.index",
+  },
+  {
+    icon: MapPinnedIcon,
+    title: "Daerah",
+    routeName: "admin.regions.index",
   },
   {
     icon: ArchiveIcon,
@@ -401,3 +406,4 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     </div>
   );
 }
+

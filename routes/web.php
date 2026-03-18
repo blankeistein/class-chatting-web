@@ -3,7 +3,11 @@
 use App\Http\Controllers\Admin\ActivationCodeController;
 use App\Http\Controllers\Admin\BookController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\RegionController as AdminRegionController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\VideoController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\NotificationController;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -17,10 +21,10 @@ Route::post('login', [AuthController::class, 'loginAction'])->middleware('guest'
 Route::delete('logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::middleware('auth')->group(function () {
-    Route::get('notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
-    Route::put('notifications/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.read');
-    Route::put('notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
-    Route::delete('notifications/{id}', [\App\Http\Controllers\NotificationController::class, 'destroy'])->name('notifications.destroy');
+    Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::put('notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::put('notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
+    Route::delete('notifications/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
 
     Route::group(['prefix' => Config::get('app.admin_path'), 'as' => 'admin.', 'middleware' => 'admin'], function () {
         Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -33,8 +37,19 @@ Route::middleware('auth')->group(function () {
         Route::get('books/selection', [BookController::class, 'selection'])->name('books.selection');
         Route::resource('books', BookController::class);
 
-        Route::resource('videos', \App\Http\Controllers\Admin\VideoController::class);
-        Route::resource('users', \App\Http\Controllers\Admin\UserController::class);
+        Route::get('regions', [AdminRegionController::class, 'index'])->name('regions.index');
+        Route::post('regions/provinces', [AdminRegionController::class, 'storeProvince'])->name('regions.provinces.store');
+        Route::put('regions/provinces/{province}', [AdminRegionController::class, 'updateProvince'])->name('regions.provinces.update');
+        Route::delete('regions/provinces/{province}', [AdminRegionController::class, 'destroyProvince'])->name('regions.provinces.destroy');
+        Route::post('regions/regencies', [AdminRegionController::class, 'storeRegency'])->name('regions.regencies.store');
+        Route::put('regions/regencies/{regency}', [AdminRegionController::class, 'updateRegency'])->name('regions.regencies.update');
+        Route::delete('regions/regencies/{regency}', [AdminRegionController::class, 'destroyRegency'])->name('regions.regencies.destroy');
+        Route::post('regions/districts', [AdminRegionController::class, 'storeDistrict'])->name('regions.districts.store');
+        Route::put('regions/districts/{district}', [AdminRegionController::class, 'updateDistrict'])->name('regions.districts.update');
+        Route::delete('regions/districts/{district}', [AdminRegionController::class, 'destroyDistrict'])->name('regions.districts.destroy');
+
+        Route::resource('videos', VideoController::class);
+        Route::resource('users', UserController::class);
     });
 });
 

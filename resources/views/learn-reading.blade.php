@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title inertia>{{ config('app.name', 'App Lestari Ilmu') }}</title>
+    <title inertia>{{ config('app.name', 'Class Chatting Web') }}</title>
     @viteReactRefresh
     @routes
     @vite(['resources/js/app-learn-reading.tsx', "resources/js/Pages/{$page['component']}.tsx"])

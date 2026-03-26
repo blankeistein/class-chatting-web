@@ -8,9 +8,9 @@ export default function Index() {
   return (
     <>
       <Head>
-        <meta name="description" content="Lestari Ilmu - Aplikasi untuk belajar Bahasa Indonesia" />
-        <meta name="keywords" content="Lestari Ilmu, Aplikasi, Belajar Bahasa Indonesia" />
-        <meta name="author" content="Lestari Ilmu" />
+        <meta name="description" content="Class Chatting Web - Aplikasi untuk belajar Bahasa Indonesia" />
+        <meta name="keywords" content="Class Chatting Web, Aplikasi, Belajar Bahasa Indonesia" />
+        <meta name="author" content="Class Chatting Web" />
       </Head>
       <div className="bg-neo-pinkish text-neo-dark h-screen w-screen overflow-hidden flex flex-col font-neo selection:bg-neo-lime">
         <header className="flex-none p-4 md:p-6 flex justify-between items-center border-b-4 border-black bg-white">
@@ -19,7 +19,7 @@ export default function Index() {
               {/* <TerminalIcon className="w-6 h-6" /> */}
               <img src="/favicon.ico" className="h-8 w-8" alt="icon" />
             </div>
-            <h1 className="text-2xl md:text-3xl font-black tracking-tighter uppercase">Lestari <span className="text-neo-yellow bg-black px-2">Ilmu</span></h1>
+            <h1 className="text-2xl md:text-3xl font-black tracking-tighter uppercase">Class Chatting Web</h1>
           </div>
           <div className="flex gap-4 items-center">
             {
@@ -106,7 +106,7 @@ export default function Index() {
         </main>
         <footer className="flex-none p-4 md:p-6 bg-white border-t-4 border-black flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="font-mono font-bold text-sm md:text-base bg-black text-white px-2 py-1 rotate-1">
-            © {new Date().getFullYear()} Lestari Ilmu
+            &copy; {new Date().getFullYear()} class-chatting-web
           </div>
 
           <div className="flex gap-3 flex-wrap justify-center">

@@ -255,7 +255,7 @@ function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
               type="h1"
               className="block py-1 font-bold !text-lg text-surface-foreground whitespace-nowrap overflow-hidden"
             >
-              App Lestari Ilmu
+              Class Chatting Web
             </Typography>
           )}
         </Card.Header>
@@ -359,7 +359,7 @@ function TopNavbar({ onToggleSidebar }: { onToggleSidebar: () => void }) {
               <div className="flex items-center gap-4 mb-4 px-2">
                 <img src="/assets/images/icons/lestari-ilmu.webp" alt="logo" className="h-8 w-8" />
                 <Typography type="h1" className="font-bold text-lg text-surface-foreground">
-                  App Lestari Ilmu
+                  Class Chatting Web
                 </Typography>
               </div>
               <NavList />

@@ -26,7 +26,7 @@ export default function Dashboard() {
 
     return (
         <>
-            <Head title="Lestari Ilmu" />
+            <Head title="Class Chatting Web" />
             <div className="h-screen flex">
                 {/* Container */}
                 <div className="bg-white w-full max-w-[320px]">

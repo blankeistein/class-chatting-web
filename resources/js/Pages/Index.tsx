@@ -17,7 +17,7 @@ export default function Index() {
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-neo-yellow border-2 border-black flex items-center justify-center shadow-neo-sm">
               {/* <TerminalIcon className="w-6 h-6" /> */}
-              <img src="/favicon.ico" className="h-8 w-8" alt="icon" />
+              <img src="/icon.png" className="h-8 w-8" alt="icon" />
             </div>
             <h1 className="text-2xl md:text-3xl font-black tracking-tighter uppercase">Class Chatting Web</h1>
           </div>
@@ -62,7 +62,7 @@ export default function Index() {
                   <img src="/assets/images/icons/class-chatting-ulangan-online.webp" className="w-10 h-10 md:w-16 md:h-16" alt="Class Chatting Ulangan Online icon" />
                 </div>
                 <span className="font-bold font-mono text-sm md:text-base truncate w-full text-center">
-                  Class Chatting Ulangan Online
+                  Ulangan Online
                 </span>
               </div>
             </a>
@@ -86,7 +86,7 @@ export default function Index() {
                   <img src="/assets/images/icons/class-chatting-for-kids.webp" className="w-10 h-10 md:w-16 md:h-16" alt="Class Chatting For Kids icon" />
                 </div>
                 <span className="font-bold font-mono text-sm md:text-base truncate w-full text-center">
-                  Class Chatting For Kids
+                  For Kids
                 </span>
               </div>
             </a>
@@ -98,7 +98,7 @@ export default function Index() {
                   <img src="/assets/images/icons/class-chatting-layar-lebar.webp" className="w-10 h-10 md:w-16 md:h-16" alt="Class Chatting Layar Lebar icon" />
                 </div>
                 <span className="font-bold font-mono text-sm md:text-base truncate w-full text-center">
-                  Class Chatting Layar Lebar
+                  Layar Lebar
                 </span>
               </div>
             </a>

@@ -20,19 +20,7 @@ class BookController extends Controller
     public function index()
     {
         $books = Book::query()->get();
-        $books = $books->map(function ($book) {
-            return [
-                'id' => $book->uuid,
-                'title' => $book->title
-            ];
-        });
-
-        return response()->json($books);
-    }
-
-    public function group_book()
-    {
-        return response()->json([]);
+        return BookResource::collection($books);
     }
 
     public function activate(Request $request): JsonResponse

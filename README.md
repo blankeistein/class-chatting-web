@@ -1,6 +1,6 @@
-# class-chatting-web
+# Class Chatting Web
 
-`class-chatting-web` adalah aplikasi web berbasis Laravel 12, Inertia.js v2, React 19, dan Tailwind CSS untuk mengelola ekosistem konten Class Chatting. Proyek ini menyediakan landing page publik, panel admin, manajemen konten, wilayah, pengguna, kode aktivasi, notifikasi, serta workspace `learn-reading`.
+Class Chatting Web adalah aplikasi web berbasis Laravel 12, Inertia.js v2, React 19, dan Tailwind CSS untuk mengelola ekosistem konten Class Chatting. Proyek ini menyediakan landing page publik, panel admin, manajemen konten, wilayah, pengguna, kode aktivasi, notifikasi, serta workspace `learn-reading`.
 
 ## Fitur Utama
 

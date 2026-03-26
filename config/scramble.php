@@ -18,7 +18,7 @@ return [
     /*
      * The path where your OpenAPI specification will be exported.
      */
-    'export_path' => 'api.json',
+    'export_path' => 'openapi.json',
 
     'info' => [
         /*
@@ -29,7 +29,16 @@ return [
         /*
          * Description rendered on the home page of the API documentation (`/docs/api`).
          */
-        'description' => '',
+        'description' => <<<'MARKDOWN'
+Dokumen OpenAPI 3.1 untuk Class Chatting.
+
+Dokumentasi ini mencakup:
+- Public API di bawah prefix `/api`
+- Private API di bawah prefix `/private-api/{api_key}`
+- Firebase webhook di bawah prefix `/api/firebase`
+
+Gunakan `/docs/api` untuk dokumentasi interaktif, `/docs/api.json` untuk OpenAPI JSON runtime, dan `openapi.json` untuk artefak yang dapat dikonsumsi AI, generator SDK, atau automation tooling.
+MARKDOWN,
     ],
 
     /*
@@ -39,7 +48,7 @@ return [
         /*
          * Define the title of the documentation's website. App name is used when this config is `null`.
          */
-        'title' => null,
+        'title' => 'Class Chatting API',
 
         /*
          * Define the theme of the documentation. Available options are `light`, `dark`, and `system`.
@@ -89,13 +98,15 @@ return [
      * ],
      * ```
      */
-    'servers' => null,
+    'servers' => [
+        'Current application' => '/',
+    ],
 
     /**
      * Determines how Scramble stores the descriptions of enum cases.
      * Available options:
-     * - 'description' – Case descriptions are stored as the enum schema's description using table formatting.
-     * - 'extension' – Case descriptions are stored in the `x-enumDescriptions` enum schema extension.
+     * - 'description' - Case descriptions are stored as the enum schema's description using table formatting.
+     * - 'extension' - Case descriptions are stored in the `x-enumDescriptions` enum schema extension.
      *
      *    @see https://redocly.com/docs-legacy/api-reference-docs/specification-extensions/x-enum-descriptions
      * - false - Case descriptions are ignored.
@@ -105,7 +116,7 @@ return [
     /**
      * Determines how Scramble stores the names of enum cases.
      * Available options:
-     * - 'names' – Case names are stored in the `x-enumNames` enum schema extension.
+     * - 'names' - Case names are stored in the `x-enumNames` enum schema extension.
      * - 'varnames' - Case names are stored in the `x-enum-varnames` enum schema extension.
      * - false - Case names are not stored.
      */

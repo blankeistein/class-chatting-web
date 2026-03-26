@@ -6,6 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\BookResource;
 use App\Models\ActivationCode;
 use App\Models\Book;
+use Dedoc\Scramble\Attributes\BodyParameter;
+use Dedoc\Scramble\Attributes\Endpoint;
+use Dedoc\Scramble\Attributes\Group;
+use Dedoc\Scramble\Attributes\PathParameter;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,16 +17,28 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
+#[Group('Public Books', 'Endpoint publik untuk aktivasi buku dan pengecekan level kode aktivasi.', 20)]
 class BookController extends Controller
 {
     private array $tester = ['nvRVUlsMQ9Q3se6gJbvCIsGG5k53', '3Psyf8Gb2iOIMXjzv1C7dqculQz2', 'DPdbFiuzk3NkCQn9X36l4k5bnLu2', 'zTctHzi7N4hdD0g7BjXIEONpbud2', 'voijgBsUiDeFxOW2p2KqMlxxbL32', 'cKoJY2E3nLNzYv023XIIdq4cTs23', 'ArxTzz5LfldwSu0MC7aW5Ce6njr2', 'gPq2Gu33cZSajWlHbZFAz82LXNz2', 'Yzy9GJTyoUgqXHms4zxNzz3auGM2', 'buE1H0Fc31UR54oO94HzQQM7Rzo2', 'dMhQmdphV0fGFG0BNhSE2twfrCk2', 'IlVd8Ci2QPQUmT4aYXrhOH1VGj72'];
 
-    public function index()
+    public function index(): AnonymousResourceCollection
     {
         $books = Book::query()->get();
+
         return BookResource::collection($books);
     }
 
+    #[Endpoint(
+        operationId: 'publicBooksActivate',
+        title: 'Activate book code',
+        description: 'Memvalidasi kode aktivasi untuk sebuah buku dan mengaitkannya ke pengguna. Error bisnis dikembalikan pada body JSON, bukan response validasi 422 standar.'
+    )]
+    #[BodyParameter('api_key', 'API key aplikasi publik yang diharapkan server.', required: true, example: 'public-app-key')]
+    #[BodyParameter('code', 'Kode aktivasi buku.', required: true, example: 'AKTIVASI-001')]
+    #[BodyParameter('uid', 'Firebase UID atau identifier unik pengguna yang melakukan aktivasi.', required: true, example: 'firebase-user-001')]
+    #[BodyParameter('package_name', 'UUID buku yang akan diaktivasi.', required: true, example: 'book-uuid-001')]
+    #[BodyParameter('tier', 'Tier buku yang diharapkan. Gunakan `1` untuk Regular dan `2` untuk Premium.', required: true, type: 'integer', example: 1)]
     public function activate(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
@@ -191,6 +207,12 @@ class BookController extends Controller
         ]);
     }
 
+    #[Endpoint(
+        operationId: 'publicBooksActivationLevel',
+        title: 'Check activation code level',
+        description: 'Mengembalikan tier atau level dari sebuah kode aktivasi apabila kode tersebut valid.'
+    )]
+    #[PathParameter('code', 'Kode aktivasi yang akan dicek levelnya.', example: 'AKTIVASI-001')]
     public function activation_check_level(Request $request, string $code): JsonResponse
     {
         try {

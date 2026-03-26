@@ -1,0 +1,2507 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "Class Chatting API",
+        "version": "0.0.1",
+        "description": "Dokumen OpenAPI 3.1 untuk Class Chatting.\n\nDokumentasi ini mencakup:\n- Public API di bawah prefix `/api`\n- Private API di bawah prefix `/private-api/{api_key}`\n- Firebase webhook di bawah prefix `/api/firebase`\n\nGunakan `/docs/api` untuk dokumentasi interaktif, `/docs/api.json` untuk OpenAPI JSON runtime, dan `openapi.json` untuk artefak yang dapat dikonsumsi AI, generator SDK, atau automation tooling."
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8000",
+            "description": "Current application"
+        }
+    ],
+    "tags": [
+        {
+            "name": "Regions",
+            "description": "Referensi wilayah Indonesia: provinsi, kabupaten atau kota, dan kecamatan."
+        },
+        {
+            "name": "Public Books",
+            "description": "Endpoint publik untuk aktivasi buku dan pengecekan level kode aktivasi."
+        },
+        {
+            "name": "Firebase Webhooks",
+            "description": "Webhook internal untuk sinkronisasi data pengguna dari Firebase."
+        },
+        {
+            "name": "Private Books",
+            "description": "Endpoint private untuk integrasi buku internal dengan autentikasi `api_key` pada path URL."
+        },
+        {
+            "name": "Private Videos",
+            "description": "Endpoint private untuk manajemen video yang digunakan oleh consumer internal atau aplikasi legacy."
+        }
+    ],
+    "paths": {
+        "/v1/regions/provinces": {
+            "get": {
+                "operationId": "regionsListProvinces",
+                "description": "Mengambil daftar provinsi dalam format paginasi.",
+                "summary": "List provinces",
+                "tags": [
+                    "Regions"
+                ],
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Kata kunci pencarian berdasarkan kode atau nama provinsi.",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "maxLength": 100
+                        },
+                        "example": "jakarta"
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Jumlah item per halaman. Nilai yang valid antara 1 sampai 100.",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 25
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated set of `ProvinceResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ProvinceResource"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "properties": {
+                                                "first": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "last": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "first",
+                                                "last",
+                                                "prev",
+                                                "next"
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "from": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "minimum": 1
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "links": {
+                                                    "type": "array",
+                                                    "description": "Generated paginator links.",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "url": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "label": {
+                                                                "type": "string"
+                                                            },
+                                                            "active": {
+                                                                "type": "boolean"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "url",
+                                                            "label",
+                                                            "active"
+                                                        ]
+                                                    }
+                                                },
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Base path for paginator generated URLs."
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items shown per page.",
+                                                    "minimum": 0
+                                                },
+                                                "to": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "description": "Number of the last item in the slice.",
+                                                    "minimum": 1
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items being paginated.",
+                                                    "minimum": 0
+                                                }
+                                            },
+                                            "required": [
+                                                "current_page",
+                                                "from",
+                                                "last_page",
+                                                "links",
+                                                "path",
+                                                "per_page",
+                                                "to",
+                                                "total"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/regions/provinces/{province}": {
+            "get": {
+                "operationId": "regionsShowProvince",
+                "description": "Mengambil detail satu provinsi berdasarkan kode wilayah Indonesia.",
+                "summary": "Get province detail",
+                "tags": [
+                    "Regions"
+                ],
+                "parameters": [
+                    {
+                        "name": "province",
+                        "in": "path",
+                        "required": true,
+                        "description": "Kode provinsi Indonesia yang dipakai route model binding.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "31"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`ProvinceResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ProvinceResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/v1/regions/provinces/{province}/regencies": {
+            "get": {
+                "operationId": "regionsListRegenciesByProvince",
+                "description": "Mengambil daftar kabupaten atau kota yang berada dalam satu provinsi tertentu.",
+                "summary": "List regencies by province",
+                "tags": [
+                    "Regions"
+                ],
+                "parameters": [
+                    {
+                        "name": "province",
+                        "in": "path",
+                        "required": true,
+                        "description": "Kode provinsi Indonesia yang menjadi induk data kabupaten atau kota.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "31"
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Kata kunci pencarian berdasarkan kode atau nama kabupaten atau kota.",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "maxLength": 100
+                        },
+                        "example": "selatan"
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Jumlah item per halaman. Nilai yang valid antara 1 sampai 100.",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 25
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated set of `RegencyResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/RegencyResource"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "properties": {
+                                                "first": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "last": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "first",
+                                                "last",
+                                                "prev",
+                                                "next"
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "from": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "minimum": 1
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "links": {
+                                                    "type": "array",
+                                                    "description": "Generated paginator links.",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "url": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "label": {
+                                                                "type": "string"
+                                                            },
+                                                            "active": {
+                                                                "type": "boolean"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "url",
+                                                            "label",
+                                                            "active"
+                                                        ]
+                                                    }
+                                                },
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Base path for paginator generated URLs."
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items shown per page.",
+                                                    "minimum": 0
+                                                },
+                                                "to": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "description": "Number of the last item in the slice.",
+                                                    "minimum": 1
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items being paginated.",
+                                                    "minimum": 0
+                                                }
+                                            },
+                                            "required": [
+                                                "current_page",
+                                                "from",
+                                                "last_page",
+                                                "links",
+                                                "path",
+                                                "per_page",
+                                                "to",
+                                                "total"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/regions/regencies": {
+            "get": {
+                "operationId": "regionsListRegencies",
+                "description": "Mengambil daftar kabupaten atau kota dalam format paginasi beserta referensi provinsinya.",
+                "summary": "List regencies",
+                "tags": [
+                    "Regions"
+                ],
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Kata kunci pencarian berdasarkan kode atau nama kabupaten atau kota.",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "maxLength": 100
+                        },
+                        "example": "bandung"
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Jumlah item per halaman. Nilai yang valid antara 1 sampai 100.",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 25
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated set of `RegencyResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/RegencyResource"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "properties": {
+                                                "first": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "last": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "first",
+                                                "last",
+                                                "prev",
+                                                "next"
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "from": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "minimum": 1
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "links": {
+                                                    "type": "array",
+                                                    "description": "Generated paginator links.",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "url": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "label": {
+                                                                "type": "string"
+                                                            },
+                                                            "active": {
+                                                                "type": "boolean"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "url",
+                                                            "label",
+                                                            "active"
+                                                        ]
+                                                    }
+                                                },
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Base path for paginator generated URLs."
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items shown per page.",
+                                                    "minimum": 0
+                                                },
+                                                "to": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "description": "Number of the last item in the slice.",
+                                                    "minimum": 1
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items being paginated.",
+                                                    "minimum": 0
+                                                }
+                                            },
+                                            "required": [
+                                                "current_page",
+                                                "from",
+                                                "last_page",
+                                                "links",
+                                                "path",
+                                                "per_page",
+                                                "to",
+                                                "total"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/regions/regencies/{regency}": {
+            "get": {
+                "operationId": "regionsShowRegency",
+                "description": "Mengambil detail satu kabupaten atau kota berdasarkan kode wilayah Indonesia.",
+                "summary": "Get regency detail",
+                "tags": [
+                    "Regions"
+                ],
+                "parameters": [
+                    {
+                        "name": "regency",
+                        "in": "path",
+                        "required": true,
+                        "description": "Kode kabupaten atau kota Indonesia yang dipakai route model binding.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "3171"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`RegencyResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/RegencyResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/v1/regions/regencies/{regency}/districts": {
+            "get": {
+                "operationId": "regionsListDistrictsByRegency",
+                "description": "Mengambil daftar kecamatan untuk satu kabupaten atau kota tertentu.",
+                "summary": "List districts by regency",
+                "tags": [
+                    "Regions"
+                ],
+                "parameters": [
+                    {
+                        "name": "regency",
+                        "in": "path",
+                        "required": true,
+                        "description": "Kode kabupaten atau kota Indonesia yang menjadi induk data kecamatan.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "3171"
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Kata kunci pencarian berdasarkan kode atau nama kecamatan.",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "maxLength": 100
+                        },
+                        "example": "baru"
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Jumlah item per halaman. Nilai yang valid antara 1 sampai 100.",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 25
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated set of `DistrictResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/DistrictResource"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "properties": {
+                                                "first": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "last": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "first",
+                                                "last",
+                                                "prev",
+                                                "next"
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "from": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "minimum": 1
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "links": {
+                                                    "type": "array",
+                                                    "description": "Generated paginator links.",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "url": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "label": {
+                                                                "type": "string"
+                                                            },
+                                                            "active": {
+                                                                "type": "boolean"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "url",
+                                                            "label",
+                                                            "active"
+                                                        ]
+                                                    }
+                                                },
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Base path for paginator generated URLs."
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items shown per page.",
+                                                    "minimum": 0
+                                                },
+                                                "to": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "description": "Number of the last item in the slice.",
+                                                    "minimum": 1
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items being paginated.",
+                                                    "minimum": 0
+                                                }
+                                            },
+                                            "required": [
+                                                "current_page",
+                                                "from",
+                                                "last_page",
+                                                "links",
+                                                "path",
+                                                "per_page",
+                                                "to",
+                                                "total"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/regions/districts": {
+            "get": {
+                "operationId": "regionsListDistricts",
+                "description": "Mengambil daftar kecamatan dalam format paginasi beserta konteks kabupaten atau kota dan provinsinya.",
+                "summary": "List districts",
+                "tags": [
+                    "Regions"
+                ],
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Kata kunci pencarian berdasarkan kode atau nama kecamatan.",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "maxLength": 100
+                        },
+                        "example": "kebayoran"
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Jumlah item per halaman. Nilai yang valid antara 1 sampai 100.",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 25
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated set of `DistrictResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/DistrictResource"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "properties": {
+                                                "first": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "last": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "first",
+                                                "last",
+                                                "prev",
+                                                "next"
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "from": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "minimum": 1
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "links": {
+                                                    "type": "array",
+                                                    "description": "Generated paginator links.",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "url": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "label": {
+                                                                "type": "string"
+                                                            },
+                                                            "active": {
+                                                                "type": "boolean"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "url",
+                                                            "label",
+                                                            "active"
+                                                        ]
+                                                    }
+                                                },
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Base path for paginator generated URLs."
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items shown per page.",
+                                                    "minimum": 0
+                                                },
+                                                "to": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "description": "Number of the last item in the slice.",
+                                                    "minimum": 1
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items being paginated.",
+                                                    "minimum": 0
+                                                }
+                                            },
+                                            "required": [
+                                                "current_page",
+                                                "from",
+                                                "last_page",
+                                                "links",
+                                                "path",
+                                                "per_page",
+                                                "to",
+                                                "total"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/regions/districts/{district}": {
+            "get": {
+                "operationId": "regionsShowDistrict",
+                "description": "Mengambil detail satu kecamatan berdasarkan kode wilayah Indonesia.",
+                "summary": "Get district detail",
+                "tags": [
+                    "Regions"
+                ],
+                "parameters": [
+                    {
+                        "name": "district",
+                        "in": "path",
+                        "required": true,
+                        "description": "Kode kecamatan Indonesia yang dipakai route model binding.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "3171010"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`DistrictResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/DistrictResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/v1/book/activate": {
+            "post": {
+                "operationId": "publicBooksActivate",
+                "description": "Memvalidasi kode aktivasi untuk sebuah buku dan mengaitkannya ke pengguna. Error bisnis dikembalikan pada body JSON, bukan response validasi 422 standar.",
+                "summary": "Activate book code",
+                "tags": [
+                    "Public Books"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "api_key": {
+                                        "type": "string",
+                                        "description": "API key aplikasi publik yang diharapkan server.",
+                                        "example": "public-app-key"
+                                    },
+                                    "code": {
+                                        "type": "string",
+                                        "description": "Kode aktivasi buku.",
+                                        "example": "AKTIVASI-001"
+                                    },
+                                    "uid": {
+                                        "type": "string",
+                                        "description": "Firebase UID atau identifier unik pengguna yang melakukan aktivasi.",
+                                        "example": "firebase-user-001"
+                                    },
+                                    "package_name": {
+                                        "type": "string",
+                                        "description": "UUID buku yang akan diaktivasi.",
+                                        "example": "book-uuid-001"
+                                    },
+                                    "tier": {
+                                        "type": "integer",
+                                        "description": "Tier buku yang diharapkan. Gunakan `1` untuk Regular dan `2` untuk Premium.",
+                                        "example": 1
+                                    }
+                                },
+                                "required": [
+                                    "api_key",
+                                    "code",
+                                    "uid",
+                                    "package_name",
+                                    "tier"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "const": "success"
+                                                },
+                                                "message": {
+                                                    "type": "string"
+                                                },
+                                                "version": {
+                                                    "type": "integer",
+                                                    "const": 1
+                                                }
+                                            },
+                                            "required": [
+                                                "status",
+                                                "message",
+                                                "version"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "const": "error"
+                                                },
+                                                "error_code": {
+                                                    "type": "integer",
+                                                    "const": 110
+                                                },
+                                                "message": {
+                                                    "type": "string"
+                                                },
+                                                "version": {
+                                                    "type": "integer",
+                                                    "const": 1
+                                                }
+                                            },
+                                            "required": [
+                                                "status",
+                                                "error_code",
+                                                "message",
+                                                "version"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "const": "error"
+                                                },
+                                                "error_code": {
+                                                    "type": "integer",
+                                                    "const": 109
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "const": "Maaf kode yang anda masukkan sudah diaktifkan di akun lain [109]"
+                                                },
+                                                "version": {
+                                                    "type": "integer",
+                                                    "const": 1
+                                                }
+                                            },
+                                            "required": [
+                                                "status",
+                                                "error_code",
+                                                "message",
+                                                "version"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "const": "error"
+                                                },
+                                                "error_code": {
+                                                    "type": "integer",
+                                                    "const": 114
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "const": "Kode tidak cocok diaktifkan disini. [114]"
+                                                },
+                                                "version": {
+                                                    "type": "integer",
+                                                    "const": 1
+                                                }
+                                            },
+                                            "required": [
+                                                "status",
+                                                "error_code",
+                                                "message",
+                                                "version"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "const": "error"
+                                                },
+                                                "error_code": {
+                                                    "type": "integer",
+                                                    "const": 108
+                                                },
+                                                "message": {
+                                                    "type": "string"
+                                                },
+                                                "version": {
+                                                    "type": "integer",
+                                                    "const": 1
+                                                }
+                                            },
+                                            "required": [
+                                                "status",
+                                                "error_code",
+                                                "message",
+                                                "version"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "const": "error"
+                                                },
+                                                "error_code": {
+                                                    "type": "integer",
+                                                    "const": 107
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "const": "Buku belum terdaftar, Mohon laporkan ini ke Customer Service kami. Terima Kasih :) [107]"
+                                                },
+                                                "version": {
+                                                    "type": "integer",
+                                                    "const": 1
+                                                }
+                                            },
+                                            "required": [
+                                                "status",
+                                                "error_code",
+                                                "message",
+                                                "version"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "const": "error"
+                                                },
+                                                "error_code": {
+                                                    "type": "integer",
+                                                    "const": 113
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "const": "Mohon maaf, Kode sudah mencapai batas pengaktifan. [113]"
+                                                },
+                                                "version": {
+                                                    "type": "integer",
+                                                    "const": 1
+                                                }
+                                            },
+                                            "required": [
+                                                "status",
+                                                "error_code",
+                                                "message",
+                                                "version"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "const": "error"
+                                                },
+                                                "error_code": {
+                                                    "type": "integer",
+                                                    "const": 108
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "const": "Mohon maaf, Kode ini tidak aktif atau sudah dinonaktifkan. [108]"
+                                                },
+                                                "version": {
+                                                    "type": "integer",
+                                                    "const": 1
+                                                }
+                                            },
+                                            "required": [
+                                                "status",
+                                                "error_code",
+                                                "message",
+                                                "version"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "const": "error"
+                                                },
+                                                "error_code": {
+                                                    "type": "integer",
+                                                    "const": 106
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "const": "Kode yang anda masukkan tidak valid. [106]"
+                                                },
+                                                "version": {
+                                                    "type": "integer",
+                                                    "const": 1
+                                                }
+                                            },
+                                            "required": [
+                                                "status",
+                                                "error_code",
+                                                "message",
+                                                "version"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "const": "error"
+                                                },
+                                                "error_code": {
+                                                    "type": "integer",
+                                                    "const": 102
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "const": "Mohon maaf aplikasi anda sudah usang, update aplikasi ke versi paling baru. [102]"
+                                                },
+                                                "version": {
+                                                    "type": "integer",
+                                                    "const": 1
+                                                }
+                                            },
+                                            "required": [
+                                                "status",
+                                                "error_code",
+                                                "message",
+                                                "version"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "const": "error"
+                                                },
+                                                "error_code": {
+                                                    "type": "integer",
+                                                    "const": 999
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "const": "[999] Anda tidak tergabung dengan team pengembang. Kode tidak bisa diaktivasi"
+                                                },
+                                                "version": {
+                                                    "type": "integer",
+                                                    "const": 1
+                                                }
+                                            },
+                                            "required": [
+                                                "status",
+                                                "error_code",
+                                                "message",
+                                                "version"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "const": "success"
+                                                },
+                                                "error_code": {
+                                                    "type": "integer",
+                                                    "const": 200
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "const": "[Anda adalah seorang Tester] Kode berhasil diaktifkan."
+                                                }
+                                            },
+                                            "required": [
+                                                "status",
+                                                "error_code",
+                                                "message"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "const": "error"
+                                                },
+                                                "error_code": {
+                                                    "anyOf": [
+                                                        {
+                                                            "type": "string"
+                                                        },
+                                                        {
+                                                            "type": "integer",
+                                                            "enum": [
+                                                                101
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
+                                                "message": {
+                                                    "type": "string"
+                                                },
+                                                "version": {
+                                                    "type": "integer",
+                                                    "const": 1
+                                                }
+                                            },
+                                            "required": [
+                                                "status",
+                                                "error_code",
+                                                "message",
+                                                "version"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/book/level/{code}": {
+            "get": {
+                "operationId": "publicBooksActivationLevel",
+                "description": "Mengembalikan tier atau level dari sebuah kode aktivasi apabila kode tersebut valid.",
+                "summary": "Check activation code level",
+                "tags": [
+                    "Public Books"
+                ],
+                "parameters": [
+                    {
+                        "name": "code",
+                        "in": "path",
+                        "required": true,
+                        "description": "Kode aktivasi yang akan dicek levelnya.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "AKTIVASI-001"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "const": "error"
+                                                },
+                                                "message": {
+                                                    "type": "string"
+                                                },
+                                                "version": {
+                                                    "type": "integer",
+                                                    "const": 1
+                                                }
+                                            },
+                                            "required": [
+                                                "status",
+                                                "message",
+                                                "version"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "const": "success"
+                                                },
+                                                "level": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "slug": {
+                                                            "type": "string"
+                                                        },
+                                                        "name": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "slug",
+                                                        "name"
+                                                    ]
+                                                },
+                                                "version": {
+                                                    "type": "integer",
+                                                    "const": 1
+                                                }
+                                            },
+                                            "required": [
+                                                "status",
+                                                "level",
+                                                "version"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "const": "error"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "const": "Kode aktivasi tidak valid."
+                                                },
+                                                "version": {
+                                                    "type": "integer",
+                                                    "const": 1
+                                                }
+                                            },
+                                            "required": [
+                                                "status",
+                                                "message",
+                                                "version"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/firebase/webhook/user-created": {
+            "post": {
+                "operationId": "firebaseWebhookUserCreated",
+                "description": "Webhook yang menerima event pembuatan user dari Firebase lalu melakukan sinkronisasi atau pembaruan data user lokal.",
+                "summary": "Sync created Firebase user",
+                "tags": [
+                    "Firebase Webhooks"
+                ],
+                "parameters": [
+                    {
+                        "name": "X-Firebase-Secret",
+                        "in": "header",
+                        "required": true,
+                        "description": "Shared secret untuk memverifikasi bahwa request berasal dari sumber webhook yang sah.",
+                        "schema": {},
+                        "example": "firebase-webhook-secret"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "uid": {
+                                        "type": "string",
+                                        "description": "Firebase UID pengguna.",
+                                        "example": "firebase-user-001"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "description": "Alamat email pengguna.",
+                                        "example": "user@example.com"
+                                    },
+                                    "displayName": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "description": "Nama tampilan pengguna.",
+                                        "example": "Budi"
+                                    },
+                                    "photoURL": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "format": "uri",
+                                        "description": "URL avatar pengguna.",
+                                        "example": "https://example.com/avatar.jpg"
+                                    },
+                                    "phoneNumber": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "description": "Nomor telepon pengguna.",
+                                        "example": "+628123456789"
+                                    }
+                                },
+                                "required": [
+                                    "uid",
+                                    "email"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "const": "User synced"
+                                        },
+                                        "id": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "required": [
+                                        "message",
+                                        "id"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/private-api/{api_key}/book": {
+            "get": {
+                "operationId": "privateBooksList",
+                "description": "Mengambil daftar buku ringkas untuk consumer internal atau integrasi private API.",
+                "summary": "List private books",
+                "tags": [
+                    "Private Books"
+                ],
+                "parameters": [
+                    {
+                        "name": "api_key",
+                        "in": "path",
+                        "required": true,
+                        "description": "Private API key yang wajib dikirim pada path URL.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "test-private-key"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "id": {
+                                                "type": "string"
+                                            },
+                                            "title": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "id",
+                                            "title"
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/private-api/{api_key}/book/group": {
+            "get": {
+                "operationId": "privateBooksGroup",
+                "description": "Endpoint placeholder untuk grouping buku private. Saat ini implementasi mengembalikan array kosong.",
+                "summary": "List grouped private books",
+                "tags": [
+                    "Private Books"
+                ],
+                "parameters": [
+                    {
+                        "name": "api_key",
+                        "in": "path",
+                        "required": true,
+                        "description": "Private API key yang wajib dikirim pada path URL.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "test-private-key"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "minItems": 0,
+                                    "maxItems": 0,
+                                    "additionalItems": false
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/private-api/{api_key}/video/list": {
+            "get": {
+                "operationId": "privateVideosList",
+                "description": "Mengambil daftar video private. Request memakai `page` berbasis 1, tetapi field `page` pada response saat ini mengikuti implementasi legacy dan bernilai indeks berbasis 0.",
+                "summary": "List private videos",
+                "tags": [
+                    "Private Videos"
+                ],
+                "parameters": [
+                    {
+                        "name": "api_key",
+                        "in": "path",
+                        "required": true,
+                        "description": "Private API key yang wajib dikirim pada path URL.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "test-private-key"
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Nomor halaman request. Nilai minimum efektif adalah 1.",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Jumlah video per halaman.",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 20
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Filter judul video berbasis kata kunci.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "tajwid"
+                    },
+                    {
+                        "name": "video",
+                        "in": "query",
+                        "description": "Flag legacy untuk filtering tambahan pada implementasi lama.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "1"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "page": {
+                                            "type": [
+                                                "object",
+                                                "null"
+                                            ]
+                                        },
+                                        "limit": {
+                                            "type": "integer"
+                                        },
+                                        "search": {
+                                            "anyOf": [
+                                                {
+                                                    "type": "string"
+                                                },
+                                                {
+                                                    "type": "array",
+                                                    "items": {}
+                                                },
+                                                {
+                                                    "type": "null"
+                                                }
+                                            ]
+                                        },
+                                        "list_video": {
+                                            "type": "string"
+                                        },
+                                        "slug": {
+                                            "type": "string",
+                                            "const": "list"
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "const": "success"
+                                        }
+                                    },
+                                    "required": [
+                                        "page",
+                                        "limit",
+                                        "search",
+                                        "list_video",
+                                        "slug",
+                                        "status"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/private-api/{video_id}/video/detail/{video_id}": {
+            "get": {
+                "operationId": "privateVideosShow",
+                "description": "Mengambil detail satu video private berdasarkan `video_id` legacy.",
+                "summary": "Get private video detail",
+                "tags": [
+                    "Private Videos"
+                ],
+                "parameters": [
+                    {
+                        "name": "api_key",
+                        "in": "path",
+                        "required": true,
+                        "description": "Private API key yang wajib dikirim pada path URL.",
+                        "schema": {},
+                        "example": "test-private-key"
+                    },
+                    {
+                        "name": "video_id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifier legacy video yang dipakai endpoint private.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "abc123def45"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        },
+                                        "slug": {
+                                            "type": "string",
+                                            "const": "detail"
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "const": "success"
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "slug",
+                                        "status"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "const": "error"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Video not Found"
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/private-api/{api_key}/video/add": {
+            "post": {
+                "operationId": "privateVideosCreate",
+                "description": "Membuat data video private baru. Implementasi saat ini menerima body JSON secara fleksibel dan akan mengembalikan payload yang sama beserta `video_id` dan `date_upload` yang dibuat server.",
+                "summary": "Create private video",
+                "tags": [
+                    "Private Videos"
+                ],
+                "parameters": [
+                    {
+                        "name": "api_key",
+                        "in": "path",
+                        "required": true,
+                        "description": "Private API key yang wajib dikirim pada path URL.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "test-private-key"
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {},
+                                    "slug": {},
+                                    "description": {},
+                                    "uploaded_by": {
+                                        "type": "integer",
+                                        "description": "ID user pengunggah.",
+                                        "example": 1
+                                    },
+                                    "thumbnail": {},
+                                    "video_url": {},
+                                    "storage_path": {},
+                                    "file_path": {},
+                                    "provider": {},
+                                    "metadata": {
+                                        "type": "object",
+                                        "description": "Metadata tambahan dalam bentuk objek JSON.",
+                                        "example": {
+                                            "duration": 120,
+                                            "resolution": "1280x720"
+                                        },
+                                        "additionalProperties": {}
+                                    },
+                                    "tags": {
+                                        "type": "array",
+                                        "description": "Daftar tag video.",
+                                        "example": [
+                                            "kelas-4",
+                                            "tajwid"
+                                        ],
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "slug": {
+                                            "type": "string",
+                                            "const": "add"
+                                        },
+                                        "data": {
+                                            "type": "string"
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "const": "success"
+                                        }
+                                    },
+                                    "required": [
+                                        "slug",
+                                        "data",
+                                        "status"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/private-api/{video_id}/video/update/{video_id}": {
+            "put": {
+                "operationId": "privateVideosUpdate",
+                "description": "Memperbarui data video private berdasarkan `video_id` legacy. Body JSON yang dikirim akan dipakai langsung untuk operasi update.",
+                "summary": "Update private video",
+                "tags": [
+                    "Private Videos"
+                ],
+                "parameters": [
+                    {
+                        "name": "api_key",
+                        "in": "path",
+                        "required": true,
+                        "description": "Private API key yang wajib dikirim pada path URL.",
+                        "schema": {},
+                        "example": "test-private-key"
+                    },
+                    {
+                        "name": "video_id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifier legacy video yang dipakai endpoint private.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "abc123def45"
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {},
+                                    "slug": {},
+                                    "description": {},
+                                    "uploaded_by": {
+                                        "type": "integer",
+                                        "description": "ID user pengunggah.",
+                                        "example": 1
+                                    },
+                                    "thumbnail": {},
+                                    "video_url": {},
+                                    "storage_path": {},
+                                    "file_path": {},
+                                    "provider": {},
+                                    "metadata": {
+                                        "type": "object",
+                                        "description": "Metadata tambahan dalam bentuk objek JSON.",
+                                        "example": {
+                                            "duration": 120,
+                                            "resolution": "1280x720"
+                                        },
+                                        "additionalProperties": {}
+                                    },
+                                    "tags": {
+                                        "type": "array",
+                                        "description": "Daftar tag video.",
+                                        "example": [
+                                            "kelas-4",
+                                            "tajwid"
+                                        ],
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "slug": {
+                                            "type": "string",
+                                            "const": "update"
+                                        },
+                                        "data": {
+                                            "type": "string"
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "const": "success"
+                                        }
+                                    },
+                                    "required": [
+                                        "slug",
+                                        "data",
+                                        "status"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "const": "error"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Update Failed"
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/private-api/{video_id}/video/delete/{video_id}": {
+            "delete": {
+                "operationId": "privateVideosDelete",
+                "description": "Menghapus video private berdasarkan `video_id` legacy.",
+                "summary": "Delete private video",
+                "tags": [
+                    "Private Videos"
+                ],
+                "parameters": [
+                    {
+                        "name": "api_key",
+                        "in": "path",
+                        "required": true,
+                        "description": "Private API key yang wajib dikirim pada path URL.",
+                        "schema": {},
+                        "example": "test-private-key"
+                    },
+                    {
+                        "name": "video_id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Identifier legacy video yang dipakai endpoint private.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "abc123def45"
+                    }
+                ],
+                "responses": {
+                    "500": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "const": "error"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Delete Failed"
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "slug": {
+                                            "type": "string",
+                                            "const": "add"
+                                        },
+                                        "msg": {
+                                            "type": "string",
+                                            "const": "Delete video succesfully"
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "const": "success"
+                                        }
+                                    },
+                                    "required": [
+                                        "slug",
+                                        "msg",
+                                        "status"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "DistrictResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "code": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "regency": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "code": {
+                                "type": "string"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "type": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "code",
+                            "name",
+                            "type"
+                        ]
+                    },
+                    "province": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "code": {
+                                "type": "string"
+                            },
+                            "name": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "code",
+                            "name"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "code",
+                    "name"
+                ],
+                "title": "DistrictResource"
+            },
+            "ProvinceResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "code": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "regencies_count": {
+                        "type": "integer"
+                    },
+                    "districts_count": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "id",
+                    "code",
+                    "name"
+                ],
+                "title": "ProvinceResource"
+            },
+            "RegencyResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "code": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "districts_count": {
+                        "type": "integer"
+                    },
+                    "province": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "code": {
+                                "type": "string"
+                            },
+                            "name": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "code",
+                            "name"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "code",
+                    "name",
+                    "type"
+                ],
+                "title": "RegencyResource"
+            }
+        },
+        "responses": {
+            "ValidationException": {
+                "description": "Validation error",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "description": "Errors overview."
+                                },
+                                "errors": {
+                                    "type": "object",
+                                    "description": "A detailed description of each field that failed validation.",
+                                    "additionalProperties": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            },
+                            "required": [
+                                "message",
+                                "errors"
+                            ]
+                        }
+                    }
+                }
+            },
+            "ModelNotFoundException": {
+                "description": "Not found",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "description": "Error overview."
+                                }
+                            },
+                            "required": [
+                                "message"
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

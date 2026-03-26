@@ -4,12 +4,13 @@ namespace App\Providers;
 
 use App\Models\Book;
 use App\Models\User;
-use Dedoc\Scramble\RouteRegistrar;
 use Dedoc\Scramble\Scramble;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -33,12 +34,18 @@ class AppServiceProvider extends ServiceProvider
             'user' => User::class,
         ]);
 
-        Scramble::configure()->routes(function (RouteRegistrar $r) {
-            $r->prefix('docs/api');
-        });
+        Scramble::configure()
+            ->routes(function (Route $route): bool {
+                return Str::startsWith($route->uri(), ['api/v1', 'api/firebase', 'private-api']);
+            })
+            ->expose('docs/api', 'docs/api.json');
 
-        Gate::define('viewApiDocs', function (?User $user = null) {
-            return $user && in_array($user->email, config('app.development_email'));
+        Gate::define('viewApiDocs', function (?User $user = null): bool {
+            if (app()->environment('testing')) {
+                return true;
+            }
+
+            return $user !== null && in_array($user->email, (array) config('app.development_email', []), true);
         });
     }
 }

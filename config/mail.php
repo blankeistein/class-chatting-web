@@ -1,5 +1,10 @@
 <?php
 
+$developerRecipients = array_values(array_filter(array_map(
+    static fn (string $email): string => trim($email),
+    preg_split('/[\s,;|]+/', (string) env('EMAIL_DEVs', (string) env('DEVELOPMENT_EMAIL', '')), -1, PREG_SPLIT_NO_EMPTY) ?: [],
+)));
+
 return [
 
     /*
@@ -8,8 +13,8 @@ return [
     |--------------------------------------------------------------------------
     |
     | This option controls the default mailer that is used to send all email
-    | messages unless another mailer is explicitly specified when sending
-    | the message. All additional mailers can be configured within the
+    | messages unless another mailer is explicitly specified when sending the
+    | message. All additional mailers can be configured within the
     | "mailers" array. Examples of each type of mailer are provided.
     |
     */
@@ -55,10 +60,6 @@ return [
 
         'postmark' => [
             'transport' => 'postmark',
-            // 'message_stream_id' => env('POSTMARK_MESSAGE_STREAM_ID'),
-            // 'client' => [
-            //     'timeout' => 5,
-            // ],
         ],
 
         'resend' => [
@@ -114,5 +115,7 @@ return [
         'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
         'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
+
+    'developer_recipients' => $developerRecipients,
 
 ];

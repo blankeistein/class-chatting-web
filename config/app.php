@@ -1,5 +1,10 @@
 <?php
 
+$developerEmails = array_values(array_filter(array_map(
+    static fn (string $email): string => trim($email),
+    preg_split('/[\s,;|]+/', (string) env('EMAIL_DEVs', (string) env('DEVELOPMENT_EMAIL', '')), -1, PREG_SPLIT_NO_EMPTY) ?: [],
+)));
+
 return [
 
     /*
@@ -127,5 +132,5 @@ return [
 
     'api_key' => env('APP_API_KEY'),
 
-    'development_email' => explode('|', env('DEVELOPMENT_EMAIL', 'admin@admin.com')),
+    'development_email' => $developerEmails,
 ];

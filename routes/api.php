@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\API\BookController;
+use App\Http\Controllers\API\VideoController;
 use App\Http\Controllers\API\FirebaseWebhookController;
 use App\Http\Controllers\API\RegionController;
 use Illuminate\Http\Request;
@@ -10,7 +11,17 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-Route::get('/book', [BookController::class, 'index']);
+Route::prefix('private-api/{api_key}')->middleware('private.api')->group(function () {
+    Route::get('/book', [BookController::class, 'index']);
+    Route::get('/book/group', [BookController::class, 'group_book']);
+
+    Route::get('/video/list', [VideoController::class, 'index']);
+    Route::get('/video/detail/{video_id}', [VideoController::class, 'show']);
+    Route::post('/video/add', [VideoController::class, 'create']);
+    Route::put('/video/update/{video_id}', [VideoController::class, 'update']);
+    Route::delete('/video/delete/{video_id}', [VideoController::class, 'destroy']);
+});
+
 Route::post('/v1/book/activate', [BookController::class, 'activate']);
 Route::get('/v1/book/level/{code}', [BookController::class, 'activation_check_level']);
 

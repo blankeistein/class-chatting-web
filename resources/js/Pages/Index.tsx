@@ -106,7 +106,7 @@ export default function Index() {
         </main>
         <footer className="flex-none p-4 md:p-6 bg-white border-t-4 border-black flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="font-mono font-bold text-sm md:text-base bg-black text-white px-2 py-1 rotate-1">
-            &copy; {new Date().getFullYear()} class-chatting-web
+            &copy; {new Date().getFullYear()} Class Chatting Web
           </div>
 
           <div className="flex gap-3 flex-wrap justify-center">

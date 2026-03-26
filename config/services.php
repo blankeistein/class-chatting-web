@@ -39,4 +39,8 @@ return [
         'webhook_secret' => env('FIREBASE_WEBHOOK_SECRET'),
     ],
 
+    'private_api' => [
+        'key' => env('PRIVATE_API_KEY'),
+    ],
+
 ];

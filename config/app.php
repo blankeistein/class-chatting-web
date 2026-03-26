@@ -125,5 +125,7 @@ return [
 
     'admin_path' => env('ADMIN_PATH', 'admin'),
 
+    'api_key' => env('APP_API_KEY'),
+
     'development_email' => explode('|', env('DEVELOPMENT_EMAIL', 'admin@admin.com')),
 ];

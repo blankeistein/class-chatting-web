@@ -7,21 +7,35 @@ use App\Http\Resources\BookResource;
 use App\Models\ActivationCode;
 use App\Models\Book;
 use Exception;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class BookController extends Controller
 {
-    private $tester = ['nvRVUlsMQ9Q3se6gJbvCIsGG5k53', '3Psyf8Gb2iOIMXjzv1C7dqculQz2', 'DPdbFiuzk3NkCQn9X36l4k5bnLu2', 'zTctHzi7N4hdD0g7BjXIEONpbud2', 'voijgBsUiDeFxOW2p2KqMlxxbL32', 'cKoJY2E3nLNzYv023XIIdq4cTs23', 'ArxTzz5LfldwSu0MC7aW5Ce6njr2', 'gPq2Gu33cZSajWlHbZFAz82LXNz2', 'Yzy9GJTyoUgqXHms4zxNzz3auGM2', 'buE1H0Fc31UR54oO94HzQQM7Rzo2', 'dMhQmdphV0fGFG0BNhSE2twfrCk2', 'IlVd8Ci2QPQUmT4aYXrhOH1VGj72'];
+    private array $tester = ['nvRVUlsMQ9Q3se6gJbvCIsGG5k53', '3Psyf8Gb2iOIMXjzv1C7dqculQz2', 'DPdbFiuzk3NkCQn9X36l4k5bnLu2', 'zTctHzi7N4hdD0g7BjXIEONpbud2', 'voijgBsUiDeFxOW2p2KqMlxxbL32', 'cKoJY2E3nLNzYv023XIIdq4cTs23', 'ArxTzz5LfldwSu0MC7aW5Ce6njr2', 'gPq2Gu33cZSajWlHbZFAz82LXNz2', 'Yzy9GJTyoUgqXHms4zxNzz3auGM2', 'buE1H0Fc31UR54oO94HzQQM7Rzo2', 'dMhQmdphV0fGFG0BNhSE2twfrCk2', 'IlVd8Ci2QPQUmT4aYXrhOH1VGj72'];
 
     public function index()
     {
-        $books = Book::all();
+        $books = Book::query()->get();
+        $books = $books->map(function ($book) {
+            return [
+                'id' => $book->uuid,
+                'title' => $book->title
+            ];
+        });
 
-        return BookResource::collection($books);
+        return response()->json($books);
     }
 
-    public function activate(Request $request)
+    public function group_book()
+    {
+        return response()->json([]);
+    }
+
+    public function activate(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'api_key' => 'required',
@@ -55,9 +69,8 @@ class BookController extends Controller
 
         $validateData = $validator->validated();
 
-        // Testing Code Logic
         if ($validateData['code'] === 'lestariilmu') {
-            if (in_array($validateData['api_key'], $this->tester)) {
+            if (in_array($validateData['api_key'], $this->tester, true)) {
                 return response()->json([
                     'status' => 'success',
                     'error_code' => 200,
@@ -73,8 +86,7 @@ class BookController extends Controller
             ]);
         }
 
-        // Security Check
-        if ($validateData['api_key'] !== env('APP_API_KEY')) {
+        if ($validateData['api_key'] !== config('app.api_key')) {
             return response()->json([
                 'status' => 'error',
                 'error_code' => 102,
@@ -83,8 +95,7 @@ class BookController extends Controller
             ]);
         }
 
-        // Activation Code Retrieval & General Validation
-        $code = ActivationCode::where('code', $validateData['code'])->first();
+        $code = ActivationCode::query()->where('code', $validateData['code'])->first();
 
         if (! $code) {
             return response()->json([
@@ -113,8 +124,7 @@ class BookController extends Controller
             ]);
         }
 
-        // Book Retrieval
-        $book = Book::where('uuid', $validateData['package_name'])->first();
+        $book = Book::query()->where('uuid', $validateData['package_name'])->first();
 
         if (! $book) {
             return response()->json([
@@ -125,10 +135,9 @@ class BookController extends Controller
             ]);
         }
 
-        // Restriction Check: Supported Books
         $supportedBooksKey = $code->items->pluck('model.uuid')->filter()->toArray();
 
-        if (empty($supportedBooksKey) || ! in_array($validateData['package_name'], $supportedBooksKey)) {
+        if (empty($supportedBooksKey) || ! in_array($validateData['package_name'], $supportedBooksKey, true)) {
             return response()->json([
                 'status' => 'error',
                 'error_code' => 108,
@@ -137,8 +146,7 @@ class BookController extends Controller
             ]);
         }
 
-        // Restriction Check: Tier
-        if (! empty($validateData['tier']) && intval($validateData['tier']) !== $code->tier->value) {
+        if (! empty($validateData['tier']) && (int) $validateData['tier'] !== $code->tier->value) {
             return response()->json([
                 'status' => 'error',
                 'error_code' => 114,
@@ -147,7 +155,6 @@ class BookController extends Controller
             ]);
         }
 
-        // Restriction Check: Type (Private/User-bound)
         if ($code->type !== 'public') {
             if (! empty($code->user_id) && $code->user_id !== $validateData['uid']) {
                 return response()->json([
@@ -159,18 +166,17 @@ class BookController extends Controller
             }
 
             if ($code->activate_in !== null && $code->activate_in !== $book->id) {
-                $activated_book = Book::find($code->activate_in);
+                $activatedBook = Book::query()->find($code->activate_in);
 
                 return response()->json([
                     'status' => 'error',
                     'error_code' => 110,
-                    'message' => "Maaf kode yang anda masukkan sudah aktif di buku {$activated_book->title} [110]",
+                    'message' => "Maaf kode yang anda masukkan sudah aktif di buku {$activatedBook->title} [110]",
                     'version' => 1,
                 ]);
             }
         }
 
-        // Update Activation State
         $code->update([
             'user_id' => $validateData['uid'],
             'activate_in' => $book->id,
@@ -179,6 +185,7 @@ class BookController extends Controller
         ]);
 
         $message = 'Kode berhasil diaktifkan. Semoga harimu menyenangkan :)';
+
         if ($code->max_activated) {
             $limit = $code->max_activated - $code->times_activated;
             $message = "Kode berhasil diaktifkan. \nKode bisa diaktifkan {$limit} kali lagi";
@@ -196,10 +203,10 @@ class BookController extends Controller
         ]);
     }
 
-    public function activation_check_level(Request $request, string $code)
+    public function activation_check_level(Request $request, string $code): JsonResponse
     {
         try {
-            $activationCode = ActivationCode::where('code', trim($code))->first();
+            $activationCode = ActivationCode::query()->where('code', trim($code))->first();
 
             if (! $activationCode) {
                 return response()->json([

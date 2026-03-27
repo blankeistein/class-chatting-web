@@ -108,10 +108,9 @@ class VideoController extends Controller
             'description' => $request->description,
             'tags' => $request->tags ?? [],
             'uploaded_by' => auth()->id(),
-            'video_url' => $this->buildFirebaseUrl($storagePath),
+            'video_url' => null,
             'thumbnail' => $thumbnailUrl,
             'storage_path' => $storagePath,
-            'file_path' => $storagePath,
             'provider' => 'firebase',
         ]);
 
@@ -177,9 +176,8 @@ class VideoController extends Controller
             $this->deleteFirebaseObject($video->storage_path);
             $this->deleteFirebaseDirectory($this->makeHlsDirectory($video->slug));
 
-            $updateData['video_url'] = $this->buildFirebaseUrl($storagePath);
+            $updateData['video_url'] = null;
             $updateData['storage_path'] = $storagePath;
-            $updateData['file_path'] = $storagePath;
             $updateData['provider'] = 'firebase';
         }
 

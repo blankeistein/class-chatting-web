@@ -3,6 +3,7 @@
 use App\Http\Controllers\API\BookController;
 use App\Http\Controllers\API\FirebaseWebhookController;
 use App\Http\Controllers\API\RegionController;
+use App\Http\Controllers\API\VideoController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -24,6 +25,10 @@ Route::prefix('v1/regions')->group(function () {
 
     Route::get('/districts', [RegionController::class, 'districts']);
     Route::get('/districts/{district:code}', [RegionController::class, 'district']);
+});
+
+Route::middleware('private.api')->group(function () {
+    Route::post('/video/update-hls-url', [VideoController::class, 'updateHlsUrl']);
 });
 
 // Firebase Webhook

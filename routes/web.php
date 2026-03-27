@@ -27,6 +27,10 @@ Route::middleware('auth')->group(function () {
     Route::delete('notifications/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
 
     Route::group(['prefix' => Config::get('app.admin_path'), 'as' => 'admin.', 'middleware' => 'admin'], function () {
+        Route::get('/', function () {
+            return redirect()->route('admin.dashboard');
+        });
+
         Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
         Route::get('activation-code/bulk-export', [ActivationCodeController::class, 'bulkExport'])->name('activation-code.bulk-export');

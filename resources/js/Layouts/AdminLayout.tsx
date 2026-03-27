@@ -48,11 +48,6 @@ const Links: LinkType[] = [
     routeName: "admin.activation-code.index",
   },
   {
-    icon: MapPinnedIcon,
-    title: "Daerah",
-    routeName: "admin.regions.index",
-  },
-  {
     icon: ArchiveIcon,
     title: "Konten",
     children: [
@@ -68,6 +63,12 @@ const Links: LinkType[] = [
       },
     ],
   },
+  {
+    icon: MapPinnedIcon,
+    title: "Daerah",
+    routeName: "admin.regions.index",
+  },
+  
   {
     icon: UserCircle2Icon,
     title: "User",

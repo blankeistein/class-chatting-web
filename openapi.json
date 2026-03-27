@@ -25,6 +25,10 @@
             "description": "Webhook internal untuk sinkronisasi data pengguna dari Firebase."
         },
         {
+            "name": "Videos",
+            "description": "Endpoint API untuk sinkronisasi data video dari service internal."
+        },
+        {
             "name": "Private Books",
             "description": "Endpoint private untuk integrasi buku internal dengan autentikasi `api_key` pada path URL."
         },
@@ -1608,6 +1612,67 @@
                                 }
                             }
                         }
+                    }
+                }
+            }
+        },
+        "/video/update-hls-url": {
+            "post": {
+                "operationId": "videosUpdateHlsUrl",
+                "description": "Dipakai service transcoding untuk mengisi `video_url` dengan URL Firebase `.m3u8` berdasarkan `slug` video yang sudah dibuat saat upload awal.",
+                "summary": "Update video HLS URL",
+                "tags": [
+                    "Videos"
+                ],
+                "parameters": [
+                    {
+                        "name": "X-API-KEY",
+                        "in": "header",
+                        "required": true,
+                        "description": "API key internal untuk mengamankan callback HLS.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "test-private-key"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "slug": {
+                                        "type": "string",
+                                        "example": "abc123def45"
+                                    },
+                                    "video_url": {
+                                        "type": "string",
+                                        "format": "uri",
+                                        "example": "https://firebasestorage.googleapis.com/v0/b/example-bucket/o/hls%2Fabc123def45%2Findex.m3u8?alt=media"
+                                    }
+                                },
+                                "required": [
+                                    "slug",
+                                    "video_url"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Video not found"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             }

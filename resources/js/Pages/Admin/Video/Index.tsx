@@ -30,7 +30,7 @@ interface Video {
   slug: string;
   title: string;
   description: string;
-  video_url: string;
+  video_url: string | null;
   thumbnail: string | null;
   tags?: string[];
   created_at: string;
@@ -85,11 +85,11 @@ const VideoActions = ({
           Lihat Detail
         </Menu.Item>
         <Menu.Item
-          className="flex items-center gap-2 dark:hover:bg-slate-800"
-          onClick={() => window.open(video.video_url, "_blank")}
+          className={`flex items-center gap-2 dark:hover:bg-slate-800 ${!video.video_url ? "cursor-not-allowed opacity-60" : ""}`}
+          onClick={() => video.video_url && window.open(video.video_url, "_blank")}
         >
           <PlayCircleIcon className="w-4 h-4" />
-          Buka File Video
+          {video.video_url ? "Buka File Video" : "Menunggu HLS"}
         </Menu.Item>
         <Menu.Item
           className="flex items-center gap-2 dark:hover:bg-slate-800"
@@ -198,7 +198,7 @@ const VideoGridCard = ({
             onClick={() => openVideoDetail(video)}
           >
             <PlayCircleIcon className="h-4 w-4" />
-            Putar
+            {video.video_url ? "Putar" : "Detail"}
           </Button>
         </div>
       </Card.Body>

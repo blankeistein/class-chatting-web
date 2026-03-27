@@ -8,7 +8,6 @@ import {
   EditIcon,
   ExternalLinkIcon,
   PlayCircleIcon,
-  TagIcon,
   Trash2Icon,
   UserIcon,
   VideoIcon,
@@ -19,7 +18,7 @@ interface Video {
   slug: string;
   title: string;
   description: string | null;
-  video_url: string;
+  video_url: string | null;
   thumbnail: string | null;
   tags?: string[];
   created_at: string;
@@ -77,10 +76,11 @@ export default function Show({ video }: { video: Video }) {
               color="secondary"
               size="sm"
               className="flex items-center gap-2"
-              onClick={() => window.open(video.video_url, "_blank")}
+              onClick={() => video.video_url && window.open(video.video_url, "_blank")}
+              disabled={!video.video_url}
             >
               <ExternalLinkIcon className="h-4 w-4" />
-              Buka File
+              {video.video_url ? "Buka File" : "Menunggu HLS"}
             </Button>
             <Button
               size="sm"
@@ -116,16 +116,22 @@ export default function Show({ video }: { video: Video }) {
 
             <div className="bg-black p-2 sm:p-4">
               <div className="overflow-hidden rounded-xl border border-slate-800 bg-black shadow-inner">
-                <video
-                  key={video.video_url}
-                  controls
-                  preload="metadata"
-                  poster={video.thumbnail ?? undefined}
-                  className="aspect-video w-full bg-black"
-                >
-                  <source src={video.video_url} />
-                  Browser Anda tidak mendukung pemutaran video HTML5.
-                </video>
+                {video.video_url ? (
+                  <video
+                    key={video.video_url}
+                    controls
+                    preload="metadata"
+                    poster={video.thumbnail ?? undefined}
+                    className="aspect-video w-full bg-black"
+                  >
+                    <source src={video.video_url} />
+                    Browser Anda tidak mendukung pemutaran video HTML5.
+                  </video>
+                ) : (
+                  <div className="flex aspect-video items-center justify-center px-6 text-center text-sm text-slate-300">
+                    URL HLS belum tersedia. Video sedang menunggu proses transcoding.
+                  </div>
+                )}
               </div>
             </div>
 
@@ -153,7 +159,7 @@ export default function Show({ video }: { video: Video }) {
                 <Typography className="leading-7 text-slate-700 dark:text-slate-300">
                   {video.description || "Belum ada deskripsi untuk video ini."}
                 </Typography>
-              </div>              
+              </div>
             </Card.Body>
           </Card>
 

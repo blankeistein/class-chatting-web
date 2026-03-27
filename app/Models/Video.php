@@ -18,7 +18,6 @@ class Video extends Model
         'thumbnail',
         'video_url',
         'storage_path',
-        'file_path',
         'provider',
         'metadata',
         'tags',

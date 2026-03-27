@@ -30,7 +30,7 @@ interface Video {
   slug: string;
   title: string;
   description: string;
-  video_url: string;
+  video_url: string | null;
   thumbnail: string | null;
   tags?: string[];
   created_at?: string;
@@ -527,14 +527,20 @@ export default function Edit({ video }: { video: Video }) {
               </div>
               <CardBody className="space-y-4 p-5">
                 <div className="overflow-hidden rounded-2xl border border-slate-200 bg-black shadow-inner dark:border-slate-800">
-                  <video
-                    ref={videoRef}
-                    key={activeVideoUrl}
-                    src={activeVideoUrl}
-                    controls
-                    className="aspect-video w-full bg-black"
-                    crossOrigin="anonymous"
-                  />
+                  {activeVideoUrl ? (
+                    <video
+                      ref={videoRef}
+                      key={activeVideoUrl}
+                      src={activeVideoUrl}
+                      controls
+                      className="aspect-video w-full bg-black"
+                      crossOrigin="anonymous"
+                    />
+                  ) : (
+                    <div className="flex aspect-video items-center justify-center px-6 text-center text-sm text-slate-300">
+                      URL HLS belum tersedia. Preview akan muncul setelah service transcoding mengirim callback.
+                    </div>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -559,7 +565,11 @@ export default function Edit({ video }: { video: Video }) {
                       Status Video
                     </Typography>
                     <Typography className="mt-1 font-medium text-slate-800 dark:text-white">
-                      {data.video ? "Akan diganti setelah tombol simpan ditekan." : "Masih menggunakan video yang saat ini tersimpan."}
+                      {data.video
+                        ? "Akan diganti setelah tombol simpan ditekan."
+                        : activeVideoUrl
+                          ? "Masih menggunakan video yang saat ini tersimpan."
+                          : "Menunggu URL HLS dari service transcoding."}
                     </Typography>
                   </div>
                 </div>
@@ -581,7 +591,6 @@ export default function Edit({ video }: { video: Video }) {
                 </CardBody>
               </Card>
             )}
-
           </div>
         </form>
       </div>
@@ -600,13 +609,19 @@ export default function Edit({ video }: { video: Video }) {
             </div>
 
             <div className="flex w-full justify-center bg-black">
-              <video
-                ref={videoRef}
-                src={activeVideoUrl}
-                controls
-                className="max-h-[500px] w-full object-contain"
-                crossOrigin="anonymous"
-              />
+              {activeVideoUrl ? (
+                <video
+                  ref={videoRef}
+                  src={activeVideoUrl}
+                  controls
+                  className="max-h-[500px] w-full object-contain"
+                  crossOrigin="anonymous"
+                />
+              ) : (
+                <div className="flex min-h-[320px] w-full items-center justify-center px-6 text-center text-sm text-slate-300">
+                  Tidak ada URL HLS yang bisa dipakai untuk mengambil frame saat ini.
+                </div>
+              )}
             </div>
 
             <div className="border-t border-slate-100 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900">
@@ -620,6 +635,7 @@ export default function Edit({ video }: { video: Video }) {
                   className="flex flex-shrink-0 items-center gap-2"
                   onClick={captureThumbnail}
                   type="button"
+                  disabled={!activeVideoUrl}
                 >
                   <CameraIcon className="h-4 w-4" />
                   Simpan Frame

@@ -45,6 +45,7 @@ class HandleInertiaRequests extends Middleware
                 'notifications' => $request->user()->notifications()->limit(5)->get(),
                 'unread_notifications_count' => $request->user()->unreadNotifications()->count(),
             ] : null,
+            'auth.firebase' => fn () => $request->session()->get('firebase_auth'),
         ];
     }
 }

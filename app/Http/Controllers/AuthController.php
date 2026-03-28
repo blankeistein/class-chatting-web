@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\LoginRequest;
 use App\Models\User;
+use App\Services\FirebaseCustomTokenService;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
@@ -16,24 +18,27 @@ class AuthController extends Controller
         return Inertia::render('Auth/Login');
     }
 
-    public function loginAction(Request $request)
+    public function loginAction(LoginRequest $request, FirebaseCustomTokenService $firebaseCustomTokenService)
     {
-        $validatedData = $request->validate([
-            'email' => 'required|email|max:255',
-            'password' => 'required|max:100',
-        ]);
+        $validatedData = $request->validated();
 
         try {
-            $user = User::where('email', $validatedData['email'])->firstOrFail();
+            User::query()->where('email', $validatedData['email'])->firstOrFail();
 
             if (Auth::attempt($validatedData)) {
                 $request->session()->regenerate();
 
-                if (Auth::user()->role === 'admin') {
-                    return redirect()->intended(route('admin.dashboard'));
+                $firebaseAuth = $firebaseCustomTokenService->issueFor($request->user());
+
+                if ($request->user()?->role === 'admin') {
+                    return redirect()
+                        ->intended(route('admin.dashboard'))
+                        ->with('firebase_auth', $firebaseAuth);
                 }
 
-                return redirect()->intended(route('home'));
+                return redirect()
+                    ->intended(route('home'))
+                    ->with('firebase_auth', $firebaseAuth);
             }
 
             return back()->withErrors([

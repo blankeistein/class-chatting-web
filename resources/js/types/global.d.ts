@@ -15,5 +15,9 @@ export type AuthProps = {
       notifications: any[];
       unread_notifications_count: number;
     } | null;
+    firebase: {
+      uid: string;
+      custom_token: string;
+    } | null;
   }
 }

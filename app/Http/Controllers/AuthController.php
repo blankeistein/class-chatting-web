@@ -25,25 +25,26 @@ class AuthController extends Controller
         try {
             User::query()->where('email', $validatedData['email'])->firstOrFail();
 
-            if (Auth::attempt($validatedData)) {
-                $request->session()->regenerate();
+            if (! Auth::attempt($validatedData)) {
+                return back()->withErrors([
+                    'email' => 'Email atau password salah',
+                ]);
+            }
 
-                $firebaseAuth = $firebaseCustomTokenService->issueFor($request->user());
+            $request->session()->regenerate();
 
-                if ($request->user()?->role === 'admin') {
-                    return redirect()
-                        ->intended(route('admin.dashboard'))
-                        ->with('firebase_auth', $firebaseAuth);
-                }
+            $firebaseAuth = $firebaseCustomTokenService->issueFor($request->user());
 
+            if ($request->user()?->role === 'admin') {
                 return redirect()
-                    ->intended(route('home'))
+                    ->intended(route('admin.dashboard'))
                     ->with('firebase_auth', $firebaseAuth);
             }
 
-            return back()->withErrors([
-                'email' => 'Email atau password salah',
-            ]);
+            return redirect()
+                ->intended(route('home'))
+                ->with('firebase_auth', $firebaseAuth);
+
         } catch (ModelNotFoundException $e) {
             return back()->withErrors([
                 'email' => 'Email tidak ditemukan',

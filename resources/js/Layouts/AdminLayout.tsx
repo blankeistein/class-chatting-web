@@ -13,12 +13,13 @@ import {
   Tooltip,
   Typography,
 } from "@material-tailwind/react";
-import { ArchiveIcon, BellIcon, BookIcon, ChevronDownIcon, GithubIcon, LayoutDashboardIcon, LogOutIcon, MailIcon, MapPinnedIcon, MenuIcon, MoonIcon, PiIcon, PinIcon, SunIcon, TicketIcon, Trash2Icon, UserCircle2Icon, VideoIcon, XIcon } from "lucide-react";
+import { ArchiveIcon, BellIcon, BookIcon, ChevronDownIcon, GithubIcon, Grid3X3, Grip, LayoutDashboardIcon, LayoutGrid, LogOutIcon, MailIcon, MapPinnedIcon, MenuIcon, MoonIcon, PiIcon, PinIcon, SunIcon, TicketIcon, Trash2Icon, UserCircle2Icon, VideoIcon, XIcon } from "lucide-react";
 import { useTheme } from "../Contexts/ThemeContext";
 import { Link, router, usePage } from "@inertiajs/react";
 import { route } from "ziggy-js";
 import { AuthProps } from "@/types/global";
 import { NotificationMenu } from "../Components/NotificationMenu";
+import { signOutFirebase } from "../lib/firebase";
 
 type ChildLinkType = {
   icon: React.ForwardRefExoticComponent<React.SVGProps<SVGSVGElement>>;
@@ -68,13 +69,47 @@ const Links: LinkType[] = [
     title: "Daerah",
     routeName: "admin.regions.index",
   },
-  
+
   {
     icon: UserCircle2Icon,
     title: "User",
     routeName: "admin.users.index",
   },
 ];
+
+type AppLinkType = {
+  icon: string;
+  title: string;
+  routeName: string;
+};
+
+const AppsLinks: AppLinkType[] = [
+  {
+    icon: "/assets/images/icons/class-chatting.webp",
+    title: "Class Chatting",
+    routeName: "admin.dashboard",
+  },
+  {
+    icon: "/assets/images/icons/class-chatting-ulangan-online.webp",
+    title: "Ulangan Online",
+    routeName: "admin.dashboard",
+  },
+  {
+    icon: "/assets/images/icons/anak-indonesia-menghafal.webp",
+    title: "Anak Indonesia Menghafal",
+    routeName: "admin.dashboard",
+  },
+  {
+    icon: "/assets/images/icons/class-chatting-for-kids.webp",
+    title: "For Kids",
+    routeName: "admin.dashboard",
+  },
+  {
+    icon: "/assets/images/icons/class-chatting-layar-lebar.webp",
+    title: "Layar Lebar",
+    routeName: "admin.dashboard",
+  }
+]
 
 const NavList = ({ isCollapsed = false }: { isCollapsed?: boolean }) => {
   const { url } = usePage();
@@ -271,6 +306,12 @@ function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
 function ProfileMenu() {
   const props = usePage<AuthProps>().props;
 
+  const handleLogout = async (): Promise<void> => {
+    await signOutFirebase();
+
+    router.delete(route('logout'));
+  };
+
   return (
     <Menu placement="bottom-end">
       <Menu.Trigger
@@ -285,7 +326,7 @@ function ProfileMenu() {
           <UserCircle2Icon className="mr-2 h-[18px] w-[18px]" /> My Profile
         </Menu.Item>
         <hr className="!my-1 -mx-1 border-surface" />
-        <Menu.Item className="text-error hover:bg-error/10 hover:text-error focus:bg-error/10 focus:text-error" onClick={() => router.delete(route('logout'))}>
+        <Menu.Item className="text-error hover:bg-error/10 hover:text-error focus:bg-error/10 focus:text-error" onClick={() => void handleLogout()}>
           <LogOutIcon className="mr-2 h-[18px] w-[18px]" />
           Logout
         </Menu.Item>
@@ -343,11 +384,33 @@ function TopNavbar({ onToggleSidebar }: { onToggleSidebar: () => void }) {
               <MenuIcon className="h-4 w-4" />
             </IconButton>
 
-            <div className="flex gap-4 items-center ml-auto">
+            <div className="flex gap-2 items-center ml-auto">
               <NotificationMenu />
               <IconButton variant="ghost" onClick={toggleTheme}>
                 {theme === 'dark' ? <SunIcon className="h-4 w-4" /> : <MoonIcon className="h-4 w-4" />}
               </IconButton>
+              <Menu placement="bottom-end">
+                <Menu.Trigger as={IconButton} variant="ghost">
+                  <Grip className="h-4 w-4" />
+                </Menu.Trigger>
+                <Menu.Content className="z-20 !p-3 min-w-[240px] max-w-[280px]">
+                  <Typography type="small" className="px-2 pb-2 font-semibold text-surface-foreground/70">
+                    Daftar Aplikasi
+                  </Typography>
+                  <div className="grid grid-cols-2 gap-2">
+                    {AppsLinks.map((item) => (
+                      <Link
+                        key={item.title}
+                        href={route(item.routeName)}
+                        className="group flex flex-col items-center gap-2 rounded-xl border border-surface/30 bg-surface/5 p-3 text-sm transition hover:border-primary hover:bg-primary/10"
+                      >
+                        <img src={item.icon} alt={`${item.title}-icon`} className="h-12 w-12 rounded-lg" />
+                        <span className="text-xs">{item.title}</span>
+                      </Link>
+                    ))}
+                  </div>
+                </Menu.Content>
+              </Menu>
               <ProfileMenu />
             </div>
           </div>
@@ -407,4 +470,3 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     </div>
   );
 }
-

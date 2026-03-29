@@ -12,6 +12,7 @@ class FirebaseCustomTokenService
         $firebaseUid = $this->resolveFirebaseUid($user);
         $customToken = Firebase::auth()->createCustomToken($firebaseUid, [
             'role' => $user->role,
+            'email' => $user->email,
             'user_id' => (string) $user->id,
         ])->toString();
 

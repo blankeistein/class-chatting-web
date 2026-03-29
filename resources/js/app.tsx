@@ -15,12 +15,14 @@ createInertiaApp({
         import.meta.glob('./Pages/**/*.tsx')
     ),
 
-    setup({ el, App, props }) {
+    setup({ el, App, props }: { el: Element; App: any; props: any }) {
         const root = createRoot(el);
         root.render(
             <ThemeProvider>
-                <FirebaseAuthBridge />
-                <App {...props} />
+                <>
+                    <FirebaseAuthBridge firebaseAuth={props.initialPage.props.auth?.firebase ?? null} />
+                    <App {...props} />
+                </>
             </ThemeProvider>
         );
     },

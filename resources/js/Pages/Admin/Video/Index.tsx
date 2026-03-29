@@ -10,7 +10,7 @@ import {
   Select,
 } from "@material-tailwind/react";
 import AdminLayout from "@/Layouts/AdminLayout";
-import { Head, router, useForm } from "@inertiajs/react";
+import { Head, Link, router, useForm } from "@inertiajs/react";
 import {
   PlusIcon,
   VideoIcon,
@@ -22,6 +22,7 @@ import {
   MoreVerticalIcon,
   SearchIcon,
   EyeIcon,
+  Server,
 } from "lucide-react";
 import { toast, Toaster } from "react-hot-toast";
 
@@ -218,7 +219,7 @@ export default function Index({
   const [search, setSearch] = useState(filters?.search || "");
   const [sort, setSort] = useState(
     SORT_OPTIONS.find((option) => option.value === (filters?.sort || "latest")) ||
-      SORT_OPTIONS[0],
+    SORT_OPTIONS[0],
   );
 
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -283,8 +284,12 @@ export default function Index({
             </Typography>
           </div>
           <div className="flex gap-2">
+            <Button as={Link} href={route("admin.videos.jobs")} className="flex items-center gap-2 ">
+              <Server className="h-4 w-4" />
+              Tugas
+            </Button>
             <Button
-              className="flex items-center gap-2 border border-surface bg-slate-900 shadow-none dark:border-none dark:bg-white dark:text-slate-900"
+              className="flex items-center gap-2"
               size="sm"
               onClick={() => router.get(route("admin.videos.create"))}
             >

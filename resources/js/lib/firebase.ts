@@ -1,5 +1,6 @@
 import { FirebaseApp, getApp, getApps, initializeApp } from "firebase/app";
 import { Auth, getAuth, signInWithCustomToken, signOut } from "firebase/auth";
+import { Firestore, getFirestore } from "firebase/firestore";
 
 type FirebaseSession = {
     uid: string;
@@ -54,7 +55,17 @@ function getFirebaseApp(): FirebaseApp | null {
     return getApps().length > 0 ? getApp() : initializeApp(config);
 }
 
-function getFirebaseAuth(): Auth | null {
+export function getFirebaseFirestore(): Firestore | null {
+    const app = getFirebaseApp();
+
+    if (! app) {
+        return null;
+    }
+
+    return getFirestore(app);
+}
+
+export function getFirebaseAuth(): Auth | null {
     const app = getFirebaseApp();
 
     if (! app) {

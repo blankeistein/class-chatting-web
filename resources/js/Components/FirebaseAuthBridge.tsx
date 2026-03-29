@@ -1,14 +1,15 @@
-import { usePage } from "@inertiajs/react";
 import { useEffect } from "react";
 import { syncFirebaseAuth } from "../lib/firebase";
-import { AuthProps } from "../types/global";
 
-export function FirebaseAuthBridge(): null {
-    const { auth } = usePage<AuthProps>().props;
+type FirebaseAuthData = {
+    uid: string;
+    custom_token: string;
+} | null;
 
+export function FirebaseAuthBridge({ firebaseAuth }: { firebaseAuth: FirebaseAuthData }): null {
     useEffect(() => {
-        void syncFirebaseAuth(auth.firebase);
-    }, [auth.firebase]);
+        void syncFirebaseAuth(firebaseAuth);
+    }, [firebaseAuth]);
 
     return null;
 }

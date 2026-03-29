@@ -7,6 +7,8 @@ use App\Models\Video;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -62,6 +64,11 @@ class VideoController extends Controller
         return Inertia::render('Admin/Video/Create');
     }
 
+    public function jobs(): Response
+    {
+        return Inertia::render('Admin/Video/Jobs');
+    }
+
     /**
      * Store a newly created video in storage.
      */
@@ -107,7 +114,7 @@ class VideoController extends Controller
             'slug' => $slug,
             'description' => $request->description,
             'tags' => $request->tags ?? [],
-            'uploaded_by' => auth()->id(),
+            'uploaded_by' => Auth::id(),
             'video_url' => null,
             'thumbnail' => $thumbnailUrl,
             'storage_path' => $storagePath,
@@ -270,8 +277,7 @@ class VideoController extends Controller
         $temporaryPath = tempnam(sys_get_temp_dir(), 'thumb-webp-');
 
         if ($temporaryPath === false) {
-            imagedestroy($canvas);
-            imagedestroy($source);
+            unset($canvas, $source);
             throw new \RuntimeException('File sementara thumbnail tidak dapat dibuat.');
         }
 
@@ -280,8 +286,7 @@ class VideoController extends Controller
 
         $converted = imagewebp($canvas, $webpPath, $quality);
 
-        imagedestroy($canvas);
-        imagedestroy($source);
+        unset($canvas, $source);
 
         if (! $converted) {
             throw new \RuntimeException('Thumbnail gagal dikonversi ke WebP.');
@@ -303,7 +308,7 @@ class VideoController extends Controller
                 $object->delete();
             }
         } catch (\Exception $e) {
-            \Log::error('Firebase object deletion failed: '.$e->getMessage());
+            Log::error('Firebase object deletion failed: '.$e->getMessage());
         }
     }
 
@@ -320,7 +325,7 @@ class VideoController extends Controller
                 $object->delete();
             }
         } catch (\Exception $e) {
-            \Log::error('Firebase directory deletion failed: '.$e->getMessage());
+            Log::error('Firebase directory deletion failed: '.$e->getMessage());
         }
     }
 

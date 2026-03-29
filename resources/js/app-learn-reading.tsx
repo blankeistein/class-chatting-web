@@ -17,7 +17,7 @@ createInertiaApp({
         const root = createRoot(el);
         root.render(
             <>
-                <FirebaseAuthBridge />
+                <FirebaseAuthBridge firebaseAuth={props.initialPage.props.auth?.firebase ?? null} />
                 <App {...props} />
             </>
         );

@@ -32,6 +32,7 @@ Route::middleware('auth')->group(function () {
         });
 
         Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+        Route::get('videos/jobs', [VideoController::class, 'jobs'])->name('videos.jobs');
 
         Route::get('activation-code/bulk-export', [ActivationCodeController::class, 'bulkExport'])->name('activation-code.bulk-export');
         Route::delete('activation-code/bulk-delete', [ActivationCodeController::class, 'bulkDelete'])->name('activation-code.bulk-delete');

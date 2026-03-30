@@ -4,6 +4,7 @@ import { Eye, EyeClosedIcon, EyeIcon } from "lucide-react";
 import { FormEvent, useState } from "react";
 import { route } from "ziggy-js";
 import toast, { Toaster } from "react-hot-toast";
+import { syncFirebaseAuth } from "@/lib/firebase";
 
 export default function Login() {
     const { data, setData, post, processing } = useForm({
@@ -15,6 +16,18 @@ export default function Login() {
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         post(route('login'), {
+            onSuccess: async (page) => {
+                const firebaseAuth = (page.props as {
+                    auth?: {
+                        firebase?: {
+                            uid: string;
+                            custom_token: string;
+                        } | null;
+                    };
+                }).auth?.firebase ?? null;
+
+                await syncFirebaseAuth(firebaseAuth);
+            },
             onError: (errors) => {
                 Object.values(errors).forEach((error) => {
                     toast.error(error);

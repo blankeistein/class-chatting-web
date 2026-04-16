@@ -11,7 +11,7 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-Route::post('/v1/book/activate', [BookController::class, 'activate']);
+Route::post('/v1/book/activate', [BookController::class, 'activate'])->middleware('throttle:60,1');
 Route::get('/v1/book/level/{code}', [BookController::class, 'activation_check_level']);
 
 Route::prefix('v1/regions')->group(function () {
@@ -27,11 +27,11 @@ Route::prefix('v1/regions')->group(function () {
     Route::get('/districts/{district:code}', [RegionController::class, 'district']);
 });
 
-Route::middleware('private.api')->group(function () {
+Route::middleware(['throttle:1000,1', 'private.api'])->group(function () {
     Route::post('/video/update-hls-url', [VideoController::class, 'updateHlsUrl']);
 });
 
 // Firebase Webhook
-Route::middleware('firebase.webhook')->prefix('firebase')->group(function () {
+Route::middleware(['throttle:1000,1', 'firebase.webhook'])->prefix('firebase')->group(function () {
     Route::post('/webhook/user-created', [FirebaseWebhookController::class, 'userCreated']);
 });

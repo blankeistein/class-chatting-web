@@ -1,15 +1,18 @@
-import { Head, useForm } from "@inertiajs/react";
+import { Head, useForm, usePage } from "@inertiajs/react";
 import { Button, Card, IconButton, Input, Spinner, Typography } from "@material-tailwind/react";
 import { Eye, EyeClosedIcon, EyeIcon } from "lucide-react";
 import { FormEvent, useState } from "react";
 import { route } from "ziggy-js";
 import toast, { Toaster } from "react-hot-toast";
 import { syncFirebaseAuth } from "@/lib/firebase";
+import ReCAPTCHA from "react-google-recaptcha";
 
 export default function Login() {
+    const page = usePage();
     const { data, setData, post, processing } = useForm({
         email: "",
         password: "",
+        "g-recaptcha-response": ""
     });
     const [inputType, setInputType] = useState("password");
 
@@ -121,6 +124,12 @@ export default function Login() {
                                         </Input.Icon>
                                     </Input>
                                 </div>
+                                <ReCAPTCHA
+                                    sitekey={page.props?.recaptcha_site_key as string || ''}
+                                    onChange={(value) => {
+                                        setData('g-recaptcha-response', value || '');
+                                    }} className="mb-6" />
+
                                 <Button size="lg" isFullWidth disabled={processing}>
                                     {
                                         processing && (

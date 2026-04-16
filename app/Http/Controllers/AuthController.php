@@ -6,30 +6,63 @@ use App\Http\Requests\LoginRequest;
 use App\Models\User;
 use App\Services\FirebaseCustomTokenService;
 use Exception;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class AuthController extends Controller
 {
-    public function login(Request $request)
+    protected function ensureIsNotRateLimited(Request $request): void
+    {
+        $key = 'login:'.$request->input('email').'|'.$request->ip();
+
+        if (RateLimiter::tooManyAttempts($key, 5)) {
+            $seconds = RateLimiter::availableIn($key);
+            throw ValidationException::withMessages([
+                'email' => "Terlalu banyak percobaan. Coba lagi dalam {$seconds} detik.",
+            ]);
+        }
+    }
+
+    public function login()
     {
         return Inertia::render('Auth/Login');
     }
 
     public function loginAction(LoginRequest $request, FirebaseCustomTokenService $firebaseCustomTokenService)
     {
+        $this->ensureIsNotRateLimited($request);
+
         $validatedData = $request->validated();
+
+        $auth = [
+            'email' => $validatedData['email'],
+            'password' => $validatedData['password'],
+        ];
 
         try {
             User::query()->where('email', $validatedData['email'])->firstOrFail();
 
-            if (! Auth::attempt($validatedData)) {
+            $key = 'login:'.$request->input('email').'|'.$request->ip();
+            if (! Auth::attempt($auth)) {
+                RateLimiter::hit($key, 300);
+
+                Log::warning('Failed login attempt', [
+                    'ip' => $request->ip(),
+                    'email' => $request->input('email'),
+                    'ua' => $request->userAgent(),
+                    'time' => now(),
+                ]);
+
                 return back()->withErrors([
-                    'email' => 'Email atau password salah',
+                    'email' => 'Autentikasi gagal',
                 ]);
             }
+
+            RateLimiter::clear($key);
 
             $request->session()->regenerate();
 
@@ -45,10 +78,6 @@ class AuthController extends Controller
                 ->intended(route('home'))
                 ->with('firebase_auth', $firebaseAuth);
 
-        } catch (ModelNotFoundException $e) {
-            return back()->withErrors([
-                'email' => 'Email tidak ditemukan',
-            ]);
         } catch (Exception $e) {
             return back()->withErrors([
                 'email' => 'Autentikasi gagal',

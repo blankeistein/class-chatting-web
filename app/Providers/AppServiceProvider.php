@@ -5,9 +5,12 @@ namespace App\Providers;
 use App\Models\Book;
 use App\Models\User;
 use Dedoc\Scramble\Scramble;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
@@ -47,5 +50,13 @@ class AppServiceProvider extends ServiceProvider
 
             return $user !== null && in_array($user->email, (array) config('app.development_email', []), true);
         });
+
+        RateLimiter::for('login', function (Request $request) {
+            return [
+                Limit::perMinute(5)->by($request->ip()),
+                Limit::perMinute(3)->by($request->input('email')),
+            ];
+        });
+
     }
 }

@@ -25,6 +25,7 @@ class LoginRequest extends FormRequest
         return [
             'email' => ['required', 'email', 'max:255'],
             'password' => ['required', 'string', 'max:100'],
+            'g-recaptcha-response' => 'required|captcha',
         ];
     }
 
@@ -37,6 +38,8 @@ class LoginRequest extends FormRequest
             'password.required' => 'Password wajib diisi.',
             'password.string' => 'Password harus berupa teks.',
             'password.max' => 'Password maksimal 100 karakter.',
+            'g-recaptcha-response.required' => 'Please verify that you are not a robot.',
+            'g-recaptcha-response.captcha' => 'Captcha error! try again later or contact site admin.',
         ];
     }
 }

@@ -45,7 +45,7 @@ class ActivationCodeController extends Controller
             ->when($bookId, function ($query, $bookId) {
                 $query->whereHas('items', function ($itemQuery) use ($bookId) {
                     $itemQuery->where('model_id', $bookId)
-                        ->where('model_type', Book::class);
+                        ->where('model_type', 'book');
                 });
             })
             ->when(in_array((int) $tier, $tierValues, true), function ($query) use ($tier) {
@@ -134,7 +134,7 @@ class ActivationCodeController extends Controller
                 foreach ($request->book_ids as $bookId) {
                     $activationCode->items()->create([
                         'model_id' => $bookId,
-                        'model_type' => Book::class,
+                        'model_type' => 'book',
                     ]);
                 }
             }

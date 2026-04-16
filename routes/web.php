@@ -17,7 +17,7 @@ Route::get('/', function () {
 })->name('home');
 
 Route::get('login', [AuthController::class, 'login'])->name('login')->middleware('guest');
-Route::post('login', [AuthController::class, 'loginAction'])->middleware('guest');
+Route::post('login', [AuthController::class, 'loginAction'])->middleware(['guest', 'throttle:login']);
 Route::delete('logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::middleware('auth')->group(function () {

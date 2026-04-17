@@ -40,6 +40,7 @@ type Regency = {
   name: string;
   type: string | null;
   districts_count?: number;
+  villages_count?: number;
   province?: {
     id: number;
     code: string;
@@ -51,6 +52,29 @@ type District = {
   id: number;
   code: string;
   name: string;
+  villages_count?: number;
+  regency?: {
+    id: number;
+    code: string;
+    name: string;
+    type: string | null;
+  };
+  province?: {
+    id: number;
+    code: string;
+    name: string;
+  };
+};
+
+type Village = {
+  id: number;
+  code: string;
+  name: string;
+  district?: {
+    id: number;
+    code: string;
+    name: string;
+  };
   regency?: {
     id: number;
     code: string;
@@ -65,9 +89,9 @@ type District = {
 };
 
 type DialogState = {
-  entity: "province" | "regency" | "district";
+  entity: "province" | "regency" | "district" | "village";
   mode: "create" | "edit" | "delete";
-  item?: Province | Regency | District;
+  item?: Province | Regency | District | Village;
 } | null;
 
 const TYPE_OPTIONS = [
@@ -116,28 +140,35 @@ export default function Index({
   provinces,
   regencies,
   districts,
+  villages,
   selectedProvince,
   selectedRegency,
+  selectedDistrict,
 }: {
-  stats: { provinces: number; regencies: number; districts: number };
+  stats: { provinces: number; regencies: number; districts: number; villages: number };
   provinces: { data: Province[] };
   regencies: { data: Regency[] };
   districts: { data: District[] };
+  villages: { data: Village[] };
   selectedProvince: { id: number; code: string; name: string } | null;
   selectedRegency: { id: number; code: string; name: string; type: string | null } | null;
+  selectedDistrict: { id: number; code: string; name: string } | null;
 }) {
   const provinceItems = provinces.data ?? [];
   const regencyItems = regencies.data ?? [];
   const districtItems = districts.data ?? [];
+  const villageItems = villages.data ?? [];
 
   const [provinceSearch, setProvinceSearch] = useState("");
   const [regencySearch, setRegencySearch] = useState("");
   const [districtSearch, setDistrictSearch] = useState("");
+  const [villageSearch, setVillageSearch] = useState("");
   const [dialog, setDialog] = useState<DialogState>(null);
 
   const deferredProvinceSearch = React.useDeferredValue(provinceSearch);
   const deferredRegencySearch = React.useDeferredValue(regencySearch);
   const deferredDistrictSearch = React.useDeferredValue(districtSearch);
+  const deferredVillageSearch = React.useDeferredValue(villageSearch);
 
   const provinceForm = useForm({
     code: "",
@@ -155,6 +186,13 @@ export default function Index({
 
   const districtForm = useForm({
     regency_id: selectedRegency?.id ?? 0,
+    code: "",
+    name: "",
+    _method: "post",
+  });
+
+  const villageForm = useForm({
+    district_id: selectedDistrict?.id ?? 0,
     code: "",
     name: "",
     _method: "post",
@@ -190,18 +228,29 @@ export default function Index({
     return `${district.code} ${district.name}`.toLowerCase().includes(keyword);
   });
 
-  const visitHierarchy = (provinceCode?: string | null, regencyCode?: string | null) => {
+  const filteredVillages = villageItems.filter((village) => {
+    const keyword = deferredVillageSearch.trim().toLowerCase();
+
+    if (!keyword) {
+      return true;
+    }
+
+    return `${village.code} ${village.name}`.toLowerCase().includes(keyword);
+  });
+
+  const visitHierarchy = (provinceCode?: string | null, regencyCode?: string | null, districtCode?: string | null) => {
     router.get(
       route("admin.regions.index"),
       {
         province: provinceCode || undefined,
         regency: regencyCode || undefined,
+        district: districtCode || undefined,
       },
       {
         preserveState: true,
         preserveScroll: true,
         replace: true,
-        only: ["stats", "provinces", "regencies", "districts", "selectedProvince", "selectedRegency"],
+        only: ["stats", "provinces", "regencies", "districts", "villages", "selectedProvince", "selectedRegency", "selectedDistrict"],
       },
     );
   };
@@ -242,7 +291,18 @@ export default function Index({
     setDialog({ entity: "district", mode, item: district });
   };
 
-  const openDeleteDialog = (entity: DialogState["entity"], item: Province | Regency | District) => {
+  const openVillageDialog = (mode: "create" | "edit", village?: Village) => {
+    villageForm.clearErrors();
+    villageForm.setData({
+      district_id: village?.district?.id ?? selectedDistrict?.id ?? 0,
+      code: village?.code ?? "",
+      name: village?.name ?? "",
+      _method: mode === "edit" ? "put" : "post",
+    });
+    setDialog({ entity: "village", mode, item: village });
+  };
+
+  const openDeleteDialog = (entity: DialogState["entity"], item: Province | Regency | District | Village) => {
     setDialog({ entity, mode: "delete", item });
   };
 
@@ -294,6 +354,22 @@ export default function Index({
     });
   };
 
+  const submitVillage = () => {
+    const isEdit = dialog?.mode === "edit";
+    const target = isEdit
+      ? route("admin.regions.villages.update", (dialog?.item as Village).code)
+      : route("admin.regions.villages.store");
+
+    villageForm.post(target, {
+      preserveScroll: true,
+      onSuccess: () => {
+        toast.success(isEdit ? "Desa diperbarui." : "Desa ditambahkan.");
+        closeDialog();
+      },
+      onError: () => toast.error("Simpan desa gagal. Periksa kembali form Anda."),
+    });
+  };
+
   const deleteCurrentItem = () => {
     if (!dialog?.item || dialog.mode !== "delete") {
       return;
@@ -303,6 +379,7 @@ export default function Index({
       province: route("admin.regions.provinces.destroy", (dialog.item as Province).code),
       regency: route("admin.regions.regencies.destroy", (dialog.item as Regency).code),
       district: route("admin.regions.districts.destroy", (dialog.item as District).code),
+      village: route("admin.regions.villages.destroy", (dialog.item as Village).code),
     };
 
     router.delete(routeMap[dialog.entity], {
@@ -327,7 +404,7 @@ export default function Index({
               Manajemen Daerah
             </Typography>
             <Typography className="mt-1 text-slate-500 dark:text-slate-400">
-              Kelola hierarki provinsi, kabupaten atau kota, dan kecamatan dari satu dashboard.
+              Kelola hierarki provinsi, kabupaten atau kota, kecamatan, dan desa dari satu dashboard.
             </Typography>
           </div>
           <Menu placement="bottom-end">
@@ -359,17 +436,25 @@ export default function Index({
                 <MapPinnedIcon className="h-4 w-4" />
                 Tambah Kecamatan
               </Menu.Item>
+              <Menu.Item
+                className={`flex items-center gap-2 dark:hover:bg-slate-800 ${!selectedDistrict ? "pointer-events-none opacity-50" : ""}`}
+                onClick={() => selectedDistrict && openVillageDialog("create")}
+              >
+                <MapIcon className="h-4 w-4" />
+                Tambah Desa
+              </Menu.Item>
             </Menu.Content>
           </Menu>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           <StatCard title="Provinsi" value={stats.provinces} caption="Level administratif tertinggi" icon={LandmarkIcon} />
           <StatCard title="Kabupaten/Kota" value={stats.regencies} caption="Turunan aktif dari seluruh provinsi" icon={Building2Icon} />
           <StatCard title="Kecamatan" value={stats.districts} caption="Unit layanan yang paling sering diakses" icon={MapPinnedIcon} />
+          <StatCard title="Desa" value={stats.villages} caption="Level administratif paling detail" icon={MapIcon} />
         </div>
 
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-4">
           <Card className="border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div className="border-b border-slate-200 p-5 dark:border-slate-800">
               <div className="flex items-start justify-between gap-3">
@@ -443,7 +528,7 @@ export default function Index({
                   <button
                     key={regency.code}
                     type="button"
-                    onClick={() => visitHierarchy(selectedProvince.code, regency.code)}
+                    onClick={() => visitHierarchy(selectedProvince.code, regency.code, undefined)}
                     className={`w-full rounded-2xl border p-4 text-left transition ${active ? "border-primary bg-primary/5" : "border-slate-200 bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-slate-950 dark:hover:border-slate-700"}`}
                   >
                     <div className="flex items-start justify-between gap-3">
@@ -460,6 +545,9 @@ export default function Index({
                         <div className="mt-3">
                           <Chip size="sm" variant="ghost" className="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
                             <Chip.Label>{regency.districts_count ?? 0} kecamatan</Chip.Label>
+                          </Chip>
+                          <Chip size="sm" variant="ghost" className="ml-2 bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                            <Chip.Label>{regency.villages_count ?? 0} desa</Chip.Label>
                           </Chip>
                         </div>
                       </div>
@@ -498,23 +586,71 @@ export default function Index({
             <div className="max-h-[560px] space-y-3 overflow-auto p-4">
               {selectedRegency ? (filteredDistricts.length > 0 ? filteredDistricts.map((district) => (
                 <div key={district.code} className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
-                  <div className="flex items-start justify-between gap-3">
+                  <button
+                    type="button"
+                    onClick={() => visitHierarchy(selectedProvince?.code, selectedRegency.code, district.code)}
+                    className="flex w-full items-start justify-between gap-3 text-left"
+                  >
                     <div>
                       <Typography className="font-semibold text-slate-900 dark:text-white">{district.name}</Typography>
                       <Typography className="mt-1 text-xs text-slate-500 dark:text-slate-400">Kode {district.code}</Typography>
                       <Typography className="mt-3 text-xs text-slate-400 dark:text-slate-500">{selectedProvince?.name} / {selectedRegency.name}</Typography>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Chip size="sm" variant="ghost" className="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                          <Chip.Label>{district.villages_count ?? 0} desa</Chip.Label>
+                        </Chip>
+                      </div>
                     </div>
                     <div className="flex items-center gap-1">
-                      <IconButton variant="ghost" size="sm" onClick={() => openDistrictDialog("edit", district)}>
+                      <IconButton variant="ghost" size="sm" onClick={(event) => { event.stopPropagation(); openDistrictDialog("edit", district); }}>
                         <PencilIcon className="h-4 w-4 text-slate-500" />
                       </IconButton>
-                      <IconButton variant="ghost" size="sm" onClick={() => openDeleteDialog("district", district)}>
+                      <IconButton variant="ghost" size="sm" onClick={(event) => { event.stopPropagation(); openDeleteDialog("district", district); }}>
+                        <Trash2Icon className="h-4 w-4 text-red-500" />
+                      </IconButton>
+                    </div>
+                  </button>
+                </div>
+              )) : <EmptyState title="Kecamatan tidak ditemukan" description="Tambahkan data baru atau ganti kata kunci pencarian." />) : <EmptyState title="Belum ada kabupaten/kota terpilih" description="Klik salah satu kabupaten atau kota untuk memuat kecamatannya." />}
+            </div>
+          </Card>
+
+          <Card className="border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div className="border-b border-slate-200 p-5 dark:border-slate-800">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <Typography variant="h6" className="font-bold text-slate-900 dark:text-white">Desa</Typography>
+                  <Typography className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                    {selectedDistrict ? `Turunan dari ${selectedDistrict.name}.` : "Pilih kecamatan lebih dulu."}
+                  </Typography>
+                </div>
+              </div>
+              <div className="mt-4">
+                <Input value={villageSearch} onChange={(event) => setVillageSearch(event.target.value)} placeholder="Cari desa..." disabled={!selectedDistrict} className="dark:text-white">
+                  <Input.Icon><SearchIcon className="h-4 w-4" /></Input.Icon>
+                </Input>
+              </div>
+            </div>
+            <div className="max-h-[560px] space-y-3 overflow-auto p-4">
+              {selectedDistrict ? (filteredVillages.length > 0 ? filteredVillages.map((village) => (
+                <div key={village.code} className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <Typography className="font-semibold text-slate-900 dark:text-white">{village.name}</Typography>
+                      <Typography className="mt-1 text-xs text-slate-500 dark:text-slate-400">Kode {village.code}</Typography>
+                      <Typography className="mt-3 text-xs text-slate-400 dark:text-slate-500">{selectedProvince?.name} / {selectedRegency?.name} / {selectedDistrict.name}</Typography>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <IconButton variant="ghost" size="sm" onClick={() => openVillageDialog("edit", village)}>
+                        <PencilIcon className="h-4 w-4 text-slate-500" />
+                      </IconButton>
+                      <IconButton variant="ghost" size="sm" onClick={() => openDeleteDialog("village", village)}>
                         <Trash2Icon className="h-4 w-4 text-red-500" />
                       </IconButton>
                     </div>
                   </div>
                 </div>
-              )) : <EmptyState title="Kecamatan tidak ditemukan" description="Tambahkan data baru atau ganti kata kunci pencarian." />) : <EmptyState title="Belum ada kabupaten/kota terpilih" description="Klik salah satu kabupaten atau kota untuk memuat kecamatannya." />}
+              )) : <EmptyState title="Desa tidak ditemukan" description="Tambahkan data baru atau ganti kata kunci pencarian." />) : <EmptyState title="Belum ada kecamatan terpilih" description="Klik salah satu kecamatan untuk memuat desa." />}
             </div>
           </Card>
         </div>
@@ -618,6 +754,40 @@ export default function Index({
             <div className="mt-6 flex justify-end gap-2">
               <Button variant="ghost" color="secondary" onClick={closeDialog}>Batal</Button>
               <Button onClick={submitDistrict} disabled={districtForm.processing}>{districtForm.processing ? "Menyimpan..." : "Simpan"}</Button>
+            </div>
+          </Dialog.Content>
+        </Dialog.Overlay>
+      </Dialog>
+
+      <Dialog open={dialog?.entity === "village" && dialog.mode !== "delete"} onOpenChange={closeDialog} size="sm">
+        <Dialog.Overlay>
+          <Dialog.Content className="dark:border-slate-800 dark:bg-slate-900">
+            <Typography type="h6" className="dark:text-white">{dialog?.mode === "edit" ? "Edit Desa" : "Tambah Desa"}</Typography>
+            <div className="mt-5 space-y-4">
+              <div>
+                <Typography type="small" className="mb-1 font-semibold dark:text-white">Kecamatan Induk</Typography>
+                <Select value={villageForm.data.district_id ? String(villageForm.data.district_id) : undefined} onValueChange={(value) => villageForm.setData("district_id", Number(value) || 0)}>
+                  <Select.Trigger className="dark:text-white" placeholder="Pilih kecamatan" />
+                  <Select.List>
+                    {districtItems.map((district) => <Select.Option key={district.id} value={String(district.id)}>{district.name}</Select.Option>)}
+                  </Select.List>
+                </Select>
+                {villageForm.errors.district_id && <Typography type="small" color="error" className="mt-1 block">{villageForm.errors.district_id}</Typography>}
+              </div>
+              <div>
+                <Typography type="small" className="mb-1 font-semibold dark:text-white">Kode Desa</Typography>
+                <Input value={villageForm.data.code} onChange={(event) => villageForm.setData("code", event.target.value)} placeholder="Contoh: 3171010001" isError={!!villageForm.errors.code} className="dark:text-white" />
+                {villageForm.errors.code && <Typography type="small" color="error" className="mt-1 block">{villageForm.errors.code}</Typography>}
+              </div>
+              <div>
+                <Typography type="small" className="mb-1 font-semibold dark:text-white">Nama Desa</Typography>
+                <Input value={villageForm.data.name} onChange={(event) => villageForm.setData("name", event.target.value)} placeholder="Contoh: Gandaria Utara" isError={!!villageForm.errors.name} className="dark:text-white" />
+                {villageForm.errors.name && <Typography type="small" color="error" className="mt-1 block">{villageForm.errors.name}</Typography>}
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-2">
+              <Button variant="ghost" color="secondary" onClick={closeDialog}>Batal</Button>
+              <Button onClick={submitVillage} disabled={villageForm.processing}>{villageForm.processing ? "Menyimpan..." : "Simpan"}</Button>
             </div>
           </Dialog.Content>
         </Dialog.Overlay>

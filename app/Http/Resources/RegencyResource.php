@@ -20,6 +20,7 @@ class RegencyResource extends JsonResource
             'name' => $this->name,
             'type' => $this->type,
             'districts_count' => $this->whenCounted('districts'),
+            'villages_count' => $this->whenCounted('villages'),
             'province' => $this->whenLoaded('province', function (): array {
                 return [
                     'id' => $this->province->id,

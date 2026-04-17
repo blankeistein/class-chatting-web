@@ -18,6 +18,7 @@ class DistrictResource extends JsonResource
             'id' => $this->id,
             'code' => $this->code,
             'name' => $this->name,
+            'villages_count' => $this->whenCounted('villages'),
             'regency' => $this->whenLoaded('regency', function (): array {
                 return [
                     'id' => $this->regency->id,

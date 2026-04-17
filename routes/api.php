@@ -25,6 +25,10 @@ Route::prefix('v1/regions')->group(function () {
 
     Route::get('/districts', [RegionController::class, 'districts']);
     Route::get('/districts/{district:code}', [RegionController::class, 'district']);
+    Route::get('/districts/{district:code}/villages', [RegionController::class, 'villagesByDistrict']);
+
+    Route::get('/villages', [RegionController::class, 'villages']);
+    Route::get('/villages/{village:code}', [RegionController::class, 'village']);
 });
 
 Route::middleware(['throttle:1000,1', 'private.api'])->group(function () {

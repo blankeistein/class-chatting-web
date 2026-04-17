@@ -22,7 +22,7 @@ class SyncIndonesiaRegions extends Command
      *
      * @var string
      */
-    protected $description = 'Sinkronkan data provinsi, kabupaten/kota, dan kecamatan Indonesia dari file JSON lokal.';
+    protected $description = 'Sinkronkan data provinsi, kabupaten/kota, kecamatan, dan desa Indonesia dari file JSON lokal.';
 
     /**
      * Execute the console command.
@@ -45,6 +45,7 @@ class SyncIndonesiaRegions extends Command
                 ['Provinsi', $summary['provinces']],
                 ['Kabupaten/Kota', $summary['regencies']],
                 ['Kecamatan', $summary['districts']],
+                ['Desa', $summary['villages']],
             ],
         );
 
@@ -55,6 +56,7 @@ class SyncIndonesiaRegions extends Command
                     ['Provinsi', $summary['pruned']['provinces']],
                     ['Kabupaten/Kota', $summary['pruned']['regencies']],
                     ['Kecamatan', $summary['pruned']['districts']],
+                    ['Desa', $summary['pruned']['villages']],
                 ],
             );
         }

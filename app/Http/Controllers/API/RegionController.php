@@ -7,16 +7,18 @@ use App\Http\Requests\RegionListRequest;
 use App\Http\Resources\DistrictResource;
 use App\Http\Resources\ProvinceResource;
 use App\Http\Resources\RegencyResource;
+use App\Http\Resources\VillageResource;
 use App\Models\District;
 use App\Models\Province;
 use App\Models\Regency;
+use App\Models\Village;
 use Dedoc\Scramble\Attributes\Endpoint;
 use Dedoc\Scramble\Attributes\Group;
 use Dedoc\Scramble\Attributes\PathParameter;
 use Dedoc\Scramble\Attributes\QueryParameter;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
-#[Group('Regions', 'Referensi wilayah Indonesia: provinsi, kabupaten atau kota, dan kecamatan.', 10)]
+#[Group('Regions', 'Referensi wilayah Indonesia: provinsi, kabupaten atau kota, kecamatan, dan desa.', 10)]
 class RegionController extends Controller
 {
     #[Endpoint(
@@ -62,7 +64,7 @@ class RegionController extends Controller
     {
         $regencies = Regency::query()
             ->with('province')
-            ->withCount('districts')
+            ->withCount(['districts', 'villages'])
             ->search($request->searchTerm())
             ->orderBy('code')
             ->paginate($request->perPage())
@@ -83,7 +85,7 @@ class RegionController extends Controller
     {
         $regencies = $province->regencies()
             ->with('province')
-            ->withCount('districts')
+            ->withCount(['districts', 'villages'])
             ->search($request->searchTerm())
             ->orderBy('code')
             ->paginate($request->perPage())
@@ -100,7 +102,7 @@ class RegionController extends Controller
     #[PathParameter('regency', 'Kode kabupaten atau kota Indonesia yang dipakai route model binding.', example: '3171')]
     public function regency(Regency $regency): RegencyResource
     {
-        $regency->load('province')->loadCount('districts');
+        $regency->load('province')->loadCount(['districts', 'villages']);
 
         return new RegencyResource($regency);
     }
@@ -116,6 +118,7 @@ class RegionController extends Controller
     {
         $districts = District::query()
             ->with(['regency.province'])
+            ->withCount('villages')
             ->search($request->searchTerm())
             ->orderBy('code')
             ->paginate($request->perPage())
@@ -136,6 +139,7 @@ class RegionController extends Controller
     {
         $districts = $regency->districts()
             ->with(['regency.province'])
+            ->withCount('villages')
             ->search($request->searchTerm())
             ->orderBy('code')
             ->paginate($request->perPage())
@@ -152,8 +156,60 @@ class RegionController extends Controller
     #[PathParameter('district', 'Kode kecamatan Indonesia yang dipakai route model binding.', example: '3171010')]
     public function district(District $district): DistrictResource
     {
-        $district->load(['regency.province']);
+        $district->load(['regency.province'])->loadCount('villages');
 
         return new DistrictResource($district);
+    }
+
+    #[Endpoint(
+        operationId: 'regionsListVillages',
+        title: 'List villages',
+        description: 'Mengambil daftar desa dalam format paginasi beserta konteks kecamatan, kabupaten atau kota, dan provinsinya.'
+    )]
+    #[QueryParameter('search', 'Kata kunci pencarian berdasarkan kode atau nama desa.', required: false, example: 'sukamaju')]
+    #[QueryParameter('per_page', 'Jumlah item per halaman. Nilai yang valid antara 1 sampai 100.', required: false, type: 'integer', example: 25)]
+    public function villages(RegionListRequest $request): AnonymousResourceCollection
+    {
+        $villages = Village::query()
+            ->with(['district.regency.province'])
+            ->search($request->searchTerm())
+            ->orderBy('code')
+            ->paginate($request->perPage())
+            ->withQueryString();
+
+        return VillageResource::collection($villages);
+    }
+
+    #[Endpoint(
+        operationId: 'regionsListVillagesByDistrict',
+        title: 'List villages by district',
+        description: 'Mengambil daftar desa untuk satu kecamatan tertentu.'
+    )]
+    #[PathParameter('district', 'Kode kecamatan Indonesia yang menjadi induk data desa.', example: '3171010')]
+    #[QueryParameter('search', 'Kata kunci pencarian berdasarkan kode atau nama desa.', required: false, example: 'baru')]
+    #[QueryParameter('per_page', 'Jumlah item per halaman. Nilai yang valid antara 1 sampai 100.', required: false, type: 'integer', example: 25)]
+    public function villagesByDistrict(RegionListRequest $request, District $district): AnonymousResourceCollection
+    {
+        $villages = $district->villages()
+            ->with(['district.regency.province'])
+            ->search($request->searchTerm())
+            ->orderBy('code')
+            ->paginate($request->perPage())
+            ->withQueryString();
+
+        return VillageResource::collection($villages);
+    }
+
+    #[Endpoint(
+        operationId: 'regionsShowVillage',
+        title: 'Get village detail',
+        description: 'Mengambil detail satu desa berdasarkan kode wilayah Indonesia.'
+    )]
+    #[PathParameter('village', 'Kode desa Indonesia yang dipakai route model binding.', example: '3171010001')]
+    public function village(Village $village): VillageResource
+    {
+        $village->load(['district.regency.province']);
+
+        return new VillageResource($village);
     }
 }

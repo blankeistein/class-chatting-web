@@ -5,6 +5,7 @@ namespace App\Services\Regions;
 use App\Models\District;
 use App\Models\Province;
 use App\Models\Regency;
+use App\Models\Village;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use JsonException;
@@ -116,13 +117,47 @@ class IndonesiaRegionSynchronizer
                 District::query()->upsert($districtRows, ['code'], ['regency_id', 'name', 'updated_at']);
             }
 
+            $districtCodes = array_values(array_unique([
+                ...$this->pluckCodes($districtRows),
+                ...array_column($normalized['villages'], 'district_code'),
+            ]));
+
+            $districtIds = District::query()
+                ->whereIn('code', $districtCodes)
+                ->pluck('id', 'code');
+
+            $villageRows = array_map(function (array $village) use ($districtIds, $timestamp): array {
+                $districtId = $districtIds->get($village['district_code']);
+
+                if ($districtId === null) {
+                    throw new RuntimeException("Kode kecamatan [{$village['district_code']}] tidak ditemukan untuk desa [{$village['code']}].");
+                }
+
+                return [
+                    'district_id' => $districtId,
+                    'code' => $village['code'],
+                    'name' => $village['name'],
+                    'created_at' => $timestamp,
+                    'updated_at' => $timestamp,
+                ];
+            }, $normalized['villages']);
+
+            if ($villageRows !== []) {
+                Village::query()->upsert($villageRows, ['code'], ['district_id', 'name', 'updated_at']);
+            }
+
             $pruned = [
+                'villages' => 0,
                 'districts' => 0,
                 'regencies' => 0,
                 'provinces' => 0,
             ];
 
             if ($prune) {
+                if ($normalized['should_prune_villages']) {
+                    $pruned['villages'] = $this->pruneMissingRows(Village::class, $this->pluckCodes($villageRows));
+                }
+
                 if ($normalized['should_prune_districts']) {
                     $pruned['districts'] = $this->pruneMissingRows(District::class, $this->pluckCodes($districtRows));
                 }
@@ -140,6 +175,7 @@ class IndonesiaRegionSynchronizer
                 'provinces' => count($provinceRows),
                 'regencies' => count($regencyRows),
                 'districts' => count($districtRows),
+                'villages' => count($villageRows),
                 'pruned' => $pruned,
             ];
         });
@@ -150,14 +186,17 @@ class IndonesiaRegionSynchronizer
         $provinces = $this->normalizeProvinces($payload['provinces'] ?? []);
         $regencies = $this->normalizeRegencies($payload);
         $districts = $this->normalizeDistricts($payload);
+        $villages = $this->normalizeVillages($payload);
 
         return [
             'provinces' => $provinces,
             'regencies' => $regencies,
             'districts' => $districts,
+            'villages' => $villages,
             'should_prune_provinces' => array_key_exists('provinces', $payload),
             'should_prune_regencies' => array_key_exists('regencies', $payload) || $this->hasNestedRegencies($payload['provinces'] ?? []),
             'should_prune_districts' => array_key_exists('districts', $payload) || $this->hasNestedDistricts($payload['provinces'] ?? []),
+            'should_prune_villages' => array_key_exists('villages', $payload) || $this->hasNestedVillages($payload['provinces'] ?? []),
         ];
     }
 
@@ -247,6 +286,49 @@ class IndonesiaRegionSynchronizer
         return collect($rows)->keyBy('code')->values()->all();
     }
 
+    private function normalizeVillages(array $payload): array
+    {
+        $rows = [];
+
+        if (array_key_exists('villages', $payload)) {
+            foreach ($payload['villages'] as $village) {
+                if (! is_array($village)) {
+                    throw new RuntimeException('Setiap data desa harus berupa objek.');
+                }
+
+                $rows[] = $this->mapVillage($village, $village['district_code'] ?? null);
+            }
+        } else {
+            foreach ($payload['provinces'] ?? [] as $province) {
+                if (! is_array($province)) {
+                    throw new RuntimeException('Setiap data provinsi harus berupa objek.');
+                }
+
+                foreach ($province['regencies'] ?? [] as $regency) {
+                    if (! is_array($regency)) {
+                        throw new RuntimeException('Setiap data kabupaten/kota harus berupa objek.');
+                    }
+
+                    foreach ($regency['districts'] ?? [] as $district) {
+                        if (! is_array($district)) {
+                            throw new RuntimeException('Setiap data kecamatan harus berupa objek.');
+                        }
+
+                        foreach ($district['villages'] ?? [] as $village) {
+                            if (! is_array($village)) {
+                                throw new RuntimeException('Setiap data desa harus berupa objek.');
+                            }
+
+                            $rows[] = $this->mapVillage($village, $district['code'] ?? null);
+                        }
+                    }
+                }
+            }
+        }
+
+        return collect($rows)->keyBy('code')->values()->all();
+    }
+
     private function mapRegency(array $regency, mixed $provinceCode): array
     {
         $name = $this->normalizeName($regency['name'] ?? null, 'kabupaten/kota');
@@ -265,6 +347,15 @@ class IndonesiaRegionSynchronizer
             'regency_code' => $this->normalizeCode($regencyCode, 'kode kabupaten/kota'),
             'code' => $this->normalizeCode($district['code'] ?? null, 'kecamatan'),
             'name' => $this->normalizeName($district['name'] ?? null, 'kecamatan'),
+        ];
+    }
+
+    private function mapVillage(array $village, mixed $districtCode): array
+    {
+        return [
+            'district_code' => $this->normalizeCode($districtCode, 'kode kecamatan'),
+            'code' => $this->normalizeCode($village['code'] ?? null, 'desa'),
+            'name' => $this->normalizeName($village['name'] ?? null, 'desa'),
         ];
     }
 
@@ -342,6 +433,29 @@ class IndonesiaRegionSynchronizer
             foreach ($province['regencies'] ?? [] as $regency) {
                 if (is_array($regency) && array_key_exists('districts', $regency)) {
                     return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private function hasNestedVillages(array $provinces): bool
+    {
+        foreach ($provinces as $province) {
+            if (! is_array($province)) {
+                continue;
+            }
+
+            foreach ($province['regencies'] ?? [] as $regency) {
+                if (! is_array($regency)) {
+                    continue;
+                }
+
+                foreach ($regency['districts'] ?? [] as $district) {
+                    if (is_array($district) && array_key_exists('villages', $district)) {
+                        return true;
+                    }
                 }
             }
         }

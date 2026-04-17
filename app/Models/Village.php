@@ -2,20 +2,19 @@
 
 namespace App\Models;
 
-use Database\Factories\DistrictFactory;
+use Database\Factories\VillageFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class District extends Model
+class Village extends Model
 {
-    /** @use HasFactory<DistrictFactory> */
+    /** @use HasFactory<VillageFactory> */
     use HasFactory;
 
     protected $fillable = [
-        'regency_id',
+        'district_id',
         'code',
         'name',
     ];
@@ -25,14 +24,9 @@ class District extends Model
         return 'code';
     }
 
-    public function regency(): BelongsTo
+    public function district(): BelongsTo
     {
-        return $this->belongsTo(Regency::class);
-    }
-
-    public function villages(): HasMany
-    {
-        return $this->hasMany(Village::class);
+        return $this->belongsTo(District::class);
     }
 
     public function scopeSearch(Builder $query, ?string $search): Builder

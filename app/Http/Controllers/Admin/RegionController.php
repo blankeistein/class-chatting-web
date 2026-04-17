@@ -6,12 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\DistrictDataRequest;
 use App\Http\Requests\ProvinceDataRequest;
 use App\Http\Requests\RegencyDataRequest;
+use App\Http\Requests\VillageDataRequest;
 use App\Http\Resources\DistrictResource;
 use App\Http\Resources\ProvinceResource;
 use App\Http\Resources\RegencyResource;
+use App\Http\Resources\VillageResource;
 use App\Models\District;
 use App\Models\Province;
 use App\Models\Regency;
+use App\Models\Village;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -24,6 +27,7 @@ class RegionController extends Controller
     {
         $requestedProvinceCode = trim((string) $request->input('province', ''));
         $requestedRegencyCode = trim((string) $request->input('regency', ''));
+        $requestedDistrictCode = trim((string) $request->input('district', ''));
 
         $provinces = Province::query()
             ->withCount(['regencies', 'districts'])
@@ -37,12 +41,14 @@ class RegionController extends Controller
         $regencies = collect();
         $selectedRegency = null;
         $districts = collect();
+        $selectedDistrict = null;
+        $villages = collect();
 
         if ($selectedProvince !== null) {
             $regencies = Regency::query()
                 ->whereBelongsTo($selectedProvince)
                 ->with('province')
-                ->withCount('districts')
+                ->withCount(['districts', 'villages'])
                 ->orderBy('code')
                 ->get();
 
@@ -54,8 +60,21 @@ class RegionController extends Controller
                 $districts = District::query()
                     ->whereBelongsTo($selectedRegency)
                     ->with(['regency.province'])
+                    ->withCount('villages')
                     ->orderBy('code')
                     ->get();
+
+                $selectedDistrict = $requestedDistrictCode !== ''
+                    ? $districts->firstWhere('code', $requestedDistrictCode)
+                    : $districts->first();
+
+                if ($selectedDistrict !== null) {
+                    $villages = Village::query()
+                        ->whereBelongsTo($selectedDistrict)
+                        ->with(['district.regency.province'])
+                        ->orderBy('code')
+                        ->get();
+                }
             }
         }
 
@@ -64,10 +83,12 @@ class RegionController extends Controller
                 'provinces' => $provinces->count(),
                 'regencies' => $provinces->sum('regencies_count'),
                 'districts' => $provinces->sum('districts_count'),
+                'villages' => Village::query()->count(),
             ],
             'provinces' => ProvinceResource::collection($provinces),
             'regencies' => RegencyResource::collection($regencies),
             'districts' => DistrictResource::collection($districts),
+            'villages' => VillageResource::collection($villages),
             'selectedProvince' => $selectedProvince ? [
                 'id' => $selectedProvince->id,
                 'code' => $selectedProvince->code,
@@ -78,6 +99,11 @@ class RegionController extends Controller
                 'code' => $selectedRegency->code,
                 'name' => $selectedRegency->name,
                 'type' => $selectedRegency->type,
+            ] : null,
+            'selectedDistrict' => $selectedDistrict ? [
+                'id' => $selectedDistrict->id,
+                'code' => $selectedDistrict->code,
+                'name' => $selectedDistrict->name,
             ] : null,
         ]);
     }
@@ -172,11 +198,51 @@ class RegionController extends Controller
         return $this->redirectToIndex($provinceCode, $regencyCode, 'Kecamatan berhasil dihapus.');
     }
 
-    private function redirectToIndex(?string $provinceCode, ?string $regencyCode, string $message): RedirectResponse
+    public function storeVillage(VillageDataRequest $request): RedirectResponse
+    {
+        $village = Village::query()->create($request->validated());
+        $village->load('district.regency.province');
+
+        return $this->redirectToIndex(
+            $village->district?->regency?->province?->code,
+            $village->district?->regency?->code,
+            'Desa berhasil ditambahkan.',
+            $village->district?->code,
+        );
+    }
+
+    public function updateVillage(VillageDataRequest $request, Village $village): RedirectResponse
+    {
+        $village->update($request->validated());
+        $village->load('district.regency.province');
+
+        return $this->redirectToIndex(
+            $village->district?->regency?->province?->code,
+            $village->district?->regency?->code,
+            'Desa berhasil diperbarui.',
+            $village->district?->code,
+        );
+    }
+
+    public function destroyVillage(Village $village): RedirectResponse
+    {
+        $village->load('district.regency.province');
+
+        $provinceCode = $village->district?->regency?->province?->code;
+        $regencyCode = $village->district?->regency?->code;
+        $districtCode = $village->district?->code;
+
+        $village->delete();
+
+        return $this->redirectToIndex($provinceCode, $regencyCode, 'Desa berhasil dihapus.', $districtCode);
+    }
+
+    private function redirectToIndex(?string $provinceCode, ?string $regencyCode, string $message, ?string $districtCode = null): RedirectResponse
     {
         $parameters = Collection::make([
             'province' => $provinceCode,
             'regency' => $regencyCode,
+            'district' => $districtCode,
         ])
             ->filter(fn (?string $value): bool => $value !== null && $value !== '')
             ->all();

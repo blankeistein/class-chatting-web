@@ -3,6 +3,7 @@
 use App\Models\District;
 use App\Models\Province;
 use App\Models\Regency;
+use App\Models\Village;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -67,9 +68,14 @@ it('returns district detail with regency and province context', function () {
         'type' => 'kota',
     ]);
 
-    District::factory()->for($regency)->create([
+    $district = District::factory()->for($regency)->create([
         'code' => '3171010',
         'name' => 'Kebayoran Baru',
+    ]);
+
+    Village::factory()->for($district)->create([
+        'code' => '3171010001',
+        'name' => 'Gandaria Utara',
     ]);
 
     $response = $this->getJson('/api/v1/regions/districts/3171010');
@@ -77,6 +83,82 @@ it('returns district detail with regency and province context', function () {
     $response
         ->assertSuccessful()
         ->assertJsonPath('data.code', '3171010')
+        ->assertJsonPath('data.villages_count', 1)
+        ->assertJsonPath('data.regency.code', '3171')
+        ->assertJsonPath('data.province.code', '31');
+});
+
+it('returns villages scoped to a district', function () {
+    $province = Province::factory()->create([
+        'code' => '31',
+        'name' => 'DKI Jakarta',
+    ]);
+
+    $regency = Regency::factory()->for($province)->create([
+        'code' => '3171',
+        'name' => 'Jakarta Selatan',
+        'type' => 'kota',
+    ]);
+
+    $district = District::factory()->for($regency)->create([
+        'code' => '3171010',
+        'name' => 'Kebayoran Baru',
+    ]);
+
+    $otherDistrict = District::factory()->for($regency)->create([
+        'code' => '3171020',
+        'name' => 'Pesanggrahan',
+    ]);
+
+    Village::factory()->for($district)->create([
+        'code' => '3171010001',
+        'name' => 'Gandaria Utara',
+    ]);
+
+    Village::factory()->for($otherDistrict)->create([
+        'code' => '3171020001',
+        'name' => 'Bintaro',
+    ]);
+
+    $response = $this->getJson('/api/v1/regions/districts/3171010/villages');
+
+    $response
+        ->assertSuccessful()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.code', '3171010001')
+        ->assertJsonPath('data.0.district.code', '3171010')
+        ->assertJsonPath('data.0.regency.code', '3171')
+        ->assertJsonPath('data.0.province.code', '31');
+});
+
+it('returns village detail with district, regency, and province context', function () {
+    $province = Province::factory()->create([
+        'code' => '31',
+        'name' => 'DKI Jakarta',
+    ]);
+
+    $regency = Regency::factory()->for($province)->create([
+        'code' => '3171',
+        'name' => 'Jakarta Selatan',
+        'type' => 'kota',
+    ]);
+
+    $district = District::factory()->for($regency)->create([
+        'code' => '3171010',
+        'name' => 'Kebayoran Baru',
+    ]);
+
+    Village::factory()->for($district)->create([
+        'code' => '3171010001',
+        'name' => 'Gandaria Utara',
+    ]);
+
+    $response = $this->getJson('/api/v1/regions/villages/3171010001');
+
+    $response
+        ->assertSuccessful()
+        ->assertJsonPath('data.code', '3171010001')
+        ->assertJsonPath('data.district.code', '3171010')
         ->assertJsonPath('data.regency.code', '3171')
         ->assertJsonPath('data.province.code', '31');
 });
@@ -111,6 +193,12 @@ it('syncs indonesia regions from a local json file', function () {
                             [
                                 'code' => '3171010',
                                 'name' => 'Kebayoran Baru',
+                                'villages' => [
+                                    [
+                                        'code' => '3171010001',
+                                        'name' => 'Gandaria Utara',
+                                    ],
+                                ],
                             ],
                         ],
                     ],
@@ -128,6 +216,7 @@ it('syncs indonesia regions from a local json file', function () {
     expect(Province::query()->where('code', '99')->exists())->toBeFalse();
     expect(Regency::query()->where('code', '3171')->exists())->toBeTrue();
     expect(District::query()->where('code', '3171010')->exists())->toBeTrue();
+    expect(Village::query()->where('code', '3171010001')->exists())->toBeTrue();
 
     @unlink($path);
 });

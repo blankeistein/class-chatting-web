@@ -52,6 +52,9 @@ Route::middleware('auth')->group(function () {
         Route::post('regions/districts', [AdminRegionController::class, 'storeDistrict'])->name('regions.districts.store');
         Route::put('regions/districts/{district}', [AdminRegionController::class, 'updateDistrict'])->name('regions.districts.update');
         Route::delete('regions/districts/{district}', [AdminRegionController::class, 'destroyDistrict'])->name('regions.districts.destroy');
+        Route::post('regions/villages', [AdminRegionController::class, 'storeVillage'])->name('regions.villages.store');
+        Route::put('regions/villages/{village}', [AdminRegionController::class, 'updateVillage'])->name('regions.villages.update');
+        Route::delete('regions/villages/{village}', [AdminRegionController::class, 'destroyVillage'])->name('regions.villages.destroy');
 
         Route::resource('videos', VideoController::class);
         Route::resource('users', UserController::class);

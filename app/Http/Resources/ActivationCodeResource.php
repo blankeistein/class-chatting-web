@@ -22,7 +22,11 @@ class ActivationCodeResource extends JsonResource
                 'email' => $this->user->email,
             ] : null,
             'activated_at' => $this->activated_at,
-            'activated_in' => $this->activated_in,
+            'activatedIn' => $this->activatedIn ? [
+                'id' => $this->activatedIn->id,
+                'name' => $this->activatedIn->model->title,
+                'type' => $this->activatedIn->model_type,
+            ] : null,
             'tier' => [
                 'value' => $this->tier->value,
                 'label' => $this->tier->label(),

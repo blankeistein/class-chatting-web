@@ -53,7 +53,11 @@ interface ActivationCode {
   code: string;
   user: User | null;
   activated_at: string | null;
-  activated_in: string | null;
+  activatedIn: {
+    id: number;
+    name: string;
+    type: string;
+  } | null;
   tier: {
     value: number;
     label: string;
@@ -346,13 +350,13 @@ export default function Show({ activationCode }: { activationCode: { data: Activ
                   </Typography>
                 </div>
 
-                {code.activated_in && (
+                {code.activatedIn && (
                   <div className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-800">
                     <Typography variant="small" className="text-slate-500 font-medium flex items-center gap-1">
                       <SmartphoneIcon className="h-3.5 w-3.5" /> Diaktivasi di
                     </Typography>
                     <Typography variant="small" className="font-medium text-slate-700 dark:text-slate-300">
-                      {code.activated_in}
+                      {code.activatedIn?.name || "Unknown Model"}
                     </Typography>
                   </div>
                 )}
@@ -395,7 +399,7 @@ export default function Show({ activationCode }: { activationCode: { data: Activ
                 {code.items.map((item) => (
                   <div
                     key={item.id}
-                    className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
+                    className={`flex items-center gap-3 p-3 ${item.id == code.activatedIn?.id ? "bg-success/20" : "bg-slate-50 dark:bg-slate-800/50"}  rounded-lg border border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-600 transition-colors`}
                   >
                     <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg shrink-0">
                       <BookOpenIcon className="h-4 w-4 text-blue-500" />

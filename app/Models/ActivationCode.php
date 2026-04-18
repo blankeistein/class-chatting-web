@@ -35,6 +35,11 @@ class ActivationCode extends Model
         return $this->belongsTo(User::class, 'user_id', 'firebase_uid');
     }
 
+    public function activatedIn(): BelongsTo
+    {
+        return $this->belongsTo(ActivationItem::class, 'activated_in', 'id');
+    }
+
     public function items(): HasMany
     {
         return $this->hasMany(ActivationItem::class);

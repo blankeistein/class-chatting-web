@@ -98,8 +98,9 @@ const VideoActions = ({
           {video.video_url ? "Buka File Video" : "Menunggu HLS"}
         </Menu.Item>
         <Menu.Item
+          as={Link}
+          href={route("admin.videos.edit", video.slug)}
           className="flex items-center gap-2 dark:hover:bg-slate-800"
-          onClick={() => router.get(route("admin.videos.edit", video.slug))}
         >
           <EditIcon className="w-4 h-4" />
           Edit Video
@@ -126,9 +127,8 @@ const VideoGridCard = ({
 }) => {
   return (
     <Card className="relative overflow-hidden border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900">
-      <button
-        type="button"
-        onClick={() => openVideoDetail(video)}
+      <Link
+        href={route("admin.videos.show", video.slug)}
         className="group block w-full text-left"
       >
         <div className="relative h-[180px] w-full aspect-video overflow-hidden bg-slate-100 dark:bg-slate-800">
@@ -149,16 +149,15 @@ const VideoGridCard = ({
             Lihat Detail
           </div>
         </div>
-      </button>
+      </Link>
 
       <div className="absolute right-3 top-3 z-10">
         <VideoActions video={video} onDelete={onDelete} />
       </div>
 
       <Card.Body className="flex h-full flex-col gap-4 p-4">
-        <button
-          type="button"
-          onClick={() => openVideoDetail(video)}
+        <Link
+          href={route("admin.videos.show", video.slug)}
           className="space-y-2 text-left"
         >
           <Typography
@@ -176,7 +175,7 @@ const VideoGridCard = ({
           <Typography className="line-clamp-3 text-sm text-slate-600 dark:text-slate-300">
             {video.description}
           </Typography>
-        </button>
+        </Link>
 
         {video.tags && video.tags.length > 0 && (
           <div className="flex flex-wrap gap-1">
@@ -206,7 +205,8 @@ const VideoGridCard = ({
             size="sm"
             color="secondary"
             className="flex items-center gap-2"
-            onClick={() => openVideoDetail(video)}
+            as={Link}
+            href={route("admin.videos.show", video.slug)}
           >
             <PlayCircleIcon className="h-4 w-4" />
             {video.video_url ? "Putar" : "Detail"}
@@ -299,9 +299,10 @@ export default function Index({
               Tugas
             </Button>
             <Button
+              as={Link}
               className="flex items-center gap-2"
               size="sm"
-              onClick={() => router.get(route("admin.videos.create"))}
+              href={route("admin.videos.create")}
             >
               <PlusIcon className="h-4 w-4" />
               Unggah Video
@@ -406,9 +407,8 @@ export default function Index({
                         className="border-b border-slate-100 transition-colors hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/50"
                       >
                         <td className="p-4">
-                          <button
-                            type="button"
-                            onClick={() => openVideoDetail(video)}
+                          <Link
+                            href={route("admin.videos.show", video.slug)}
                             className="flex items-center gap-4 text-left"
                           >
                             {video.thumbnail ? (
@@ -440,7 +440,7 @@ export default function Index({
                                 Klik untuk lihat detail
                               </Typography>
                             </div>
-                          </button>
+                          </Link>
                         </td>
                         <td className="p-4">
                           <Typography

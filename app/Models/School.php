@@ -2,24 +2,32 @@
 
 namespace App\Models;
 
-use Database\Factories\RegencyFactory;
+use Database\Factories\SchoolFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
-class Regency extends Model
+class School extends Model
 {
-    /** @use HasFactory<RegencyFactory> */
+    /** @use HasFactory<SchoolFactory> */
     use HasFactory;
 
     protected $fillable = [
-        'province_id',
         'code',
+        'old_code',
+        'npsn',
         'name',
-        'type',
+        'bentuk_pendidikan',
+        'status',
+        'province_id',
+        'regency_id',
+        'district_id',
+        'address',
+        'rt',
+        'rw',
+        'latitute',
+        'longitude',
     ];
 
     public function getRouteKeyName(): string
@@ -32,19 +40,19 @@ class Regency extends Model
         return $this->belongsTo(Province::class);
     }
 
-    public function districts(): HasMany
+    public function regency(): BelongsTo
     {
-        return $this->hasMany(District::class);
+        return $this->belongsTo(Regency::class);
     }
 
-    public function villages(): HasManyThrough
+    public function district(): BelongsTo
     {
-        return $this->hasManyThrough(Village::class, District::class);
+        return $this->belongsTo(District::class);
     }
 
-    public function schools(): HasMany
+    public function village(): BelongsTo
     {
-        return $this->hasMany(School::class);
+        return $this->belongsTo(Village::class);
     }
 
     public function scopeSearch(Builder $query, ?string $search): Builder
@@ -57,9 +65,10 @@ class Regency extends Model
 
         return $query->where(function (Builder $builder) use ($search): void {
             $builder
-                ->where('code', 'like', "%{$search}%")
+                ->where('npsn', 'like', "%{$search}%")
                 ->orWhere('name', 'like', "%{$search}%")
-                ->orWhere('type', 'like', "%{$search}%");
+                ->orWhere('bentuk_pendidikan', 'like', "%{$search}%")
+                ->orWhere('status', 'like', "%{$search}%");
         });
     }
 }

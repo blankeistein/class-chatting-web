@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\ActivationCodeController;
 use App\Http\Controllers\Admin\BookController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\RegionController as AdminRegionController;
+use App\Http\Controllers\Admin\SchoolController as AdminSchoolController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VideoController;
 use App\Http\Controllers\AuthController;
@@ -41,6 +42,8 @@ Route::middleware('auth')->group(function () {
 
         Route::get('books/selection', [BookController::class, 'selection'])->name('books.selection');
         Route::resource('books', BookController::class);
+        Route::post('schools/import', [AdminSchoolController::class, 'import'])->name('schools.import');
+        Route::resource('schools', AdminSchoolController::class)->except('show');
 
         Route::get('regions', [AdminRegionController::class, 'index'])->name('regions.index');
         Route::post('regions/provinces', [AdminRegionController::class, 'storeProvince'])->name('regions.provinces.store');

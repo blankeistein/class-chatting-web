@@ -18,12 +18,12 @@ class BookResource extends JsonResource
             'id' => $this->id,
             'uuid' => $this->uuid,
             'title' => $this->title,
-            'cover_url' => $this->thumbnail,
+            'coverUrl' => $this->thumbnail,
             'tags' => $this->tags,
             'url' => $this->url,
             'version' => $this->version,
-            'created_at' => $this->created_at->toIso8601String(),
-            'updated_at' => $this->updated_at->toIso8601String(),
+            'createdAt' => $this->created_at->toIso8601String(),
+            'updatedAt' => $this->updated_at->toIso8601String(),
         ];
     }
 }

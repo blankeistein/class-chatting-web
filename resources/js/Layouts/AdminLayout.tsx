@@ -13,7 +13,7 @@ import {
   Tooltip,
   Typography,
 } from "@material-tailwind/react";
-import { ArchiveIcon, BellIcon, BookIcon, ChevronDownIcon, GithubIcon, Grid3X3, Grip, LayoutDashboardIcon, LayoutGrid, LogOutIcon, MailIcon, MapPinnedIcon, MenuIcon, MoonIcon, PiIcon, PinIcon, SunIcon, TicketIcon, Trash2Icon, UserCircle2Icon, VideoIcon, XIcon } from "lucide-react";
+import { ArchiveIcon, BellIcon, BookIcon, Building2Icon, ChevronDownIcon, GithubIcon, Grid3X3, Grip, LayoutDashboardIcon, LayoutGrid, LogOutIcon, MailIcon, MapPinnedIcon, MenuIcon, MoonIcon, PiIcon, PinIcon, SunIcon, TicketIcon, Trash2Icon, UserCircle2Icon, VideoIcon, XIcon } from "lucide-react";
 import { useTheme } from "../Contexts/ThemeContext";
 import { Link, router, usePage } from "@inertiajs/react";
 import { route } from "ziggy-js";
@@ -63,6 +63,11 @@ const Links: LinkType[] = [
         routeName: "admin.videos.index",
       },
     ],
+  },
+  {
+    title: "Sekolah",
+    icon: Building2Icon,
+    routeName: "admin.schools.index",
   },
   {
     icon: MapPinnedIcon,

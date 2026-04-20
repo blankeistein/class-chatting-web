@@ -27,12 +27,12 @@ interface Book {
   id: number;
   uuid: string;
   title: string;
-  cover_url: string;
+  coverUrl: string;
   tags: string[] | null;
   url: string | null;
   version: number;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // --- Components ---
@@ -45,7 +45,7 @@ const BookRow = ({ book }: { book: Book }) => {
       <td className={classes}>
         <div className="flex items-center gap-4">
           <img
-            src={book.cover_url}
+            src={book.coverUrl}
             alt={book.title}
             className="h-16 w-12 rounded object-cover shadow-sm border border-slate-200 dark:border-slate-700"
           />
@@ -114,7 +114,7 @@ const BookCard = ({ book }: { book: Book }) => {
       <Card className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:shadow-lg transition-all duration-300 group h-full">
         <div className="relative aspect-[3/4] overflow-hidden rounded-t-xl bg-slate-100 dark:bg-slate-800">
           <img
-            src={book.cover_url}
+            src={book.coverUrl}
             alt={book.title}
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />

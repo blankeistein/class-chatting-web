@@ -30,8 +30,8 @@ type Province = {
   id: number;
   code: string;
   name: string;
-  regencies_count?: number;
-  districts_count?: number;
+  regenciesCount?: number;
+  districtsCount?: number;
 };
 
 type Regency = {
@@ -39,8 +39,8 @@ type Regency = {
   code: string;
   name: string;
   type: string | null;
-  districts_count?: number;
-  villages_count?: number;
+  districtsCount?: number;
+  villagesCount?: number;
   province?: {
     id: number;
     code: string;
@@ -52,7 +52,7 @@ type District = {
   id: number;
   code: string;
   name: string;
-  villages_count?: number;
+  villagesCount?: number;
   regency?: {
     id: number;
     code: string;
@@ -302,7 +302,7 @@ export default function Index({
     setDialog({ entity: "village", mode, item: village });
   };
 
-  const openDeleteDialog = (entity: DialogState["entity"], item: Province | Regency | District | Village) => {
+  const openDeleteDialog = (entity: NonNullable<DialogState>["entity"], item: Province | Regency | District | Village) => {
     setDialog({ entity, mode: "delete", item });
   };
 
@@ -485,8 +485,8 @@ export default function Index({
                         <Typography className="font-semibold text-slate-900 dark:text-white">{province.name}</Typography>
                         <Typography className="mt-1 text-xs text-slate-500 dark:text-slate-400">Kode {province.code}</Typography>
                         <div className="mt-3 flex flex-wrap gap-2">
-                          <Chip size="sm" variant="ghost" className="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200"><Chip.Label>{province.regencies_count ?? 0} kab/kota</Chip.Label></Chip>
-                          <Chip size="sm" variant="ghost" className="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200"><Chip.Label>{province.districts_count ?? 0} kecamatan</Chip.Label></Chip>
+                          <Chip size="sm" variant="ghost" className="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200"><Chip.Label>{province.regenciesCount ?? 0} kab/kota</Chip.Label></Chip>
+                          <Chip size="sm" variant="ghost" className="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200"><Chip.Label>{province.districtsCount ?? 0} kecamatan</Chip.Label></Chip>
                         </div>
                       </div>
                       <div className="flex items-center gap-1">
@@ -544,10 +544,10 @@ export default function Index({
                         </div>
                         <div className="mt-3">
                           <Chip size="sm" variant="ghost" className="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
-                            <Chip.Label>{regency.districts_count ?? 0} kecamatan</Chip.Label>
+                            <Chip.Label>{regency.districtsCount ?? 0} kecamatan</Chip.Label>
                           </Chip>
                           <Chip size="sm" variant="ghost" className="ml-2 bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
-                            <Chip.Label>{regency.villages_count ?? 0} desa</Chip.Label>
+                            <Chip.Label>{regency.villagesCount ?? 0} desa</Chip.Label>
                           </Chip>
                         </div>
                       </div>
@@ -584,8 +584,14 @@ export default function Index({
               </div>
             </div>
             <div className="max-h-[560px] space-y-3 overflow-auto p-4">
-              {selectedRegency ? (filteredDistricts.length > 0 ? filteredDistricts.map((district) => (
-                <div key={district.code} className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
+              {selectedRegency ? (filteredDistricts.length > 0 ? filteredDistricts.map((district) => {
+                const active = district.code === selectedDistrict?.code;
+
+                return (
+                <div
+                  key={district.code}
+                  className={`rounded-2xl border p-4 transition ${active ? "border-primary bg-primary/5" : "border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950"}`}
+                >
                   <button
                     type="button"
                     onClick={() => visitHierarchy(selectedProvince?.code, selectedRegency.code, district.code)}
@@ -597,7 +603,7 @@ export default function Index({
                       <Typography className="mt-3 text-xs text-slate-400 dark:text-slate-500">{selectedProvince?.name} / {selectedRegency.name}</Typography>
                       <div className="mt-3 flex flex-wrap gap-2">
                         <Chip size="sm" variant="ghost" className="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
-                          <Chip.Label>{district.villages_count ?? 0} desa</Chip.Label>
+                          <Chip.Label>{district.villagesCount ?? 0} desa</Chip.Label>
                         </Chip>
                       </div>
                     </div>
@@ -608,10 +614,12 @@ export default function Index({
                       <IconButton variant="ghost" size="sm" onClick={(event) => { event.stopPropagation(); openDeleteDialog("district", district); }}>
                         <Trash2Icon className="h-4 w-4 text-red-500" />
                       </IconButton>
+                      <ChevronRightIcon className={`h-4 w-4 ${active ? "text-primary" : "text-slate-400"}`} />
                     </div>
                   </button>
                 </div>
-              )) : <EmptyState title="Kecamatan tidak ditemukan" description="Tambahkan data baru atau ganti kata kunci pencarian." />) : <EmptyState title="Belum ada kabupaten/kota terpilih" description="Klik salah satu kabupaten atau kota untuk memuat kecamatannya." />}
+                );
+              }) : <EmptyState title="Kecamatan tidak ditemukan" description="Tambahkan data baru atau ganti kata kunci pencarian." />) : <EmptyState title="Belum ada kabupaten/kota terpilih" description="Klik salah satu kabupaten atau kota untuk memuat kecamatannya." />}
             </div>
           </Card>
 

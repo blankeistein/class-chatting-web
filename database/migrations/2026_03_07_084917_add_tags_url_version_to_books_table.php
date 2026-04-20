@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('books', function (Blueprint $table) {
             $table->json('tags')->nullable()->after('cover_image');
-            $table->string('url')->nullable()->after('tags');
+            $table->string('url', 255)->nullable()->after('tags');
             $table->integer('version')->default(1)->after('url');
         });
     }

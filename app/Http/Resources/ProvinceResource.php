@@ -18,8 +18,8 @@ class ProvinceResource extends JsonResource
             'id' => $this->id,
             'code' => $this->code,
             'name' => $this->name,
-            'regencies_count' => $this->whenCounted('regencies'),
-            'districts_count' => $this->whenCounted('districts'),
+            'regenciesCount' => $this->whenCounted('regencies'),
+            'districtsCount' => $this->whenCounted('districts'),
         ];
     }
 }

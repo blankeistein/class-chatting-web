@@ -35,6 +35,11 @@ class District extends Model
         return $this->hasMany(Village::class);
     }
 
+    public function schools(): HasMany
+    {
+        return $this->hasMany(School::class);
+    }
+
     public function scopeSearch(Builder $query, ?string $search): Builder
     {
         $search = trim((string) $search);

@@ -34,6 +34,11 @@ class Province extends Model
         return $this->hasManyThrough(District::class, Regency::class);
     }
 
+    public function schools(): HasMany
+    {
+        return $this->hasMany(School::class);
+    }
+
     public function scopeSearch(Builder $query, ?string $search): Builder
     {
         $search = trim((string) $search);

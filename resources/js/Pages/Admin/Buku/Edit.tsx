@@ -17,14 +17,14 @@ interface Book {
   id: number;
   uuid: string;
   title: string;
-  cover_url: string;
+  coverUrl: string;
   tags: string[] | null;
   url: string | null;
   version: number;
 }
 
 export default function Edit({ book }: { book: { data: Book } }) {
-  const [thumbPreviewUrl, setThumbPreviewUrl] = useState<string | null>(book.data.cover_url);
+  const [thumbPreviewUrl, setThumbPreviewUrl] = useState<string | null>(book.data.coverUrl);
   const thumbInputRef = useRef<HTMLInputElement>(null);
   const [currentTag, setCurrentTag] = useState("");
 

@@ -49,22 +49,22 @@ interface ActivationCode {
   id: number;
   code: string;
   user: User | null;
-  activated_at: string | null;
-  activated_in: string | null;
+  activatedAt: string | null;
+  activatedIn: string | null;
   tier: {
     value: number;
     label: string;
   };
   type: string;
-  times_activated: number;
-  max_activated: number;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
+  timesActivated: number;
+  maxActivated: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
   items?: {
     id: number;
-    model_id: number;
-    model_type: string;
+    modelId: number;
+    modelType: string;
     model?: {
       id: number;
       title: string;
@@ -241,15 +241,15 @@ export default function Index({
   };
 
   const getStatus = (item: ActivationCode) => {
-    if (!item.is_active) {
+    if (!item.isActive) {
       return "revoked";
     }
 
-    if (item.max_activated && item.times_activated >= item.max_activated) {
+    if (item.maxActivated && item.timesActivated >= item.maxActivated) {
       return "used";
     }
 
-    if (item.times_activated > 0) {
+    if (item.timesActivated > 0) {
       return "active";
     }
 
@@ -677,18 +677,18 @@ export default function Index({
                             <Chip.Label>{status}</Chip.Label>
                           </Chip>
                           <Typography variant="small" className="text-xs text-slate-500 dark:text-slate-400">
-                            {item.times_activated > 0 ? "Sudah aktif" : "Belum aktif"}
+                            {item.timesActivated > 0 ? "Sudah aktif" : "Belum aktif"}
                           </Typography>
                         </div>
                       </td>
                       <td className={classes}>
                         <Typography variant="small" className="font-normal text-slate-600 dark:text-slate-400">
-                          {item.times_activated} / {item.max_activated ?? "Tanpa batas"}
+                          {item.timesActivated} / {item.maxActivated ?? "Tanpa batas"}
                         </Typography>
                       </td>
                       <td className={classes}>
                         <Typography variant="small" className="font-normal text-slate-600 dark:text-slate-400">
-                          {new Date(item.created_at).toLocaleDateString("id-ID", {
+                          {new Date(item.createdAt).toLocaleDateString("id-ID", {
                             day: "2-digit",
                             month: "short",
                             year: "numeric",
@@ -708,10 +708,10 @@ export default function Index({
                               </Menu.Item>
                               <Menu.Item
                                 onClick={() => handleToggleActive(item.id)}
-                                className={item.is_active ? "text-warning" : "text-success"}
+                                className={item.isActive ? "text-warning" : "text-success"}
                               >
-                                {item.is_active ? <XCircleIcon className="mr-2 h-4 w-4" /> : <CheckCircleIcon className="mr-2 h-4 w-4" />}
-                                {item.is_active ? "Nonaktifkan" : "Aktifkan"}
+                                {item.isActive ? <XCircleIcon className="mr-2 h-4 w-4" /> : <CheckCircleIcon className="mr-2 h-4 w-4" />}
+                                {item.isActive ? "Nonaktifkan" : "Aktifkan"}
                               </Menu.Item>
                               <Menu.Item onClick={() => handleDelete(item.id)} className="text-error">
                                 <Trash2Icon className="mr-2 h-4 w-4" />

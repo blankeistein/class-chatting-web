@@ -43,8 +43,8 @@ interface BookModel {
 
 interface ActivationItem {
   id: number;
-  model_id: number;
-  model_type: string;
+  modelId: number;
+  modelType: string;
   model?: BookModel;
 }
 
@@ -52,7 +52,7 @@ interface ActivationCode {
   id: number;
   code: string;
   user: User | null;
-  activated_at: string | null;
+  activatedAt: string | null;
   activatedIn: {
     id: number;
     name: string;
@@ -63,12 +63,12 @@ interface ActivationCode {
     label: string;
   };
   type: string;
-  times_activated: number;
-  max_activated: number | null;
-  is_active: boolean;
+  timesActivated: number;
+  maxActivated: number | null;
+  isActive: boolean;
   items?: ActivationItem[];
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export default function Show({ activationCode }: { activationCode: { data: ActivationCode } }) {
@@ -80,9 +80,9 @@ export default function Show({ activationCode }: { activationCode: { data: Activ
   };
 
   const getStatus = () => {
-    if (!code.is_active) return "revoked";
-    if (code.max_activated && code.times_activated >= code.max_activated) return "used";
-    if (code.times_activated > 0) return "active";
+    if (!code.isActive) return "revoked";
+    if (code.maxActivated && code.timesActivated >= code.maxActivated) return "used";
+    if (code.timesActivated > 0) return "active";
     return "available";
   };
 
@@ -166,11 +166,11 @@ export default function Show({ activationCode }: { activationCode: { data: Activ
             <Button
               variant="outline"
               size="sm"
-              color={code.is_active ? "warning" : "success"}
+              color={code.isActive ? "warning" : "success"}
               onClick={handleToggleActive}
             >
-              {code.is_active ? <ShieldXIcon className="h-4 w-4 mr-2" /> : <ShieldCheckIcon className="h-4 w-4 mr-2" />}
-              {code.is_active ? "Nonaktifkan" : "Aktifkan"}
+              {code.isActive ? <ShieldXIcon className="h-4 w-4 mr-2" /> : <ShieldCheckIcon className="h-4 w-4 mr-2" />}
+              {code.isActive ? "Nonaktifkan" : "Aktifkan"}
             </Button>
             <Button
               variant="outline"
@@ -243,13 +243,13 @@ export default function Show({ activationCode }: { activationCode: { data: Activ
               </div>
               <div className="flex items-baseline gap-1">
                 <Typography variant="h3" className="font-bold text-slate-800 dark:text-white">
-                  {code.times_activated}
+                  {code.timesActivated}
                 </Typography>
                 <Typography variant="small" className="text-slate-500 text-lg">
                   /
                 </Typography>
                 <Typography variant="h4" className="text-slate-500">
-                  {code.max_activated ?? "∞"}
+                  {code.maxActivated ?? "∞"}
                 </Typography>
               </div>
               <Typography variant="small" className="text-slate-400 text-xs mt-1">
@@ -284,7 +284,7 @@ export default function Show({ activationCode }: { activationCode: { data: Activ
                 <div className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-800">
                   <Typography variant="small" className="text-slate-500 font-medium">Maks. Aktivasi</Typography>
                   <Typography variant="small" className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
-                    {code.max_activated ?? (
+                    {code.maxActivated ?? (
                       <span className="flex items-center gap-1">
                         <InfinityIcon className="h-4 w-4" /> Tanpa Batas
                       </span>
@@ -293,8 +293,8 @@ export default function Show({ activationCode }: { activationCode: { data: Activ
                 </div>
                 <div className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-800">
                   <Typography variant="small" className="text-slate-500 font-medium">Status Aktif</Typography>
-                  <Chip size="sm" variant="ghost" color={code.is_active ? "success" : "error"}>
-                    <Chip.Label>{code.is_active ? "Aktif" : "Nonaktif"}</Chip.Label>
+                  <Chip size="sm" variant="ghost" color={code.isActive ? "success" : "error"}>
+                    <Chip.Label>{code.isActive ? "Aktif" : "Nonaktif"}</Chip.Label>
                   </Chip>
                 </div>
               </div>
@@ -342,8 +342,8 @@ export default function Show({ activationCode }: { activationCode: { data: Activ
                     <CalendarIcon className="h-3.5 w-3.5" /> Aktivasi
                   </Typography>
                   <Typography variant="small" className="font-medium text-slate-700 dark:text-slate-300">
-                    {code.activated_at
-                      ? new Date(code.activated_at).toLocaleDateString("id-ID", {
+                    {code.activatedAt
+                      ? new Date(code.activatedAt).toLocaleDateString("id-ID", {
                         day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit"
                       })
                       : "—"}
@@ -366,7 +366,7 @@ export default function Show({ activationCode }: { activationCode: { data: Activ
                     <CalendarIcon className="h-3.5 w-3.5" /> Dibuat
                   </Typography>
                   <Typography variant="small" className="font-medium text-slate-700 dark:text-slate-300">
-                    {new Date(code.created_at).toLocaleDateString("id-ID", {
+                    {new Date(code.createdAt).toLocaleDateString("id-ID", {
                       day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit"
                     })}
                   </Typography>
@@ -377,7 +377,7 @@ export default function Show({ activationCode }: { activationCode: { data: Activ
                     <CalendarIcon className="h-3.5 w-3.5" /> Diperbarui
                   </Typography>
                   <Typography variant="small" className="font-medium text-slate-700 dark:text-slate-300">
-                    {new Date(code.updated_at).toLocaleDateString("id-ID", {
+                    {new Date(code.updatedAt).toLocaleDateString("id-ID", {
                       day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit"
                     })}
                   </Typography>

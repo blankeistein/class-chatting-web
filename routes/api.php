@@ -3,6 +3,7 @@
 use App\Http\Controllers\API\BookController;
 use App\Http\Controllers\API\FirebaseWebhookController;
 use App\Http\Controllers\API\RegionController;
+use App\Http\Controllers\API\SchoolController;
 use App\Http\Controllers\API\VideoController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -29,6 +30,11 @@ Route::prefix('v1/regions')->group(function () {
 
     Route::get('/villages', [RegionController::class, 'villages']);
     Route::get('/villages/{village:code}', [RegionController::class, 'village']);
+});
+
+Route::prefix('v1/schools')->group(function () {
+    Route::get('/', [SchoolController::class, 'index']);
+    Route::get('/{school}', [SchoolController::class, 'show']);
 });
 
 Route::middleware(['throttle:1000,1', 'private.api'])->group(function () {

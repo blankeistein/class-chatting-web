@@ -17,11 +17,11 @@ return new class extends Migration
             $table->string('slug')->unique()->nullable();
             $table->text('description')->nullable();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
-            $table->string('thumbnail')->nullable();
+            $table->string('thumbnail', 255)->nullable();
 
-            $table->string('video_url')->nullable();
-            $table->string('storage_path')->nullable();
-            $table->string('provider')->default('local');
+            $table->string('video_url', 255)->nullable();
+            $table->string('storage_path', 255)->nullable();
+            $table->string('provider', 100)->default('local');
             $table->json('metadata')->nullable();
             $table->timestamps();
 

@@ -21,7 +21,7 @@ class ActivationCodeResource extends JsonResource
                 'name' => $this->user->name,
                 'email' => $this->user->email,
             ] : null,
-            'activated_at' => $this->activated_at,
+            'activatedAt' => $this->activated_at,
             'activatedIn' => $this->activatedIn ? [
                 'id' => $this->activatedIn->id,
                 'name' => $this->activatedIn->model->title,
@@ -32,21 +32,21 @@ class ActivationCodeResource extends JsonResource
                 'label' => $this->tier->label(),
             ],
             'type' => $this->type,
-            'times_activated' => $this->times_activated,
-            'max_activated' => $this->max_activated,
-            'is_active' => $this->is_active,
+            'timesActivated' => $this->times_activated,
+            'maxActivated' => $this->max_activated,
+            'isActive' => $this->is_active,
             'items' => $this->items->map(fn ($item) => [
                 'id' => $item->id,
-                'model_id' => $item->model_id,
-                'model_type' => $item->model_type,
+                'modelId' => $item->model_id,
+                'modelType' => $item->model_type,
                 'model' => $item->model ? [
                     'id' => $item->model->id,
                     'uuid' => $item->model->uuid,
                     'title' => $item->model->title,
                 ] : null,
             ]),
-            'created_at' => $this->created_at->toIso8601String(),
-            'updated_at' => $this->updated_at->toIso8601String(),
+            'createdAt' => $this->created_at->toIso8601String(),
+            'updatedAt' => $this->updated_at->toIso8601String(),
         ];
     }
 }

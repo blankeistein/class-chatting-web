@@ -164,7 +164,7 @@ export default function Index() {
           </div>
 
           <div className="flex gap-3 flex-wrap justify-center">
-            <a href="#" className="w-10 h-10 md:w-12 md:h-12 bg-gray-800 border-4 border-black rounded-full flex items-center justify-center shadow-neo hover:shadow-neo-hover hover:translate-x-[2px] hover:translate-y-[2px] transition-all" target="_blank" rel="noreferrer" aria-label="GitHub profile">
+            <a href="//github.com/lestariilmu" className="w-10 h-10 md:w-12 md:h-12 bg-gray-800 border-4 border-black rounded-full flex items-center justify-center shadow-neo hover:shadow-neo-hover hover:translate-x-[2px] hover:translate-y-[2px] transition-all" target="_blank" rel="noreferrer" aria-label="GitHub profile">
               <GithubIcon className="text-white w-5 h-5 md:w-6 md:h-6" />
             </a>
             <a href="//www.instagram.com/lestariilmu5/" className="w-10 h-10 md:w-12 md:h-12 bg-pink-500 border-4 border-black rounded-full flex items-center justify-center shadow-neo hover:shadow-neo-hover hover:translate-x-[2px] hover:translate-y-[2px] transition-all" target="_blank" rel="noreferrer" aria-label="Instagram profile">

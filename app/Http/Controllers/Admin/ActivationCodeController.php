@@ -9,6 +9,7 @@ use App\Models\ActivationCode;
 use App\Models\Book;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Enum;
@@ -128,7 +129,7 @@ class ActivationCodeController extends Controller
                     'tier' => $request->tier,
                     'max_activated' => $request->max_activated,
                     'type' => $request->type,
-                    'created_by' => auth()->user()->id,
+                    'created_by' => Auth::id(),
                 ]);
 
                 foreach ($request->book_ids as $bookId) {

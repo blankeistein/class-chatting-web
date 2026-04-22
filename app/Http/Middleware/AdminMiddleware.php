@@ -12,7 +12,7 @@ class AdminMiddleware
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -20,6 +20,6 @@ class AdminMiddleware
             return $next($request);
         }
 
-        return redirect()->route('home')->with('error', 'Anda tidak memiliki hak akses ke halaman ini.');
+        return redirect()->route('home')->withErrors('Anda tidak memiliki hak akses ke halaman ini.');
     }
 }

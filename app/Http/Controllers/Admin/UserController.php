@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -34,7 +35,7 @@ class UserController extends Controller
         }
 
         // Sort
-        $sort = $request->get('sort', 'latest');
+        $sort = $request->input('sort', 'latest');
         switch ($sort) {
             case 'oldest':
                 $query->oldest();
@@ -144,8 +145,8 @@ class UserController extends Controller
     public function destroy(User $user)
     {
         // Prevent deleting yourself
-        if ($user->id === auth()->id()) {
-            return redirect()->back()->with('error', 'Anda tidak dapat menghapus akun Anda sendiri.');
+        if ($user->id === Auth::id()) {
+            return redirect()->back()->withErrors('Anda tidak dapat menghapus akun Anda sendiri.');
         }
 
         $user->delete();

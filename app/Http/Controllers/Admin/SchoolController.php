@@ -83,13 +83,13 @@ class SchoolController extends Controller
         $file = $request->file('file');
 
         if (! $file instanceof UploadedFile) {
-            return redirect()->back()->with('error', 'File CSV tidak ditemukan.');
+            return redirect()->back()->withErrors('File CSV tidak ditemukan.');
         }
 
         try {
             $result = $this->importSchoolsFromCsv($file);
         } catch (\RuntimeException|QueryException $exception) {
-            return redirect()->back()->with('error', $exception->getMessage());
+            return redirect()->back()->withErrors($exception->getMessage());
         }
 
         $summary = sprintf(
@@ -135,9 +135,9 @@ class SchoolController extends Controller
             'nama',
             'bentuk_pendidikan',
             'status_sekolah',
-            'provinsiid',
-            'kabupatenid',
-            'kecamatanid',
+            'provinsi_id',
+            'kabupaten_id',
+            'kecamatan_id',
             'old_id',
         ];
 
@@ -189,9 +189,9 @@ class SchoolController extends Controller
                 $bentukPendidikan = $this->csvValue($row, $headerMap, 'bentuk_pendidikan');
                 $status = strtoupper($this->csvValue($row, $headerMap, 'status_sekolah'));
 
-                $provinceCode = $this->csvValue($row, $headerMap, 'provinsiid');
-                $regencyCode = $this->csvValue($row, $headerMap, 'kabupatenid');
-                $districtCode = $this->csvValue($row, $headerMap, 'kecamatanid');
+                $provinceCode = $this->csvValue($row, $headerMap, 'provinsi_id');
+                $regencyCode = $this->csvValue($row, $headerMap, 'kabupaten_id');
+                $districtCode = $this->csvValue($row, $headerMap, 'kecamatan_id');
 
                 $provinceId = $provinceCodeMap[$provinceCode] ?? null;
                 $regencyId = $regencyCodeMap[$regencyCode] ?? null;

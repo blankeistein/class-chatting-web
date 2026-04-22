@@ -588,36 +588,36 @@ export default function Index({
                 const active = district.code === selectedDistrict?.code;
 
                 return (
-                <div
-                  key={district.code}
-                  className={`rounded-2xl border p-4 transition ${active ? "border-primary bg-primary/5" : "border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950"}`}
-                >
-                  <button
-                    type="button"
-                    onClick={() => visitHierarchy(selectedProvince?.code, selectedRegency.code, district.code)}
-                    className="flex w-full items-start justify-between gap-3 text-left"
+                  <div
+                    key={district.code}
+                    className={`rounded-2xl border p-4 transition ${active ? "border-primary bg-primary/5" : "border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950"}`}
                   >
-                    <div>
-                      <Typography className="font-semibold text-slate-900 dark:text-white">{district.name}</Typography>
-                      <Typography className="mt-1 text-xs text-slate-500 dark:text-slate-400">Kode {district.code}</Typography>
-                      <Typography className="mt-3 text-xs text-slate-400 dark:text-slate-500">{selectedProvince?.name} / {selectedRegency.name}</Typography>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <Chip size="sm" variant="ghost" className="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
-                          <Chip.Label>{district.villagesCount ?? 0} desa</Chip.Label>
-                        </Chip>
+                    <button
+                      type="button"
+                      onClick={() => visitHierarchy(selectedProvince?.code, selectedRegency.code, district.code)}
+                      className="flex w-full items-start justify-between gap-3 text-left"
+                    >
+                      <div>
+                        <Typography className="font-semibold text-slate-900 dark:text-white">{district.name}</Typography>
+                        <Typography className="mt-1 text-xs text-slate-500 dark:text-slate-400">Kode {district.code}</Typography>
+                        <Typography className="mt-3 text-xs text-slate-400 dark:text-slate-500">{selectedProvince?.name} / {selectedRegency.name}</Typography>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <Chip size="sm" variant="ghost" className="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                            <Chip.Label>{district.villagesCount ?? 0} desa</Chip.Label>
+                          </Chip>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <IconButton variant="ghost" size="sm" onClick={(event) => { event.stopPropagation(); openDistrictDialog("edit", district); }}>
-                        <PencilIcon className="h-4 w-4 text-slate-500" />
-                      </IconButton>
-                      <IconButton variant="ghost" size="sm" onClick={(event) => { event.stopPropagation(); openDeleteDialog("district", district); }}>
-                        <Trash2Icon className="h-4 w-4 text-red-500" />
-                      </IconButton>
-                      <ChevronRightIcon className={`h-4 w-4 ${active ? "text-primary" : "text-slate-400"}`} />
-                    </div>
-                  </button>
-                </div>
+                      <div className="flex items-center gap-1">
+                        <IconButton variant="ghost" size="sm" onClick={(event) => { event.stopPropagation(); openDistrictDialog("edit", district); }}>
+                          <PencilIcon className="h-4 w-4 text-slate-500" />
+                        </IconButton>
+                        <IconButton variant="ghost" size="sm" onClick={(event) => { event.stopPropagation(); openDeleteDialog("district", district); }}>
+                          <Trash2Icon className="h-4 w-4 text-red-500" />
+                        </IconButton>
+                        <ChevronRightIcon className={`h-4 w-4 ${active ? "text-primary" : "text-slate-400"}`} />
+                      </div>
+                    </button>
+                  </div>
                 );
               }) : <EmptyState title="Kecamatan tidak ditemukan" description="Tambahkan data baru atau ganti kata kunci pencarian." />) : <EmptyState title="Belum ada kabupaten/kota terpilih" description="Klik salah satu kabupaten atau kota untuk memuat kecamatannya." />}
             </div>

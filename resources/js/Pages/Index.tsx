@@ -1,9 +1,34 @@
 import { AuthProps } from "@/types/global";
 import { Head, Link, usePage } from "@inertiajs/react";
-import { FacebookIcon, GithubIcon, GlobeIcon, InstagramIcon, LinkedinIcon, TerminalIcon, YoutubeIcon } from "lucide-react";
+import { FacebookIcon, GithubIcon, GlobeIcon, InstagramIcon, LayoutDashboard, LinkedinIcon, LogOutIcon, TerminalIcon, YoutubeIcon } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 export default function Index() {
   const { auth } = usePage<AuthProps>().props;
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const profileMenuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent): void => {
+      if (!profileMenuRef.current?.contains(event.target as Node)) {
+        setIsProfileMenuOpen(false);
+      }
+    };
+
+    const handleEscape = (event: KeyboardEvent): void => {
+      if (event.key === "Escape") {
+        setIsProfileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, []);
 
   return (
     <>
@@ -24,11 +49,40 @@ export default function Index() {
           <div className="flex gap-4 items-center">
             {
               auth.user && (
-                <Link href={route('admin.dashboard')}>
-                  <div className="w-8 h-8 md:w-10 md:h-10 bg-white border-4 border-black rounded-full flex items-center justify-center shadow-neo hover:shadow-neo-hover hover:translate-x-[2px] hover:translate-y-[2px] transition-all overflow-hidden">
-                    <img src={auth.user?.image} className="w-6 h-6 md:w-8 md:h-8" />
-                  </div>
-                </Link>
+                <div className="relative" ref={profileMenuRef}>
+                  <button
+                    type="button"
+                    onClick={() => setIsProfileMenuOpen((current) => !current)}
+                    className="w-8 h-8 md:w-10 md:h-10 bg-white border-4 border-black rounded-full flex items-center justify-center shadow-neo hover:shadow-neo-hover hover:translate-x-[2px] hover:translate-y-[2px] transition-all overflow-hidden"
+                    aria-expanded={isProfileMenuOpen}
+                    aria-haspopup="menu"
+                    aria-label="Open profile menu"
+                  >
+                    <img src={auth.user?.image} className="w-6 h-6 md:w-8 md:h-8" alt="User avatar" />
+                  </button>
+
+                  {isProfileMenuOpen && (
+                    <div className="absolute right-0 top-12 md:top-14 z-20 w-40 border-4 border-black bg-white shadow-neo p-1">
+                      <Link
+                        href={route('admin.dashboard')}
+                        as="button"
+                        className="w-full flex items-center gap-2 font-mono text-sm font-bold border-2 border-transparent hover:border-black px-3 py-2 text-left"
+                      >
+                        <LayoutDashboard className="w-4 h-4" />
+                        Dahsboard
+                      </Link>
+                      <Link
+                        href={route('logout')}
+                        method="delete"
+                        as="button"
+                        className="w-full flex items-center gap-2 font-mono text-sm font-bold text-red-600 hover:bg-red-100 border-2 border-transparent hover:border-black px-3 py-2 text-left"
+                      >
+                        <LogOutIcon className="w-4 h-4" />
+                        Logout
+                      </Link>
+                    </div>
+                  )}
+                </div>
               )
             }
             <div className="hidden md:block font-mono text-xs font-bold bg-neo-yellow border-2 border-black px-2 py-1 shadow-neo-sm">

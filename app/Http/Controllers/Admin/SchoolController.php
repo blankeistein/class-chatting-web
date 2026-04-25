@@ -18,17 +18,43 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class SchoolController extends Controller
 {
     public function index(Request $request): Response
     {
         $search = trim((string) $request->input('search', ''));
-        $perPage = (int) $request->input('per_page', 25);
+        $perPage = (int) $request->input('per_page', 20);
+        $provinceId = (int) $request->input('province_id', 0);
+        $regencyId = (int) $request->input('regency_id', 0);
+        $districtId = (int) $request->input('district_id', 0);
+        $status = trim((string) $request->input('status', ''));
+        $bentukPendidikan = trim((string) $request->input('bentuk_pendidikan', ''));
+        $sortBy = trim((string) $request->input('sort_by', 'name'));
+        $sortDirection = trim((string) $request->input('sort_direction', 'asc'));
+
+        if (! in_array($perPage, [20, 50, 100], true)) {
+            $perPage = 20;
+        }
+
+        if (! in_array($sortBy, ['name', 'npsn', 'status', 'bentuk_pendidikan', 'province_id', 'regency_id', 'district_id'], true)) {
+            $sortBy = 'name';
+        }
+
+        if (! in_array($sortDirection, ['asc', 'desc'], true)) {
+            $sortDirection = 'asc';
+        }
 
         $schools = School::query()
             ->with(['province', 'regency', 'district', 'village'])
             ->search($search)
+            ->when($provinceId > 0, fn ($query) => $query->where('province_id', $provinceId))
+            ->when($regencyId > 0, fn ($query) => $query->where('regency_id', $regencyId))
+            ->when($districtId > 0, fn ($query) => $query->where('district_id', $districtId))
+            ->when($status !== '', fn ($query) => $query->where('status', $status))
+            ->when($bentukPendidikan !== '', fn ($query) => $query->where('bentuk_pendidikan', $bentukPendidikan))
+            ->orderBy($sortBy, $sortDirection)
             ->orderBy('name')
             ->paginate($perPage)
             ->withQueryString();
@@ -38,6 +64,24 @@ class SchoolController extends Controller
             'filters' => [
                 'search' => $search,
                 'per_page' => $perPage,
+                'province_id' => $provinceId,
+                'regency_id' => $regencyId,
+                'district_id' => $districtId,
+                'status' => $status,
+                'bentuk_pendidikan' => $bentukPendidikan,
+                'sort_by' => $sortBy,
+                'sort_direction' => $sortDirection,
+            ],
+            'filterOptions' => [
+                ...$this->regionOptions(),
+                'bentukPendidikan' => School::query()
+                    ->whereNotNull('bentuk_pendidikan')
+                    ->distinct()
+                    ->orderBy('bentuk_pendidikan')
+                    ->pluck('bentuk_pendidikan')
+                    ->filter()
+                    ->values()
+                    ->all(),
             ],
         ]);
     }
@@ -76,6 +120,67 @@ class SchoolController extends Controller
         $school->delete();
 
         return redirect()->back()->with('success', 'Sekolah berhasil dihapus.');
+    }
+
+    public function bulkDelete(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', 'exists:schools,id'],
+        ]);
+
+        $deletedCount = School::query()
+            ->whereIn('id', $validated['ids'])
+            ->delete();
+
+        return redirect()->back()->with('success', "{$deletedCount} sekolah berhasil dihapus.");
+    }
+
+    public function bulkExport(Request $request): StreamedResponse
+    {
+        $ids = collect(explode(',', (string) $request->input('ids', '')))
+            ->map(fn (string $id): int => (int) $id)
+            ->filter(fn (int $id): bool => $id > 0)
+            ->values()
+            ->all();
+
+        $schools = School::query()
+            ->with(['province', 'regency', 'district'])
+            ->whereIn('id', $ids)
+            ->orderBy('name')
+            ->get();
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="schools_'.date('Y-m-d_H-i-s').'.csv"',
+        ];
+
+        return response()->stream(function () use ($schools): void {
+            $file = fopen('php://output', 'w');
+
+            if ($file === false) {
+                return;
+            }
+
+            fputcsv($file, ['ID', 'Code', 'NPSN', 'Nama', 'Bentuk Pendidikan', 'Status', 'Provinsi', 'Kabupaten/Kota', 'Kecamatan', 'Alamat']);
+
+            foreach ($schools as $school) {
+                fputcsv($file, [
+                    $school->id,
+                    $school->code,
+                    $school->npsn,
+                    $school->name,
+                    $school->bentuk_pendidikan,
+                    $school->status,
+                    $school->province?->name,
+                    $school->regency?->name,
+                    $school->district?->name,
+                    $school->address,
+                ]);
+            }
+
+            fclose($file);
+        }, 200, $headers);
     }
 
     public function import(SchoolImportRequest $request): RedirectResponse

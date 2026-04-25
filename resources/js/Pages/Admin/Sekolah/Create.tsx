@@ -189,7 +189,7 @@ export default function Create({ provinces, regencies, districts, villages }: { 
                     <Select.Trigger placeholder="Pilih provinsi" className="dark:text-white">
                       {() => provinces.find((item) => item.id === data.province_id)?.name || "Pilih provinsi"}
                     </Select.Trigger>
-                    <Select.List>
+                    <Select.List className="overflow-auto">
                       {provinces.map((item) => (
                         <Select.Option key={item.id} value={String(item.id)}>
                           {item.code} - {item.name}
@@ -215,7 +215,7 @@ export default function Create({ provinces, regencies, districts, villages }: { 
                     <Select.Trigger placeholder="Pilih kabupaten/kota" className="dark:text-white">
                       {() => filteredRegencies.find((item) => item.id === data.regency_id)?.name || "Pilih kabupaten/kota"}
                     </Select.Trigger>
-                    <Select.List>
+                    <Select.List className="overflow-auto">
                       {filteredRegencies.map((item) => (
                         <Select.Option key={item.id} value={String(item.id)}>
                           {item.code} - {item.name}
@@ -240,7 +240,7 @@ export default function Create({ provinces, regencies, districts, villages }: { 
                     <Select.Trigger placeholder="Pilih kecamatan" className="dark:text-white">
                       {() => filteredDistricts.find((item) => item.id === data.district_id)?.name || "Pilih kecamatan"}
                     </Select.Trigger>
-                    <Select.List>
+                    <Select.List className="overflow-auto">
                       {filteredDistricts.map((item) => (
                         <Select.Option key={item.id} value={String(item.id)}>
                           {item.code} - {item.name}

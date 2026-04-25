@@ -474,9 +474,8 @@ export default function Index({
                 const active = province.code === selectedProvince?.code;
 
                 return (
-                  <button
+                  <div
                     key={province.code}
-                    type="button"
                     onClick={() => visitHierarchy(province.code, undefined)}
                     className={`w-full rounded-2xl border p-4 text-left transition ${active ? "border-primary bg-primary/5" : "border-slate-200 bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-slate-950 dark:hover:border-slate-700"}`}
                   >
@@ -499,7 +498,7 @@ export default function Index({
                         <ChevronRightIcon className={`h-4 w-4 ${active ? "text-primary" : "text-slate-400"}`} />
                       </div>
                     </div>
-                  </button>
+                  </div>
                 );
               }) : <EmptyState title="Provinsi tidak ditemukan" description="Coba ubah kata kunci pencarian Anda." />}
             </div>
@@ -525,9 +524,8 @@ export default function Index({
                 const active = regency.code === selectedRegency?.code;
 
                 return (
-                  <button
+                  <div
                     key={regency.code}
-                    type="button"
                     onClick={() => visitHierarchy(selectedProvince.code, regency.code, undefined)}
                     className={`w-full rounded-2xl border p-4 text-left transition ${active ? "border-primary bg-primary/5" : "border-slate-200 bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-slate-950 dark:hover:border-slate-700"}`}
                   >
@@ -561,7 +559,7 @@ export default function Index({
                         <ChevronRightIcon className={`h-4 w-4 ${active ? "text-primary" : "text-slate-400"}`} />
                       </div>
                     </div>
-                  </button>
+                  </div>
                 );
               }) : <EmptyState title="Kabupaten/kota tidak ditemukan" description="Tambahkan data baru atau ganti kata kunci pencarian." />) : <EmptyState title="Belum ada provinsi terpilih" description="Klik salah satu provinsi untuk memuat kabupaten atau kota." />}
             </div>
@@ -592,8 +590,7 @@ export default function Index({
                     key={district.code}
                     className={`rounded-2xl border p-4 transition ${active ? "border-primary bg-primary/5" : "border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950"}`}
                   >
-                    <button
-                      type="button"
+                    <div
                       onClick={() => visitHierarchy(selectedProvince?.code, selectedRegency.code, district.code)}
                       className="flex w-full items-start justify-between gap-3 text-left"
                     >
@@ -616,7 +613,7 @@ export default function Index({
                         </IconButton>
                         <ChevronRightIcon className={`h-4 w-4 ${active ? "text-primary" : "text-slate-400"}`} />
                       </div>
-                    </button>
+                    </div>
                   </div>
                 );
               }) : <EmptyState title="Kecamatan tidak ditemukan" description="Tambahkan data baru atau ganti kata kunci pencarian." />) : <EmptyState title="Belum ada kabupaten/kota terpilih" description="Klik salah satu kabupaten atau kota untuk memuat kecamatannya." />}

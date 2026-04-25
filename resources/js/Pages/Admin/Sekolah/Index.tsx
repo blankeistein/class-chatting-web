@@ -3,13 +3,14 @@ import {
   Button,
   Card,
   Dialog,
-  DialogRootProps,
   IconButton,
   Input,
   Menu,
+  Select,
   Typography,
 } from "@material-tailwind/react";
 import AdminLayout from "@/Layouts/AdminLayout";
+import Checkbox from "@/Components/Checkbox";
 import { Head, router, useForm } from "@inertiajs/react";
 import {
   Building2Icon,
@@ -22,6 +23,10 @@ import {
   XIcon,
   Trash2Icon,
   Copy,
+  Filter,
+  Search,
+  MoreVertical,
+  DownloadCloud,
 } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
 
@@ -72,6 +77,46 @@ type CsvPreview = {
   headers: string[];
   rows: string[][];
   totalRows: number;
+};
+
+type Province = {
+  id: number;
+  code: string;
+  name: string;
+};
+
+type Regency = {
+  id: number;
+  province_id: number;
+  code: string;
+  name: string;
+  type: string | null;
+};
+
+type District = {
+  id: number;
+  regency_id: number;
+  code: string;
+  name: string;
+};
+
+type Filters = {
+  search?: string;
+  per_page?: number;
+  province_id?: number;
+  regency_id?: number;
+  district_id?: number;
+  status?: string;
+  bentuk_pendidikan?: string;
+  sort_by?: string;
+  sort_direction?: string;
+};
+
+type FilterOptions = {
+  provinces: Province[];
+  regencies: Regency[];
+  districts: District[];
+  bentukPendidikan: string[];
 };
 
 function formatFileSize(sizeInBytes: number): string {
@@ -171,15 +216,24 @@ async function buildCsvPreview(file: File): Promise<CsvPreview> {
   };
 }
 
-export default function Index({ schools: paginatedSchools, filters }: { schools: SchoolsPayload; filters?: { search?: string; per_page?: number } }) {
+export default function Index({ schools: paginatedSchools, filters, filterOptions }: { schools: SchoolsPayload; filters?: Filters; filterOptions: FilterOptions }) {
   const [schools, setSchools] = useState<School[]>(paginatedSchools.data);
   const [search, setSearch] = useState(filters?.search || "");
+  const [provinceId, setProvinceId] = useState(filters?.province_id ? String(filters.province_id) : "");
+  const [regencyId, setRegencyId] = useState(filters?.regency_id ? String(filters.regency_id) : "");
+  const [districtId, setDistrictId] = useState(filters?.district_id ? String(filters.district_id) : "");
+  const [status, setStatus] = useState(filters?.status || "");
+  const [bentukPendidikan, setBentukPendidikan] = useState(filters?.bentuk_pendidikan || "");
+  const [sort, setSort] = useState(`${filters?.sort_by || "name"}|${filters?.sort_direction || "asc"}`);
+  const [perPage, setPerPage] = useState(filters?.per_page ? String(filters.per_page) : "20");
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [isImportDragging, setIsImportDragging] = useState(false);
   const [importPreview, setImportPreview] = useState<CsvPreview | null>(null);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [currentSchool, setCurrentSchool] = useState<School | null>(null);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const previewRequestRef = useRef(0);
 
@@ -190,7 +244,13 @@ export default function Index({ schools: paginatedSchools, filters }: { schools:
 
   React.useEffect(() => {
     setSchools(paginatedSchools.data);
+    setSelectedIds((currentIds) => currentIds.filter((id) => paginatedSchools.data.some((school) => school.id === id)));
   }, [paginatedSchools.data]);
+
+  const filteredRegencies = filterOptions.regencies.filter((item) => !provinceId || item.province_id === Number(provinceId));
+  const filteredDistricts = filterOptions.districts.filter((item) => !regencyId || item.regency_id === Number(regencyId));
+  const hasActiveFilters = search !== "" || provinceId !== "" || regencyId !== "" || districtId !== "" || status !== "" || bentukPendidikan !== "";
+  const [sortBy, sortDirection] = sort.split("|");
 
   const resetImportState = () => {
     setIsImportOpen(false);
@@ -240,7 +300,37 @@ export default function Index({ schools: paginatedSchools, filters }: { schools:
   };
 
   const handleFilter = () => {
-    router.get(route("admin.schools.index"), { search }, {
+    setIsFilterOpen(false);
+
+    router.get(route("admin.schools.index"), {
+      search,
+      province_id: provinceId,
+      regency_id: regencyId,
+      district_id: districtId,
+      status,
+      bentuk_pendidikan: bentukPendidikan,
+      sort_by: sortBy,
+      sort_direction: sortDirection,
+      per_page: perPage,
+    }, {
+      preserveState: true,
+      replace: true,
+      only: ["schools", "filters"],
+    });
+  };
+
+  const resetFilters = () => {
+    setSearch("");
+    setProvinceId("");
+    setRegencyId("");
+    setDistrictId("");
+    setStatus("");
+    setBentukPendidikan("");
+    setSort("name|asc");
+    setPerPage("20");
+    setIsFilterOpen(false);
+
+    router.get(route("admin.schools.index"), { sort_by: "name", sort_direction: "asc", per_page: 20 }, {
       preserveState: true,
       replace: true,
       only: ["schools", "filters"],
@@ -250,6 +340,19 @@ export default function Index({ schools: paginatedSchools, filters }: { schools:
   const openDelete = (school: School) => {
     setCurrentSchool(school);
     setIsDeleteOpen(true);
+  };
+
+  const toggleSelect = (id: number) => {
+    setSelectedIds((currentIds) => (currentIds.includes(id) ? currentIds.filter((item) => item !== id) : [...currentIds, id]));
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === schools.length && schools.length > 0) {
+      setSelectedIds([]);
+      return;
+    }
+
+    setSelectedIds(schools.map((school) => school.id));
   };
 
   const handleDeleteSubmit = () => {
@@ -266,6 +369,37 @@ export default function Index({ schools: paginatedSchools, filters }: { schools:
         toast.error("Gagal menghapus sekolah.");
       },
     });
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedIds.length === 0) {
+      return;
+    }
+
+    if (!confirm(`Apakah Anda yakin ingin menghapus ${selectedIds.length} sekolah terpilih?`)) {
+      return;
+    }
+
+    router.delete(route("admin.schools.bulk-delete"), {
+      data: { ids: selectedIds },
+      preserveScroll: true,
+      onSuccess: () => {
+        setSelectedIds([]);
+        toast.success("Sekolah terpilih berhasil dihapus.");
+      },
+      onError: () => {
+        toast.error("Gagal menghapus sekolah terpilih.");
+      },
+    });
+  };
+
+  const handleBulkExport = () => {
+    if (selectedIds.length === 0) {
+      toast.error("Pilih minimal satu sekolah untuk export.");
+      return;
+    }
+
+    window.location.href = route("admin.schools.bulk-export", { ids: selectedIds.join(",") });
   };
 
   const handleImportSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -329,27 +463,106 @@ export default function Index({ schools: paginatedSchools, filters }: { schools:
           <div className="w-full md:w-auto flex flex-col md:flex-row items-stretch md:items-center gap-2">
             <Button
               size="sm"
-              variant="outline"
-              className="flex items-center gap-2"
-              onClick={() => setIsImportOpen(true)}
-            >
-              <UploadCloudIcon className="w-4 h-4" />
-              Import CSV
-            </Button>
-            <Button
-              size="sm"
               className="flex items-center gap-2"
               onClick={() => router.get(route("admin.schools.create"))}
             >
               <PlusIcon className="w-4 h-4" />
               Tambah Sekolah
             </Button>
+            <Menu placement="bottom-end">
+              <Menu.Trigger as={IconButton} variant="outline" size="sm" color="secondary">
+                <MoreVertical className="w-4 h-4" />
+              </Menu.Trigger>
+              <Menu.Content>
+                <Menu.Item className="flex items-center gap-2" onClick={() => setIsImportOpen(true)}>
+                  <UploadCloudIcon className="w-4 h-4" />
+                  Import Data
+                </Menu.Item>
+                <Menu.Item className="flex items-center gap-2" onClick={handleBulkExport}>
+                  <DownloadCloud className="w-4 h-4" />
+                  Export Terpilih
+                </Menu.Item>
+              </Menu.Content>
+            </Menu>
           </div>
         </div>
 
+        {selectedIds.length > 0 && (
+          <Card color="secondary" className="fixed bottom-8 left-1/2 z-30 flex w-[90%] -translate-x-1/2 flex-row items-center justify-between gap-3 p-3 text-white shadow-xl lg:w-[620px]">
+            <div className="flex items-center gap-3">
+              <Checkbox
+                checked={selectedIds.length === schools.length && schools.length > 0}
+                onChange={toggleSelectAll}
+                color="primary"
+              />
+              <Typography variant="small" className="font-bold text-white">
+                {selectedIds.length} Sekolah Terpilih
+              </Typography>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="ghost"
+                color="secondary"
+                className="flex items-center gap-2 text-white"
+                onClick={handleBulkExport}
+              >
+                <DownloadCloud className="h-4 w-4" />
+                Export CSV
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                color="error"
+                className="flex items-center gap-2"
+                onClick={handleBulkDelete}
+              >
+                <Trash2Icon className="h-4 w-4" />
+                Hapus Terpilih
+              </Button>
+            </div>
+          </Card>
+        )}
+
         <Card className="shadow-sm border border-slate-200 dark:border-slate-800 dark:bg-slate-900">
-          <Card.Body className="p-4 flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="w-full md:w-80">
+          <Card.Body className="p-4 space-y-4">
+            <div className="flex flex-col gap-2 md:flex-row md:items-center">
+              <div className="w-full md:w-56">
+                <Select value={sort} onValueChange={(value) => setSort(value || "name|asc")}>
+                  <Select.Trigger placeholder="Urutkan berdasarkan">
+                    {() => {
+                      const labels: Record<string, string> = {
+                        "name|asc": "Nama (A-Z)",
+                        "name|desc": "Nama (Z-A)",
+                        "npsn|asc": "NPSN (A-Z)",
+                        "npsn|desc": "NPSN (Z-A)",
+                      };
+
+                      return labels[sort] || "Urutkan berdasarkan";
+                    }}
+                  </Select.Trigger>
+                  <Select.List>
+                    <Select.Option value="name|asc">Nama (A-Z)</Select.Option>
+                    <Select.Option value="name|desc">Nama (Z-A)</Select.Option>
+                    <Select.Option value="npsn|asc">NPSN (A-Z)</Select.Option>
+                    <Select.Option value="npsn|desc">NPSN (Z-A)</Select.Option>
+                  </Select.List>
+                </Select>
+              </div>
+
+              <div className="w-full md:w-40">
+                <Select value={perPage} onValueChange={(value) => setPerPage(value || "20")}>
+                  <Select.Trigger placeholder="20 data" className="dark:text-white">
+                    {() => `${perPage} data`}
+                  </Select.Trigger>
+                  <Select.List>
+                    <Select.Option value="20">20 data</Select.Option>
+                    <Select.Option value="50">50 data</Select.Option>
+                    <Select.Option value="100">100 data</Select.Option>
+                  </Select.List>
+                </Select>
+              </div>
+
               <Input
                 placeholder="Cari nama sekolah atau NPSN"
                 value={search}
@@ -361,10 +574,18 @@ export default function Index({ schools: paginatedSchools, filters }: { schools:
                 }}
                 className="dark:text-white"
               >
-                <Input.Icon>
-                  <SearchIcon className="w-4 h-4 cursor-pointer" onClick={handleFilter} />
-                </Input.Icon>
               </Input>
+              <IconButton variant="outline" color="secondary" onClick={handleFilter} className="shrink-0">
+                <Search className="w-4 h-4" />
+              </IconButton>
+              <IconButton
+                color={hasActiveFilters ? "primary" : "secondary"}
+                variant={hasActiveFilters ? "solid" : "outline"}
+                onClick={() => setIsFilterOpen(true)}
+                className="shrink-0"
+              >
+                <Filter className="w-4 h-4" />
+              </IconButton>
             </div>
           </Card.Body>
         </Card>
@@ -375,6 +596,13 @@ export default function Index({ schools: paginatedSchools, filters }: { schools:
               <table className="w-full min-w-max table-auto text-left">
                 <thead>
                   <tr>
+                    <th className="w-10 border-y border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 p-4">
+                      <Checkbox
+                        checked={selectedIds.length === schools.length && schools.length > 0}
+                        onChange={toggleSelectAll}
+                        color="primary"
+                      />
+                    </th>
                     {["Code", "Sekolah", "Status", "NPSN", "Wilayah", "Aksi"].map((head) => (
                       <th key={head} className="border-y border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 p-4">
                         <Typography variant="small" className="font-bold leading-none opacity-70 text-slate-500 dark:text-slate-300">
@@ -388,8 +616,15 @@ export default function Index({ schools: paginatedSchools, filters }: { schools:
                   {schools.map((school) => (
                     <tr
                       key={school.id}
-                      className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors border-b border-slate-100 dark:border-slate-800"
+                      className={`hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors border-b border-slate-100 dark:border-slate-800 ${selectedIds.includes(school.id) ? "bg-blue-50/30 dark:bg-blue-900/10" : ""}`}
                     >
+                      <td className="p-4">
+                        <Checkbox
+                          checked={selectedIds.includes(school.id)}
+                          onChange={() => toggleSelect(school.id)}
+                          color="primary"
+                        />
+                      </td>
                       <td className="p-4">
                         <Typography variant="small" className="cursor-pointer font-bold text-slate-800 dark:text-white flex gap-2 items-center" onClick={() => {
                           navigator.clipboard.writeText(school.code);
@@ -480,6 +715,133 @@ export default function Index({ schools: paginatedSchools, filters }: { schools:
           ))}
         </div>
       </div>
+
+      <Dialog open={isFilterOpen} onOpenChange={setIsFilterOpen} size="md">
+        <Dialog.Overlay>
+          <Dialog.Content className="dark:border-slate-800">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <Typography type="h6" className="dark:text-white">
+                  Filter Sekolah
+                </Typography>
+                <Typography className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  Pilih wilayah, status, atau bentuk pendidikan untuk menyaring data sekolah.
+                </Typography>
+              </div>
+              <IconButton variant="ghost" color="secondary" onClick={() => setIsFilterOpen(false)}>
+                <XIcon className="h-4 w-4" />
+              </IconButton>
+            </div>
+
+            <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+              <Select
+                value={provinceId}
+                onValueChange={(value) => {
+                  setProvinceId(value || "");
+                  setRegencyId("");
+                  setDistrictId("");
+                }}
+              >
+                <Select.Trigger placeholder="Semua provinsi" className="dark:text-white">
+                  {() => filterOptions.provinces.find((item) => String(item.id) === provinceId)?.name || "Semua provinsi"}
+                </Select.Trigger>
+                <Select.List className="overflow-auto">
+                  <Select.Option value="">Semua provinsi</Select.Option>
+                  {filterOptions.provinces.map((item) => (
+                    <Select.Option key={item.id} value={String(item.id)}>
+                      {item.code} - {item.name}
+                    </Select.Option>
+                  ))}
+                </Select.List>
+              </Select>
+
+              <Select
+                value={regencyId}
+                onValueChange={(value) => {
+                  setRegencyId(value || "");
+                  setDistrictId("");
+                }}
+                disabled={!provinceId}
+              >
+                <Select.Trigger placeholder="Semua kabupaten/kota" className="dark:text-white">
+                  {() => filteredRegencies.find((item) => String(item.id) === regencyId)?.name || "Semua kabupaten/kota"}
+                </Select.Trigger>
+                <Select.List className="overflow-auto">
+                  <Select.Option value="">Semua kabupaten/kota</Select.Option>
+                  {filteredRegencies.map((item) => (
+                    <Select.Option key={item.id} value={String(item.id)}>
+                      {item.code} - {item.name}
+                    </Select.Option>
+                  ))}
+                </Select.List>
+              </Select>
+
+              <Select
+                value={districtId}
+                onValueChange={(value) => setDistrictId(value || "")}
+                disabled={!regencyId}
+              >
+                <Select.Trigger placeholder="Semua kecamatan" className="dark:text-white">
+                  {() => filteredDistricts.find((item) => String(item.id) === districtId)?.name || "Semua kecamatan"}
+                </Select.Trigger>
+                <Select.List className="overflow-auto">
+                  <Select.Option value="">Semua kecamatan</Select.Option>
+                  {filteredDistricts.map((item) => (
+                    <Select.Option key={item.id} value={String(item.id)}>
+                      {item.code} - {item.name}
+                    </Select.Option>
+                  ))}
+                </Select.List>
+              </Select>
+
+              <Select value={status} onValueChange={(value) => setStatus(value || "")}>
+                <Select.Trigger placeholder="Semua status" className="dark:text-white">
+                  {() => status || "Semua status"}
+                </Select.Trigger>
+                <Select.List>
+                  <Select.Option value="">Semua status</Select.Option>
+                  <Select.Option value="NEGERI">NEGERI</Select.Option>
+                  <Select.Option value="SWASTA">SWASTA</Select.Option>
+                </Select.List>
+              </Select>
+
+              <div className="md:col-span-2">
+                <Select value={bentukPendidikan} onValueChange={(value) => setBentukPendidikan(value || "")}>
+                  <Select.Trigger placeholder="Semua bentuk pendidikan" className="dark:text-white">
+                    {() => bentukPendidikan || "Semua bentuk pendidikan"}
+                  </Select.Trigger>
+                  <Select.List className="overflow-auto">
+                    <Select.Option value="">Semua bentuk pendidikan</Select.Option>
+                    {filterOptions.bentukPendidikan.map((item) => (
+                      <Select.Option key={item} value={item}>
+                        {item}
+                      </Select.Option>
+                    ))}
+                  </Select.List>
+                </Select>
+              </div>
+            </div>
+
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
+              <Button
+                type="button"
+                variant="ghost"
+                color={hasActiveFilters ? "error" : "secondary"}
+                className="flex items-center justify-center gap-2"
+                onClick={resetFilters}
+                disabled={!hasActiveFilters}
+              >
+                <XIcon className="h-4 w-4" />
+                Reset
+              </Button>
+              <Button type="button" className="flex items-center justify-center gap-2" onClick={handleFilter}>
+                <SearchIcon className="h-4 w-4" />
+                Terapkan Filter
+              </Button>
+            </div>
+          </Dialog.Content>
+        </Dialog.Overlay>
+      </Dialog>
 
       <Dialog open={isImportOpen} onOpenChange={handleImportDialogOpenChange} size="xl">
         <Dialog.Overlay>

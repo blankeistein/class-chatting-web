@@ -8,22 +8,22 @@ import { ThemeProvider } from "./Contexts/ThemeContext";
 const appName = import.meta.env.VITE_APP_NAME || "Laravel";
 
 createInertiaApp({
-    title: (title) => `${title ? title + " | " : ""}${appName}`,
+  title: (title) => `${title ? title + " | " : ""}${appName}`,
 
-    resolve: (name) => resolvePageComponent(
-        `./Pages/${name}.tsx`,
-        import.meta.glob('./Pages/**/*.tsx')
-    ),
+  resolve: (name) => resolvePageComponent(
+    `./Pages/${name}.tsx`,
+    import.meta.glob('./Pages/**/*.tsx')
+  ),
 
-    setup({ el, App, props }: { el: Element; App: any; props: any }) {
-        const root = createRoot(el);
-        root.render(
-            <ThemeProvider>
-                <>
-                    <FirebaseAuthBridge firebaseAuth={props.initialPage.props.auth?.firebase ?? null} />
-                    <App {...props} />
-                </>
-            </ThemeProvider>
-        );
-    },
+  setup({ el, App, props }: { el: Element; App: any; props: any }) {
+    const root = createRoot(el);
+    root.render(
+      <ThemeProvider>
+        <>
+          <FirebaseAuthBridge firebaseAuth={props.initialPage.props.auth?.firebase ?? null} />
+          <App {...props} />
+        </>
+      </ThemeProvider>
+    );
+  },
 });

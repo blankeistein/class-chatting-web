@@ -528,14 +528,20 @@ export default function Edit({ video }: { video: Video }) {
               <CardBody className="space-y-4 p-5">
                 <div className="overflow-hidden rounded-2xl border border-slate-200 bg-black shadow-inner dark:border-slate-800">
                   {activeVideoUrl ? (
-                    <video
-                      ref={videoRef}
-                      key={activeVideoUrl}
-                      src={activeVideoUrl}
-                      controls
-                      className="aspect-video w-full bg-black"
-                      crossOrigin="anonymous"
-                    />
+                    <>
+                      <video
+                        ref={videoRef}
+                        key={activeVideoUrl}
+                        preload="metadata"
+                        controls
+                        className="aspect-video w-full bg-black"
+                        poster={thumbPreviewUrl || undefined}
+                      >
+                        <source src={activeVideoUrl} />
+                        Browser Anda tidak mendukung pemutaran video HTML5.
+                      </video>
+                    </>
+
                   ) : (
                     <div className="flex aspect-video items-center justify-center px-6 text-center text-sm text-slate-300">
                       URL HLS belum tersedia. Preview akan muncul setelah service transcoding mengirim callback.
@@ -612,11 +618,14 @@ export default function Edit({ video }: { video: Video }) {
               {activeVideoUrl ? (
                 <video
                   ref={videoRef}
-                  src={activeVideoUrl}
+                  preload="metadata"
                   controls
                   className="max-h-[500px] w-full object-contain"
-                  crossOrigin="anonymous"
-                />
+                  poster={thumbPreviewUrl || undefined}
+                >
+                  <source src={activeVideoUrl} />
+                  Browser Anda tidak mendukung pemutaran video HTML5.
+                </video>
               ) : (
                 <div className="flex min-h-[320px] w-full items-center justify-center px-6 text-center text-sm text-slate-300">
                   Tidak ada URL HLS yang bisa dipakai untuk mengambil frame saat ini.

@@ -31,7 +31,7 @@ class VideoController extends Controller
             });
         }
 
-        $sort = $request->get('sort', 'latest');
+        $sort = $request->input('sort', 'latest');
         switch ($sort) {
             case 'oldest':
                 $query->oldest();
@@ -47,8 +47,9 @@ class VideoController extends Controller
                 $query->latest();
                 break;
         }
+        $perPage = $request->input('per_page', 25);
 
-        $videos = $query->paginate(10)->withQueryString();
+        $videos = $query->paginate($perPage)->withQueryString();
 
         return Inertia::render('Admin/Video/Index', [
             'videos' => $videos,

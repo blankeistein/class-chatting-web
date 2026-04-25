@@ -29,6 +29,7 @@ import {
   EyeIcon,
 } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
+import Pagination from "@/Components/Pagination";
 
 type School = {
   id: number;
@@ -582,20 +583,7 @@ export default function Index({ schools: paginatedSchools, filters, filterOption
           </Card.Body>
         </Card>
 
-        <div className="mt-8 flex justify-center gap-2">
-          {paginationLinks.map((link, key) => (
-            <Button
-              key={key}
-              variant={link.active ? "solid" : "ghost"}
-              size="sm"
-              color={link.active ? "primary" : "secondary"}
-              className={`flex items-center gap-2 ${!link.url ? "opacity-50 cursor-not-allowed" : ""}`}
-              onClick={() => link.url && router.get(link.url, {}, { preserveState: true })}
-              dangerouslySetInnerHTML={{ __html: link.label }}
-              disabled={!link.url}
-            />
-          ))}
-        </div>
+        <Pagination paginated={paginatedSchools} />
 
         {schools.length > 0 ? (
           <Card className="shadow-sm border border-slate-200 dark:border-slate-800 dark:bg-slate-900 overflow-hidden">
@@ -714,20 +702,7 @@ export default function Index({ schools: paginatedSchools, filters, filterOption
           </div>
         )}
 
-        <div className="mt-8 flex justify-center gap-2">
-          {paginationLinks.map((link, key) => (
-            <Button
-              key={key}
-              variant={link.active ? "solid" : "ghost"}
-              size="sm"
-              color={link.active ? "primary" : "secondary"}
-              className={`flex items-center gap-2 ${!link.url ? "opacity-50 cursor-not-allowed" : ""}`}
-              onClick={() => link.url && router.get(link.url, {}, { preserveState: true })}
-              dangerouslySetInnerHTML={{ __html: link.label }}
-              disabled={!link.url}
-            />
-          ))}
-        </div>
+        <Pagination paginated={paginatedSchools} />
       </div>
 
       <Dialog open={isFilterOpen} onOpenChange={setIsFilterOpen} size="md">

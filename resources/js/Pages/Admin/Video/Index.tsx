@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   Card,
   Typography,
@@ -8,6 +8,7 @@ import {
   Menu,
   Input,
   Select,
+  Chip,
 } from "@material-tailwind/react";
 import AdminLayout from "@/Layouts/AdminLayout";
 import { Head, Link, router, useForm } from "@inertiajs/react";
@@ -23,6 +24,8 @@ import {
   SearchIcon,
   EyeIcon,
   Server,
+  Copy,
+  Icon,
 } from "lucide-react";
 import { toast, Toaster } from "react-hot-toast";
 
@@ -125,6 +128,21 @@ const VideoGridCard = ({
   video: Video;
   onDelete: (video: Video) => void;
 }) => {
+
+  const handleCopyCode = useCallback(() => {
+    if (video.slug) {
+      navigator.clipboard.writeText(video.slug)
+        .then(() => {
+          toast.success("Slug video berhasil disalin ke clipboard.");
+        })
+        .catch(() => {
+          toast.error("Gagal menyalin slug video.");
+        });
+    } else {
+      toast.error("Slug video tidak tersedia.");
+    }
+  }, [video.slug]);
+
   return (
     <Card className="relative overflow-hidden border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900">
       <Link
@@ -152,6 +170,9 @@ const VideoGridCard = ({
       </Link>
 
       <div className="absolute right-3 top-3 z-10">
+        <IconButton size="sm" onClick={handleCopyCode} title="Salin Slug">
+          <Copy className="h-4 w-4" />
+        </IconButton>
         <VideoActions video={video} onDelete={onDelete} />
       </div>
 
@@ -231,6 +252,7 @@ export default function Index({
     SORT_OPTIONS.find((option) => option.value === (filters?.sort || "latest")) ||
     SORT_OPTIONS[0],
   );
+  const [perPage, setPerPage] = useState(paginatedVideos.meta?.per_page || "25");
 
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [currentVideo, setCurrentVideo] = useState<Video | null>(null);
@@ -277,6 +299,20 @@ export default function Index({
       onError: () => toast.error("Gagal menghapus video."),
     });
   };
+
+  const handleCopyCode = useCallback((code: string) => {
+    if (code) {
+      navigator.clipboard.writeText(code)
+        .then(() => {
+          toast.success("Slug video berhasil disalin ke clipboard.");
+        })
+        .catch(() => {
+          toast.error("Gagal menyalin slug video.");
+        });
+    } else {
+      toast.error("Slug video tidak tersedia.");
+    }
+  }, []);
 
   return (
     <>
@@ -335,7 +371,7 @@ export default function Index({
                       setSort(option);
                       router.get(
                         route("admin.videos.index"),
-                        { search, sort: value },
+                        { search, sort: value, per_page: perPage },
                         { preserveState: true, replace: true },
                       );
                     }
@@ -350,6 +386,25 @@ export default function Index({
                         {option.label}
                       </Select.Option>
                     ))}
+                  </Select.List>
+                </Select>
+              </div>
+              <div className="w-full sm:w-48">
+                <Select value={perPage} onValueChange={(val) => {
+                  if (val) {
+                    setPerPage(val);
+                    router.get(
+                      route("admin.videos.index"),
+                      { search, sort: sort.value, per_page: val },
+                      { preserveState: true, replace: true },
+                    );
+                  }
+                }}>
+                  <Select.Trigger placeholder="per Hal" className="dark:text-white" />
+                  <Select.List>
+                    <Select.Option value="25">25 per Hal</Select.Option>
+                    <Select.Option value="50">50 per Hal</Select.Option>
+                    <Select.Option value="100">100 per Hal</Select.Option>
                   </Select.List>
                 </Select>
               </div>
@@ -385,7 +440,7 @@ export default function Index({
                 <table className="min-w-max w-full table-auto text-left">
                   <thead>
                     <tr>
-                      {["Video", "Deskripsi", "Diupload Pada", "Aksi"].map((head) => (
+                      {["Video", "Tag", "Diupload Pada", "Aksi"].map((head) => (
                         <th
                           key={head}
                           className="border-y border-slate-100 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-800/50"
@@ -443,21 +498,15 @@ export default function Index({
                           </Link>
                         </td>
                         <td className="p-4">
-                          <Typography
-                            variant="small"
-                            className="max-w-[300px] line-clamp-2 text-slate-600 dark:text-slate-300"
-                          >
-                            {video.description}
-                          </Typography>
                           {video.tags && video.tags.length > 0 && (
                             <div className="mt-2 flex flex-wrap gap-1">
                               {video.tags.map((tag) => (
-                                <span
+                                <Chip
                                   key={tag}
-                                  className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium capitalize text-primary"
+                                  size="sm"
                                 >
-                                  {tag}
-                                </span>
+                                  <Chip.Label>{tag}</Chip.Label>
+                                </Chip>
                               ))}
                             </div>
                           )}
@@ -474,6 +523,14 @@ export default function Index({
                         </td>
                         <td className="p-4">
                           <div className="flex justify-center gap-2">
+                            <IconButton
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleCopyCode(video.slug)}
+                              title="Salin Slug"
+                            >
+                              <Copy className="h-4 w-4" />
+                            </IconButton>
                             <VideoActions video={video} onDelete={openDelete} />
                           </div>
                         </td>

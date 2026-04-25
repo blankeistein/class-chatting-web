@@ -65,10 +65,9 @@ class School extends Model
 
         return $query->where(function (Builder $builder) use ($search): void {
             $builder
+                ->where('code', 'like', "%{$search}%")
                 ->where('npsn', 'like', "%{$search}%")
-                ->orWhere('name', 'like', "%{$search}%")
-                ->orWhere('bentuk_pendidikan', 'like', "%{$search}%")
-                ->orWhere('status', 'like', "%{$search}%");
+                ->orWhere('name', 'like', "%{$search}%");
         });
     }
 }

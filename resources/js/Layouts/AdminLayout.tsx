@@ -399,7 +399,7 @@ function TopNavbar({ onToggleSidebar }: { onToggleSidebar: () => void }) {
                   <Grip className="h-4 w-4" />
                 </Menu.Trigger>
                 <Menu.Content className="z-20 !p-3 min-w-[240px] max-w-[280px]">
-                  <Typography type="small" className="px-2 pb-2 font-semibold text-surface-foreground/70">
+                  <Typography as="p" type="small" className="px-2 pb-2 font-semibold text-surface-foreground/70 mb-1">
                     Daftar Aplikasi
                   </Typography>
                   <div className="grid grid-cols-2 gap-2">

@@ -26,6 +26,7 @@ class SchoolDataRequest extends FormRequest
         $schoolId = $this->route('school')?->id;
 
         return [
+            'code' => ['required', 'string', 'max:50', Rule::unique('schools', 'code')->ignore($schoolId)],
             'npsn' => ['nullable', 'string', 'max:20', Rule::unique('schools', 'npsn')->ignore($schoolId)],
             'name' => ['required', 'string', 'max:255'],
             'bentuk_pendidikan' => ['required', 'string', 'max:100'],
@@ -44,6 +45,9 @@ class SchoolDataRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'code.required' => 'Kode sekolah wajib diisi.',
+            'code.max' => 'Kode sekolah maksimal 50 karakter.',
+            'code.unique' => 'Kode sekolah sudah digunakan.',
             'npsn.max' => 'NPSN maksimal 20 karakter.',
             'npsn.unique' => 'NPSN sudah digunakan.',
             'name.required' => 'Nama sekolah wajib diisi.',

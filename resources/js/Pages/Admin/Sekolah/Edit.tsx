@@ -11,7 +11,7 @@ import {
 } from "@material-tailwind/react";
 import AdminLayout from "@/Layouts/AdminLayout";
 import { Head, router, useForm } from "@inertiajs/react";
-import { ArrowLeftIcon, SaveIcon } from "lucide-react";
+import { ArrowLeftIcon, RefreshCwIcon, SaveIcon } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
 
 type Province = {
@@ -68,10 +68,24 @@ type School = {
   };
 };
 
+function generateSchoolCode(length = 6): string {
+  let result = '';
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  const charactersLength = characters.length;
+
+  for (let i = 0; i < length; i++) {
+    // Mengambil karakter acak dari variabel 'characters'
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+
+  return result;
+}
+
 export default function Edit({ school, provinces, regencies, districts, villages }: { school: { data: School }; provinces: Province[]; regencies: Regency[]; districts: District[]; villages: Village[] }) {
   const schoolData = school.data;
 
   const { data, setData, post, transform, processing, errors } = useForm({
+    code: schoolData.code,
     npsn: schoolData.npsn || "",
     name: schoolData.name,
     bentuk_pendidikan: schoolData.bentuk_pendidikan,
@@ -96,6 +110,7 @@ export default function Edit({ school, provinces, regencies, districts, villages
 
     transform((payload) => ({
       ...payload,
+      code: payload.code.trim(),
       npsn: payload.npsn.trim() === "" ? null : payload.npsn.trim(),
       bentuk_pendidikan: payload.bentuk_pendidikan.trim(),
       status: payload.status,
@@ -139,6 +154,26 @@ export default function Edit({ school, provinces, regencies, districts, villages
           <CardBody className="p-6">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-1">
+                  <Typography as="label" htmlFor="code" type="small" className="font-semibold dark:text-white">
+                    Kode Sekolah
+                  </Typography>
+                  <div className="flex gap-2">
+                    <Input
+                      id="code"
+                      placeholder="Contoh: JASDAQ"
+                      value={data.code}
+                      onChange={(event) => setData("code", event.target.value)}
+                      isError={!!errors.code}
+                      className="dark:text-white"
+                    />
+                    <IconButton type="button" variant="outline" color="secondary" onClick={() => setData("code", generateSchoolCode())}>
+                      <RefreshCwIcon className="h-4 w-4" />
+                    </IconButton>
+                  </div>
+                  {errors.code && <Typography type="small" color="error">{errors.code}</Typography>}
+                </div>
+
                 <div className="space-y-1">
                   <Typography as="label" htmlFor="npsn" type="small" className="font-semibold dark:text-white">
                     NPSN (Opsional)

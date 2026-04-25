@@ -25,8 +25,8 @@ import {
   Copy,
   Filter,
   Search,
-  MoreVertical,
   DownloadCloud,
+  EyeIcon,
 } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
 
@@ -469,21 +469,9 @@ export default function Index({ schools: paginatedSchools, filters, filterOption
               <PlusIcon className="w-4 h-4" />
               Tambah Sekolah
             </Button>
-            <Menu placement="bottom-end">
-              <Menu.Trigger as={IconButton} variant="outline" size="sm" color="secondary">
-                <MoreVertical className="w-4 h-4" />
-              </Menu.Trigger>
-              <Menu.Content>
-                <Menu.Item className="flex items-center gap-2" onClick={() => setIsImportOpen(true)}>
-                  <UploadCloudIcon className="w-4 h-4" />
-                  Import Data
-                </Menu.Item>
-                <Menu.Item className="flex items-center gap-2" onClick={handleBulkExport}>
-                  <DownloadCloud className="w-4 h-4" />
-                  Export Terpilih
-                </Menu.Item>
-              </Menu.Content>
-            </Menu>
+            <IconButton variant="outline" color="secondary" onClick={() => setIsImportOpen(true)}>
+              <UploadCloudIcon className="w-4 h-4" />
+            </IconButton>
           </div>
         </div>
 
@@ -527,11 +515,13 @@ export default function Index({ schools: paginatedSchools, filters, filterOption
         <Card className="shadow-sm border border-slate-200 dark:border-slate-800 dark:bg-slate-900">
           <Card.Body className="p-4 space-y-4">
             <div className="flex flex-col gap-2 md:flex-row md:items-center">
-              <div className="w-full md:w-56">
+              <div className="w-full md:w-96">
                 <Select value={sort} onValueChange={(value) => setSort(value || "name|asc")}>
                   <Select.Trigger placeholder="Urutkan berdasarkan">
                     {() => {
                       const labels: Record<string, string> = {
+                        "created_at|desc": "Terbaru",
+                        "created_at|asc": "Terlama",
                         "name|asc": "Nama (A-Z)",
                         "name|desc": "Nama (Z-A)",
                         "npsn|asc": "NPSN (A-Z)",
@@ -542,6 +532,8 @@ export default function Index({ schools: paginatedSchools, filters, filterOption
                     }}
                   </Select.Trigger>
                   <Select.List>
+                    <Select.Option value="created_at|desc">Terbaru</Select.Option>
+                    <Select.Option value="created_at|asc">Terlama</Select.Option>
                     <Select.Option value="name|asc">Nama (A-Z)</Select.Option>
                     <Select.Option value="name|desc">Nama (Z-A)</Select.Option>
                     <Select.Option value="npsn|asc">NPSN (A-Z)</Select.Option>
@@ -550,13 +542,13 @@ export default function Index({ schools: paginatedSchools, filters, filterOption
                 </Select>
               </div>
 
-              <div className="w-full md:w-40">
+              <div className="w-full md:w-52">
                 <Select value={perPage} onValueChange={(value) => setPerPage(value || "20")}>
-                  <Select.Trigger placeholder="20 data" className="dark:text-white">
+                  <Select.Trigger placeholder="25 data">
                     {() => `${perPage} data`}
                   </Select.Trigger>
                   <Select.List>
-                    <Select.Option value="20">20 data</Select.Option>
+                    <Select.Option value="25">25 data</Select.Option>
                     <Select.Option value="50">50 data</Select.Option>
                     <Select.Option value="100">100 data</Select.Option>
                   </Select.List>
@@ -564,7 +556,7 @@ export default function Index({ schools: paginatedSchools, filters, filterOption
               </div>
 
               <Input
-                placeholder="Cari nama sekolah atau NPSN"
+                placeholder="Cari nama sekolah atau NPSN atau kode sekolah..."
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 onKeyDown={(event) => {
@@ -589,6 +581,21 @@ export default function Index({ schools: paginatedSchools, filters, filterOption
             </div>
           </Card.Body>
         </Card>
+
+        <div className="mt-8 flex justify-center gap-2">
+          {paginationLinks.map((link, key) => (
+            <Button
+              key={key}
+              variant={link.active ? "solid" : "ghost"}
+              size="sm"
+              color={link.active ? "primary" : "secondary"}
+              className={`flex items-center gap-2 ${!link.url ? "opacity-50 cursor-not-allowed" : ""}`}
+              onClick={() => link.url && router.get(link.url, {}, { preserveState: true })}
+              dangerouslySetInnerHTML={{ __html: link.label }}
+              disabled={!link.url}
+            />
+          ))}
+        </div>
 
         {schools.length > 0 ? (
           <Card className="shadow-sm border border-slate-200 dark:border-slate-800 dark:bg-slate-900 overflow-hidden">
@@ -666,6 +673,13 @@ export default function Index({ schools: paginatedSchools, filters, filterOption
                               <MoreVerticalIcon className="w-5 h-5" />
                             </Menu.Trigger>
                             <Menu.Content className="z-20 min-w-[160px] dark:bg-slate-900 border-none shadow-xl">
+                              <Menu.Item
+                                className="flex items-center gap-2 dark:hover:bg-slate-800"
+                                onClick={() => router.get(route("admin.schools.show", school.code))}
+                              >
+                                <EyeIcon className="w-4 h-4" />
+                                Lihat Info
+                              </Menu.Item>
                               <Menu.Item
                                 className="flex items-center gap-2 dark:hover:bg-slate-800"
                                 onClick={() => router.get(route("admin.schools.edit", school.code))}

@@ -404,7 +404,7 @@ export default function Index({
               Manajemen Daerah
             </Typography>
             <Typography className="mt-1 text-slate-500 dark:text-slate-400">
-              Kelola hierarki provinsi, kabupaten atau kota, kecamatan, dan desa dari satu dashboard.
+              Kelola hierarki provinsi, kabupaten atau kota, kecamatan, dan desa.
             </Typography>
           </div>
           <Menu placement="bottom-end">

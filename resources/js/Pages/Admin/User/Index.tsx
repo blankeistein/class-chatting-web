@@ -12,6 +12,7 @@ import {
   Avatar,
 } from "@material-tailwind/react";
 import AdminLayout from "@/Layouts/AdminLayout";
+import Checkbox from "@/Components/Checkbox";
 import { Head, router, useForm } from "@inertiajs/react";
 import {
   PlusIcon,
@@ -22,8 +23,10 @@ import {
   SearchIcon,
   UserCheckIcon,
   UserXIcon,
+  EyeIcon,
 } from "lucide-react";
 import { toast, Toaster } from "react-hot-toast";
+import Pagination from "@/Components/Pagination";
 
 interface User {
   id: number;
@@ -47,21 +50,26 @@ const SORT_OPTIONS = [
 const ROLE_OPTIONS = [
   { label: "Semua Role", value: "" },
   { label: "Admin", value: "admin" },
+  { label: "Guru", value: "teacher" },
+  { label: "Murid", value: "student" },
   { label: "User", value: "user" },
 ];
 
 export default function Index({ users: paginatedUsers, filters }: { users: any, filters?: { search?: string, sort?: string, role?: string } }) {
   const [users, setUsers] = useState<User[]>(paginatedUsers.data);
   const [search, setSearch] = useState(filters?.search || "");
+  const [perPage, setPerPage] = useState("25");
   const [sort, setSort] = useState(SORT_OPTIONS.find(o => o.value === (filters?.sort || "latest")) || SORT_OPTIONS[0]);
   const [role, setRole] = useState(ROLE_OPTIONS.find(o => o.value === (filters?.role || "")) || ROLE_OPTIONS[0]);
 
   // Modals state
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   React.useEffect(() => {
     setUsers(paginatedUsers.data);
+    setSelectedIds((currentIds) => currentIds.filter((id) => paginatedUsers.data.some((user: User) => user.id === id)));
   }, [paginatedUsers.data]);
 
   const handleFilter = () => {
@@ -103,12 +111,79 @@ export default function Index({ users: paginatedUsers, filters }: { users: any, 
     });
   };
 
+  const toggleSelect = (id: number) => {
+    setSelectedIds((currentIds) => (currentIds.includes(id) ? currentIds.filter((item) => item !== id) : [...currentIds, id]));
+  };
+
+  const toggleSelectAll = () => {
+    if (users.length > 0 && selectedIds.length === users.length) {
+      setSelectedIds([]);
+      return;
+    }
+
+    setSelectedIds(users.map((user) => user.id));
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedIds.length === 0) {
+      return;
+    }
+
+    if (!confirm(`Apakah Anda yakin ingin menghapus ${selectedIds.length} user terpilih?`)) {
+      return;
+    }
+
+    router.delete(route("admin.users.bulk-delete"), {
+      data: { ids: selectedIds },
+      preserveScroll: true,
+      onSuccess: () => {
+        setSelectedIds([]);
+        toast.success("User terpilih berhasil dihapus.");
+      },
+      onError: (errors: any) => {
+        console.error(errors)
+        if (typeof errors === "object") {
+          const errorMessages = Object.values(errors) as string[];
+          errorMessages.forEach((msg: string) => toast.error(msg));
+          return;
+        } else {
+          toast.error(errors || "Gagal menghapus user terpilih.");
+        }
+      },
+    });
+  };
+
   return (
     <>
       <Head title="Manajemen User" />
       <Toaster position="top-center" />
 
       <div className="p-4 space-y-6 min-h-screen">
+        {selectedIds.length > 0 && (
+          <Card color="secondary" className="fixed bottom-8 left-1/2 z-30 flex w-[90%] -translate-x-1/2 flex-row items-center justify-between gap-3 p-3 text-white shadow-xl lg:w-[560px]">
+            <div className="flex items-center gap-3">
+              <Checkbox
+                checked={users.length > 0 && selectedIds.length === users.length}
+                onChange={toggleSelectAll}
+                color="primary"
+              />
+              <Typography variant="small" className="font-bold text-white">
+                {selectedIds.length} User Terpilih
+              </Typography>
+            </div>
+            <Button
+              size="sm"
+              variant="ghost"
+              color="error"
+              className="flex items-center gap-2"
+              onClick={handleBulkDelete}
+            >
+              <Trash2Icon className="h-4 w-4" />
+              Hapus Terpilih
+            </Button>
+          </Card>
+        )}
+
         {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
@@ -116,7 +191,7 @@ export default function Index({ users: paginatedUsers, filters }: { users: any, 
               Daftar User
             </Typography>
             <Typography className="text-slate-500 dark:text-slate-400">
-              Kelola pengguna aplikasi dan hak akses mereka.
+              Kelola pengguna aplikasi.
             </Typography>
           </div>
           <div className="flex gap-2">
@@ -133,29 +208,36 @@ export default function Index({ users: paginatedUsers, filters }: { users: any, 
 
         {/* Toolbar Section */}
         <Card className="shadow-sm border border-slate-200 dark:border-slate-800 dark:bg-slate-900">
-          <Card.Body className="p-4 flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex flex-col sm:flex-row items-stretch gap-3 w-full md:w-auto flex-1">
-              <div className="w-full sm:w-72">
-                <Input
-                  placeholder="Cari nama, email, atau username..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  onKeyDown={handleSearchKeyPress}
-                  className="pr-10 dark:text-white"
+          <Card.Body className="flex flex-col gap-2">
+            <div className="flex flex-col lg:flex-row items-stretch gap-3 w-full md:w-auto flex-1">
+              <div className="w-full md:w-48">
+                <Select
+                  value={perPage}
+                  onValueChange={(val) => {
+                    setPerPage(val);
+                    router.get(route('admin.users.index'), { search, sort: sort.value, role: role.value, perPage: val }, { preserveState: true, replace: true });
+                  }}
                 >
-                  <Input.Icon>
-                    <SearchIcon className="w-4 h-4 cursor-pointer" onClick={handleFilter} />
-                  </Input.Icon>
-                </Input>
+                  <Select.Trigger placeholder="per Hal" className="dark:text-white">
+                    {() => perPage + " Item" || "per Hal"}
+                  </Select.Trigger>
+                  <Select.List>
+                    {["25", "50", "100"].map((opt) => (
+                      <Select.Option key={opt} value={opt}>
+                        {opt} Item
+                      </Select.Option>
+                    ))}
+                  </Select.List>
+                </Select>
               </div>
-              <div className="w-full sm:w-48">
+              <div className="w-full md:w-56">
                 <Select
                   value={role.value}
                   onValueChange={(val) => {
                     const option = ROLE_OPTIONS.find(o => o.value === val);
                     if (option) {
                       setRole(option);
-                      router.get(route('admin.users.index'), { search, sort: sort.value, role: val }, { preserveState: true, replace: true });
+                      router.get(route('admin.users.index'), { search, sort: sort.value, role: val, perPage }, { preserveState: true, replace: true });
                     }
                   }}
                 >
@@ -171,14 +253,14 @@ export default function Index({ users: paginatedUsers, filters }: { users: any, 
                   </Select.List>
                 </Select>
               </div>
-              <div className="w-full sm:w-48">
+              <div className="w-full md:w-48">
                 <Select
                   value={sort.value}
                   onValueChange={(val) => {
                     const option = SORT_OPTIONS.find(o => o.value === val);
                     if (option) {
                       setSort(option);
-                      router.get(route('admin.users.index'), { search, sort: val, role: role.value }, { preserveState: true, replace: true });
+                      router.get(route('admin.users.index'), { search, sort: val, role: role.value, perPage }, { preserveState: true, replace: true });
                     }
                   }}
                 >
@@ -195,8 +277,25 @@ export default function Index({ users: paginatedUsers, filters }: { users: any, 
                 </Select>
               </div>
             </div>
+            <div className="flex flex-col lg:flex-row items-stretch gap-3 w-full md:w-auto flex-1">
+              <div className="w-full">
+                <Input
+                  placeholder="Cari nama, email, atau username..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  onKeyDown={handleSearchKeyPress}
+                  className="pr-10 dark:text-white"
+                >
+                  <Input.Icon>
+                    <SearchIcon className="w-4 h-4 cursor-pointer" onClick={handleFilter} />
+                  </Input.Icon>
+                </Input>
+              </div>
+            </div>
           </Card.Body>
         </Card>
+
+        <Pagination paginated={paginatedUsers} />
 
         {/* Content Area */}
         {users.length > 0 ? (
@@ -205,6 +304,13 @@ export default function Index({ users: paginatedUsers, filters }: { users: any, 
               <table className="w-full min-w-max table-auto text-left">
                 <thead>
                   <tr>
+                    <th className="w-10 border-y border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 p-4">
+                      <Checkbox
+                        checked={users.length > 0 && selectedIds.length === users.length}
+                        onChange={toggleSelectAll}
+                        color="primary"
+                      />
+                    </th>
                     {["User", "Username / Phone", "Role", "Status", "Terdaftar", "Aksi"].map((head) => (
                       <th
                         key={head}
@@ -224,8 +330,15 @@ export default function Index({ users: paginatedUsers, filters }: { users: any, 
                   {users.map((user) => (
                     <tr
                       key={user.id}
-                      className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors border-b border-slate-100 dark:border-slate-800"
+                      className={`hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors border-b border-slate-100 dark:border-slate-800 ${selectedIds.includes(user.id) ? "bg-blue-50/30 dark:bg-blue-900/10" : ""}`}
                     >
+                      <td className="p-4">
+                        <Checkbox
+                          checked={selectedIds.includes(user.id)}
+                          onChange={() => toggleSelect(user.id)}
+                          color="primary"
+                        />
+                      </td>
                       <td className="p-4">
                         <div className="flex items-center gap-3">
                           <Avatar
@@ -306,6 +419,13 @@ export default function Index({ users: paginatedUsers, filters }: { users: any, 
                             <Menu.Content className="z-20 min-w-[160px] dark:bg-slate-900 border-none shadow-xl">
                               <Menu.Item
                                 className="flex items-center gap-2 dark:hover:bg-slate-800"
+                                onClick={() => router.get(route("admin.users.show", user.id))}
+                              >
+                                <EyeIcon className="w-4 h-4" />
+                                Lihat Info
+                              </Menu.Item>
+                              <Menu.Item
+                                className="flex items-center gap-2 dark:hover:bg-slate-800"
                                 onClick={() => router.get(route("admin.users.edit", user.id))}
                               >
                                 <EditIcon className="w-4 h-4 " />
@@ -339,20 +459,7 @@ export default function Index({ users: paginatedUsers, filters }: { users: any, 
         )}
 
         {/* Pagination */}
-        <div className="mt-8 flex justify-center gap-2">
-          {(paginatedUsers.meta?.links || paginatedUsers.links).map((link: any, key: number) => (
-            <Button
-              key={key}
-              variant={link.active ? "solid" : "ghost"}
-              size="sm"
-              color={link.active ? "primary" : "secondary"}
-              className={`flex items-center gap-2 ${!link.url ? "opacity-50 cursor-not-allowed" : ""}`}
-              onClick={() => link.url && router.get(link.url, {}, { preserveState: true })}
-              dangerouslySetInnerHTML={{ __html: link.label }}
-              disabled={!link.url}
-            />
-          ))}
-        </div>
+        <Pagination paginated={paginatedUsers} />
       </div>
 
       {/* --- Delete Modal --- */}

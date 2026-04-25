@@ -31,19 +31,19 @@ class SchoolController extends Controller
         $districtId = (int) $request->input('district_id', 0);
         $status = trim((string) $request->input('status', ''));
         $bentukPendidikan = trim((string) $request->input('bentuk_pendidikan', ''));
-        $sortBy = trim((string) $request->input('sort_by', 'name'));
-        $sortDirection = trim((string) $request->input('sort_direction', 'asc'));
+        $sortBy = trim((string) $request->input('sort_by', 'created_at'));
+        $sortDirection = trim((string) $request->input('sort_direction', 'desc'));
 
-        if (! in_array($perPage, [20, 50, 100], true)) {
-            $perPage = 20;
+        if (! in_array($perPage, [25, 50, 100], true)) {
+            $perPage = 25;
         }
 
-        if (! in_array($sortBy, ['name', 'npsn', 'status', 'bentuk_pendidikan', 'province_id', 'regency_id', 'district_id'], true)) {
-            $sortBy = 'name';
+        if (! in_array($sortBy, ['name', 'npsn', 'status', 'created_at'], true)) {
+            $sortBy = 'created_at';
         }
 
         if (! in_array($sortDirection, ['asc', 'desc'], true)) {
-            $sortDirection = 'asc';
+            $sortDirection = 'desc';
         }
 
         $schools = School::query()
@@ -55,7 +55,6 @@ class SchoolController extends Controller
             ->when($status !== '', fn ($query) => $query->where('status', $status))
             ->when($bentukPendidikan !== '', fn ($query) => $query->where('bentuk_pendidikan', $bentukPendidikan))
             ->orderBy($sortBy, $sortDirection)
-            ->orderBy('name')
             ->paginate($perPage)
             ->withQueryString();
 
@@ -105,6 +104,15 @@ class SchoolController extends Controller
         return Inertia::render('Admin/Sekolah/Edit', [
             'school' => new SchoolResource($school),
             ...$this->regionOptions(),
+        ]);
+    }
+
+    public function show(School $school): Response
+    {
+        $school->load(['province', 'regency', 'district', 'village']);
+
+        return Inertia::render('Admin/Sekolah/Show', [
+            'school' => new SchoolResource($school),
         ]);
     }
 

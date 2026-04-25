@@ -47,7 +47,7 @@ class BookController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'cover_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
-            'tags' => 'nullable|string',
+            'tags' => 'nullable|array',
             'url' => 'nullable|url',
             'version' => 'nullable|integer',
         ]);
@@ -81,7 +81,7 @@ class BookController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'cover_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
-            'tags' => 'nullable|string',
+            'tags' => 'nullable|array',
             'url' => 'nullable|url',
             'version' => 'nullable|integer',
         ]);

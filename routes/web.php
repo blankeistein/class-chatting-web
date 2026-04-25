@@ -45,7 +45,7 @@ Route::middleware('auth')->group(function () {
         Route::post('schools/import', [AdminSchoolController::class, 'import'])->name('schools.import');
         Route::get('schools/bulk-export', [AdminSchoolController::class, 'bulkExport'])->name('schools.bulk-export');
         Route::delete('schools/bulk-delete', [AdminSchoolController::class, 'bulkDelete'])->name('schools.bulk-delete');
-        Route::resource('schools', AdminSchoolController::class)->except('show');
+        Route::resource('schools', AdminSchoolController::class);
 
         Route::get('regions', [AdminRegionController::class, 'index'])->name('regions.index');
         Route::post('regions/provinces', [AdminRegionController::class, 'storeProvince'])->name('regions.provinces.store');
@@ -62,6 +62,7 @@ Route::middleware('auth')->group(function () {
         Route::delete('regions/villages/{village}', [AdminRegionController::class, 'destroyVillage'])->name('regions.villages.destroy');
 
         Route::resource('videos', VideoController::class);
+        Route::delete('users/bulk-delete', [UserController::class, 'bulkDelete'])->name('users.bulk-delete');
         Route::resource('users', UserController::class);
     });
 });

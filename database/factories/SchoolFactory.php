@@ -27,6 +27,7 @@ class SchoolFactory extends Factory
         $village = Village::factory()->for($district);
 
         return [
+            'code' => fake()->unique()->bothify('SCH-########'),
             'npsn' => fake()->unique()->numerify('########'),
             'name' => 'Sekolah '.fake()->unique()->company(),
             'bentuk_pendidikan' => fake()->randomElement(['SD', 'SMP', 'SMA', 'SMK', 'TK']),

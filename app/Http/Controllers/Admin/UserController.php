@@ -4,18 +4,20 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class UserController extends Controller
 {
     /**
      * Display a listing of the users.
      */
-    public function index(Request $request)
+    public function index(Request $request): Response
     {
         $query = User::query();
 
@@ -52,7 +54,9 @@ class UserController extends Controller
                 break;
         }
 
-        $users = $query->paginate(10)->withQueryString();
+        $perPage = (int) $request->input('perPage', 25);
+
+        $users = $query->paginate($perPage)->withQueryString();
 
         return Inertia::render('Admin/User/Index', [
             'users' => $users,
@@ -63,7 +67,7 @@ class UserController extends Controller
     /**
      * Show the form for creating a new user.
      */
-    public function create()
+    public function create(): Response
     {
         return Inertia::render('Admin/User/Create');
     }
@@ -71,7 +75,7 @@ class UserController extends Controller
     /**
      * Store a newly created user in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $request->validate([
             'name' => 'required|string|max:255',
@@ -99,7 +103,14 @@ class UserController extends Controller
     /**
      * Show the form for editing the specified user.
      */
-    public function edit(User $user)
+    public function show(User $user): Response
+    {
+        return Inertia::render('Admin/User/Show', [
+            'user' => $user,
+        ]);
+    }
+
+    public function edit(User $user): Response
     {
         return Inertia::render('Admin/User/Edit', [
             'user' => $user,
@@ -109,7 +120,7 @@ class UserController extends Controller
     /**
      * Update the specified user in storage.
      */
-    public function update(Request $request, User $user)
+    public function update(Request $request, User $user): RedirectResponse
     {
         $request->validate([
             'name' => 'required|string|max:255',
@@ -142,7 +153,7 @@ class UserController extends Controller
     /**
      * Remove the specified user from storage.
      */
-    public function destroy(User $user)
+    public function destroy(User $user): RedirectResponse
     {
         // Prevent deleting yourself
         if ($user->id === Auth::id()) {
@@ -152,5 +163,26 @@ class UserController extends Controller
         $user->delete();
 
         return redirect()->back()->with('success', 'User berhasil dihapus.');
+    }
+
+    public function bulkDelete(Request $request): RedirectResponse
+    {
+        return redirect()->back()->withErrors('Fitur bulk delete sedang dalam pengembangan.');
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', 'exists:users,id'],
+        ]);
+
+        $ids = collect($validated['ids'])
+            ->filter(fn (int $id): bool => $id !== Auth::id())
+            ->values();
+
+        if ($ids->isEmpty()) {
+            return redirect()->back()->withErrors('Tidak ada user valid yang dapat dihapus.');
+        }
+
+        User::query()->whereIn('id', $ids)->delete();
+
+        return redirect()->back()->with('success', $ids->count().' user berhasil dihapus.');
     }
 }

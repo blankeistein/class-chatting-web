@@ -21,6 +21,7 @@ import {
   UploadCloudIcon,
   XIcon,
   Trash2Icon,
+  Copy,
 } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
 
@@ -48,11 +49,7 @@ type School = {
     code: string;
     name: string;
   };
-  village?: {
-    id: number;
-    code: string;
-    name: string;
-  };
+  address?: string | null;
 };
 
 type PaginationLink = {
@@ -282,9 +279,11 @@ export default function Index({ schools: paginatedSchools, filters }: { schools:
       },
       onError: () => {
         if (typeof importForm.errors === "object") {
-          const errorMessages = Object.values(importForm.errors).flat();
+          const errorMessages = Object.values(importForm.errors);
+          for (const message of errorMessages) {
+            toast.error(message);
+          }
           console.error("Import errors:", errorMessages);
-          toast.error(errorMessages.join("\n"));
         } else {
           console.error("Import error:", importForm.errors);
           toast.error("Import sekolah gagal. Periksa file CSV Anda.");
@@ -376,7 +375,7 @@ export default function Index({ schools: paginatedSchools, filters }: { schools:
               <table className="w-full min-w-max table-auto text-left">
                 <thead>
                   <tr>
-                    {["Sekolah", "Bentuk", "Status", "NPSN", "Wilayah", "Aksi"].map((head) => (
+                    {["Code", "Sekolah", "Status", "NPSN", "Wilayah", "Aksi"].map((head) => (
                       <th key={head} className="border-y border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 p-4">
                         <Typography variant="small" className="font-bold leading-none opacity-70 text-slate-500 dark:text-slate-300">
                           {head}
@@ -392,19 +391,20 @@ export default function Index({ schools: paginatedSchools, filters }: { schools:
                       className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors border-b border-slate-100 dark:border-slate-800"
                     >
                       <td className="p-4">
+                        <Typography variant="small" className="cursor-pointer font-bold text-slate-800 dark:text-white flex gap-2 items-center" onClick={() => {
+                          navigator.clipboard.writeText(school.code);
+                          toast.success("Kode sekolah disalin ke clipboard.");
+                        }} >
+                          <Copy className="w-4 h-4 text-slate-400" />
+                          {school.code}
+                        </Typography>
+                      </td>
+                      <td className="p-4">
                         <div className="flex items-center gap-3">
-                          <div className="h-9 w-9 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                            <Building2Icon className="h-4 w-4 text-slate-500" />
-                          </div>
                           <Typography variant="small" className="font-bold text-slate-800 dark:text-white">
                             {school.name}
                           </Typography>
                         </div>
-                      </td>
-                      <td className="p-4">
-                        <Typography variant="small" className="font-medium text-slate-700 dark:text-slate-200">
-                          {school.bentuk_pendidikan}
-                        </Typography>
                       </td>
                       <td className="p-4">
                         <Typography variant="small" className="font-medium text-slate-700 dark:text-slate-200">
@@ -418,7 +418,7 @@ export default function Index({ schools: paginatedSchools, filters }: { schools:
                       </td>
                       <td className="p-4">
                         <Typography variant="small" className="text-slate-700 dark:text-slate-200">
-                          {school.village?.name || "-"}, {school.district?.name || "-"}
+                          {school.address || "-"}, {school.district?.name || "-"}
                         </Typography>
                         <Typography variant="small" className="text-slate-500 dark:text-slate-400 text-xs mt-1">
                           {school.regency?.name || "-"}, {school.province?.name || "-"}
@@ -615,49 +615,54 @@ export default function Index({ schools: paginatedSchools, filters }: { schools:
                 </div>
               ) : null}
 
-              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950">
-                {isPreviewLoading ? (
-                  <div className="mt-4 animate-pulse rounded-xl bg-slate-100 p-6 dark:bg-slate-900">
-                    <div className="h-4 w-1/3 rounded bg-slate-200 dark:bg-slate-800" />
-                    <div className="mt-4 h-32 rounded bg-slate-200 dark:bg-slate-800" />
-                  </div>
-                ) : importPreview?.headers.length && (
-                  <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
-                    <table className="min-w-full table-auto text-left">
-                      <thead className="bg-slate-50 dark:bg-slate-900">
-                        <tr>
-                          {importPreview.headers.map((header, index) => (
-                            <th key={`${header}-${index}`} className="border-b border-slate-200 px-4 py-3 dark:border-slate-800">
-                              <Typography variant="small" className="font-bold uppercase tracking-wide text-slate-500 dark:text-slate-300">
-                                {header || `Kolom ${index + 1}`}
-                              </Typography>
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {importPreview.rows.length > 0 ? (
-                          importPreview.rows.map((row, rowIndex) => (
-                            <tr key={`${rowIndex}-${row.join("-")}`} className="border-b border-slate-100 last:border-b-0 dark:border-slate-800">
-                              {importPreview.headers.map((_, columnIndex) => (
-                                <td key={`${rowIndex}-${columnIndex}`} className="px-4 py-3 align-top text-sm text-slate-700 dark:text-slate-200">
-                                  {row[columnIndex] || "-"}
-                                </td>
+              {
+                isPreviewLoading || importPreview?.headers.length &&
+                (
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+                    {isPreviewLoading ? (
+                      <div className="mt-4 animate-pulse rounded-xl bg-slate-100 p-6 dark:bg-slate-900">
+                        <div className="h-4 w-1/3 rounded bg-slate-200 dark:bg-slate-800" />
+                        <div className="mt-4 h-32 rounded bg-slate-200 dark:bg-slate-800" />
+                      </div>
+                    ) : importPreview?.headers.length && (
+                      <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+                        <table className="min-w-full table-auto text-left">
+                          <thead className="bg-slate-50 dark:bg-slate-900">
+                            <tr>
+                              {importPreview.headers.map((header, index) => (
+                                <th key={`${header}-${index}`} className="border-b border-slate-200 px-4 py-3 dark:border-slate-800">
+                                  <Typography variant="small" className="font-bold uppercase tracking-wide text-slate-500 dark:text-slate-300">
+                                    {header || `Kolom ${index + 1}`}
+                                  </Typography>
+                                </th>
                               ))}
                             </tr>
-                          ))
-                        ) : (
-                          <tr>
-                            <td colSpan={Math.max(importPreview.headers.length, 1)} className="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
-                              Tidak ada baris data untuk ditampilkan.
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
+                          </thead>
+                          <tbody>
+                            {importPreview.rows.length > 0 ? (
+                              importPreview.rows.map((row, rowIndex) => (
+                                <tr key={`${rowIndex}-${row.join("-")}`} className="border-b border-slate-100 last:border-b-0 dark:border-slate-800">
+                                  {importPreview.headers.map((_, columnIndex) => (
+                                    <td key={`${rowIndex}-${columnIndex}`} className="px-4 py-3 align-top text-sm text-slate-700 dark:text-slate-200">
+                                      {row[columnIndex] || "-"}
+                                    </td>
+                                  ))}
+                                </tr>
+                              ))
+                            ) : (
+                              <tr>
+                                <td colSpan={Math.max(importPreview.headers.length, 1)} className="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+                                  Tidak ada baris data untuk ditampilkan.
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
+                )
+              }
 
               <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
                 <Button type="button" variant="ghost" color="secondary" onClick={resetImportState}>

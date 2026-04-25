@@ -90,6 +90,11 @@ class SchoolController extends Controller
         return Inertia::render('Admin/Sekolah/Create', $this->regionOptions());
     }
 
+    public function importPage(): Response
+    {
+        return Inertia::render('Admin/Sekolah/Import');
+    }
+
     public function store(SchoolDataRequest $request): RedirectResponse
     {
         School::query()->create($request->validated());

@@ -42,6 +42,7 @@ Route::middleware('auth')->group(function () {
 
         Route::get('books/selection', [BookController::class, 'selection'])->name('books.selection');
         Route::resource('books', BookController::class);
+        Route::get('schools/import', [AdminSchoolController::class, 'importPage'])->name('schools.import-page');
         Route::post('schools/import', [AdminSchoolController::class, 'import'])->name('schools.import');
         Route::get('schools/bulk-export', [AdminSchoolController::class, 'bulkExport'])->name('schools.bulk-export');
         Route::delete('schools/bulk-delete', [AdminSchoolController::class, 'bulkDelete'])->name('schools.bulk-delete');

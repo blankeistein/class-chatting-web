@@ -19,6 +19,7 @@ import {
   EditIcon,
   Trash2Icon,
   BookIcon,
+  EyeIcon,
 } from "lucide-react";
 import { toast, Toaster } from "react-hot-toast";
 
@@ -35,7 +36,13 @@ interface Book {
   updatedAt: string;
 }
 
-// --- Components ---
+const formatBookDate = (date: string) => {
+  return new Date(date).toLocaleDateString("id-ID", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
 
 const BookRow = ({ book }: { book: Book }) => {
   const classes = "p-4 border-b border-slate-100 dark:border-slate-800";
@@ -61,13 +68,19 @@ const BookRow = ({ book }: { book: Book }) => {
       </td>
       <td className={classes}>
         <div className="flex flex-col gap-1">
-          <div className="flex flex-wrap gap-1">
-            {book.tags?.map((tag, i) => (
-              <Chip key={i} size="sm" variant="ghost" className="text-[9px] py-0.5 h-auto bg-slate-100 dark:bg-slate-800 dark:text-slate-400 capitalize">
-                <Chip.Label>{tag}</Chip.Label>
-              </Chip>
-            ))}
-          </div>
+          {book.tags && book.tags.length > 0 ? (
+            <div className="flex flex-wrap gap-1">
+              {book.tags.map((tag, i) => (
+                <Chip key={i} size="sm" variant="ghost" className="text-[9px] py-0.5 h-auto bg-slate-100 dark:bg-slate-800 dark:text-slate-400 capitalize">
+                  <Chip.Label>{tag}</Chip.Label>
+                </Chip>
+              ))}
+            </div>
+          ) : (
+            <Typography variant="small" className="text-xs text-slate-400">
+              Belum ada tag
+            </Typography>
+          )}
           {book.url && (
             <a href={book.url} target="_blank" rel="noopener noreferrer" className="text-primary text-[10px] hover:underline flex items-center gap-1">
               <BookIcon className="w-2 h-2" /> Lihat Link
@@ -82,6 +95,14 @@ const BookRow = ({ book }: { book: Book }) => {
       </td>
       <td className={classes}>
         <div className="flex gap-2">
+          <IconButton
+            variant="ghost"
+            size="sm"
+            title="Informasi Buku"
+            onClick={() => router.get(route("admin.books.show", book.id))}
+          >
+            <EyeIcon className="w-4 h-4 text-slate-500" />
+          </IconButton>
           <IconButton
             variant="ghost"
             size="sm"
@@ -122,6 +143,15 @@ const BookCard = ({ book }: { book: Book }) => {
             <div className="flex gap-2 justify-center pb-2 px-4">
               <Button
                 size="sm"
+                variant="ghost"
+                className="flex items-center gap-2 bg-white/90 text-slate-900"
+                isFullWidth={true}
+                onClick={() => router.get(route("admin.books.show", book.id))}
+              >
+                <EyeIcon className="w-3 h-3" /> Info
+              </Button>
+              <Button
+                size="sm"
                 className="flex items-center gap-2"
                 color="secondary"
                 isFullWidth={true}
@@ -133,9 +163,63 @@ const BookCard = ({ book }: { book: Book }) => {
           </div>
         </div>
         <CardBody className="p-4">
-          <Typography variant="h6" className="mb-1 font-bold line-clamp-1 dark:text-white text-blue-gray-900" title={book.title}>
-            {book.title}
-          </Typography>
+          <div className="mb-3 flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <Typography variant="h6" className="mb-1 font-bold line-clamp-2 dark:text-white text-blue-gray-900" title={book.title}>
+                {book.title}
+              </Typography>
+              <Typography variant="small" className="text-[10px] text-slate-400 line-clamp-1">
+                ID: {book.uuid}
+              </Typography>
+            </div>
+            <div className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+              v{book.version}
+            </div>
+          </div>
+
+          {book.tags && book.tags.length > 0 ? (
+            <div className="mb-3 flex flex-wrap gap-1">
+              {book.tags.slice(0, 3).map((tag, index) => (
+                <Chip
+                  key={`${book.id}-${tag}-${index}`}
+                  size="sm"
+                  variant="ghost"
+                  className="text-[9px] py-0.5 h-auto bg-slate-100 dark:bg-slate-800 dark:text-slate-400 capitalize"
+                >
+                  <Chip.Label>{tag}</Chip.Label>
+                </Chip>
+              ))}
+              {book.tags.length > 3 && (
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                  +{book.tags.length - 3} tag
+                </span>
+              )}
+            </div>
+          ) : (
+            <Typography variant="small" className="mb-3 text-xs text-slate-400">
+              Belum ada tag
+            </Typography>
+          )}
+
+          <div className="space-y-1 border-t border-slate-100 pt-3 dark:border-slate-800">
+            <Typography variant="small" className="text-xs text-slate-500 dark:text-slate-400">
+              Dibuat: {formatBookDate(book.createdAt)}
+            </Typography>
+            <Typography variant="small" className="text-xs text-slate-500 dark:text-slate-400">
+              Diupdate: {formatBookDate(book.updatedAt)}
+            </Typography>
+            {book.url && (
+              <a
+                href={book.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 pt-1 text-xs font-medium text-primary hover:underline"
+              >
+                <BookIcon className="h-3.5 w-3.5" />
+                Buka tautan buku
+              </a>
+            )}
+          </div>
         </CardBody>
       </Card>
     </div>
@@ -205,7 +289,7 @@ export default function Index({ books: paginatedBooks, filters }: { books: any, 
               Daftar Buku
             </Typography>
             <Typography className="text-slate-500 dark:text-slate-400">
-              Kelola koleksi buku dan materi pembelajaran.
+              Kelola buku digital yang tersedia di aplikasi.
             </Typography>
           </div>
           <div className="flex gap-2">
@@ -224,9 +308,13 @@ export default function Index({ books: paginatedBooks, filters }: { books: any, 
         <Card className="shadow-sm border border-slate-200 dark:border-slate-800 dark:bg-slate-900">
           <CardBody className="p-4">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-              <div className="flex gap-4 w-full md:w-auto flex-1">
+              <div className="order-2 md:order-1 flex flex-col md:flex-row gap-4 w-full md:w-auto flex-1">
                 <div className="w-full md:w-72">
+                  <Typography as="label" htmlFor="cari" type="small" color="default" className="font-semibold">
+                    Cari
+                  </Typography>
                   <Input
+                    id="cari"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="!border-t-blue-gray-200 focus:!border-t-gray-900 dark:focus:!border-t-white dark:text-white"
@@ -237,25 +325,15 @@ export default function Index({ books: paginatedBooks, filters }: { books: any, 
                     </Input.Icon>
                   </Input>
                 </div>
-                <div className="w-full md:w-32">
-                  <Select
-                    value={perPage.toString()}
-                    onValueChange={(val) => val && handlePerPageChange(val)}
-                  >
-                    <Select.Trigger className="dark:text-white" placeholder="Items" />
-                    <Select.List>
-                      <Select.Option value="25">25 per hal</Select.Option>
-                      <Select.Option value="50">50 per hal</Select.Option>
-                      <Select.Option value="100">100 per hal</Select.Option>
-                    </Select.List>
-                  </Select>
-                </div>
                 <div className="w-full md:w-48">
+                  <Typography as="label" htmlFor="urutkan-berdasarkan" type="small" color="default" className="font-semibold">
+                    Urutkan Berdasarkan
+                  </Typography>
                   <Select
                     value={`${sortBy}|${sortDirection}`}
                     onValueChange={(val) => val && handleSortChange(val)}
                   >
-                    <Select.Trigger className="dark:text-white" placeholder="Urutkan" />
+                    <Select.Trigger id="urutkan-berdasarkan" placeholder="Urutkan" />
                     <Select.List>
                       <Select.Option value="title|asc">Judul (A-Z)</Select.Option>
                       <Select.Option value="title|desc">Judul (Z-A)</Select.Option>
@@ -266,10 +344,25 @@ export default function Index({ books: paginatedBooks, filters }: { books: any, 
                     </Select.List>
                   </Select>
                 </div>
-
+                <div className="w-full md:w-32">
+                  <Typography as="label" htmlFor="jumlah-item" type="small" color="default" className="font-semibold">
+                    Jumlah Item
+                  </Typography>
+                  <Select
+                    value={perPage.toString()}
+                    onValueChange={(val) => val && handlePerPageChange(val)}
+                  >
+                    <Select.Trigger id="jumlah-item" placeholder="Items" />
+                    <Select.List>
+                      <Select.Option value="25">25 per hal</Select.Option>
+                      <Select.Option value="50">50 per hal</Select.Option>
+                      <Select.Option value="100">100 per hal</Select.Option>
+                    </Select.List>
+                  </Select>
+                </div>
               </div>
 
-              <div className="flex items-center gap-1 border-l border-slate-200 pl-4 ml-auto dark:border-slate-700">
+              <div className="order-1 md:order-2 flex items-center gap-1 md:border-l md:border-slate-200 pl-4 ml-auto dark:border-slate-700">
                 <IconButton
                   variant={viewMode === "list" ? "solid" : "ghost"}
                   color="secondary"

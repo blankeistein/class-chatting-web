@@ -293,7 +293,6 @@ export default function Edit({ video }: { video: Video }) {
                     value={data.title}
                     onChange={(e) => setData("title", e.target.value)}
                     isError={!!errors.title}
-                    className="dark:text-white"
                   />
                   {errors.title && (
                     <Typography type="small" color="error" className="mt-1 block">
@@ -331,7 +330,6 @@ export default function Edit({ video }: { video: Video }) {
                     value={currentTag}
                     onChange={(e) => setCurrentTag(e.target.value)}
                     onKeyDown={handleAddTag}
-                    className="dark:text-white"
                   />
                   <div className="flex flex-wrap gap-2">
                     {data.tags.map((tag) => (
@@ -605,7 +603,7 @@ export default function Edit({ video }: { video: Video }) {
         <Dialog.Overlay>
           <Dialog.Content className="border-0 p-0 shadow-lg shadow-black/10 dark:border-slate-800">
             <div className="flex items-center justify-between border-b border-slate-100 p-4 dark:border-slate-700">
-              <Typography type="h6" className="dark:text-white">
+              <Typography type="h6">
                 Ambil Thumbnail dari Video
               </Typography>
               <IconButton variant="ghost" size="sm" onClick={() => setIsCaptureModalOpen(false)}>
@@ -658,7 +656,7 @@ export default function Edit({ video }: { video: Video }) {
       <Dialog open={isDeleteModalOpen} onOpenChange={() => setIsDeleteModalOpen(false)} size="sm">
         <Dialog.Overlay>
           <Dialog.Content className="dark:border-slate-800">
-            <Typography type="h6" className="dark:text-white">
+            <Typography type="h6">
               Hapus Video
             </Typography>
             <Typography className="mb-6 mt-2 text-foreground">

@@ -34,6 +34,7 @@ import AdminLayout from "@/Layouts/AdminLayout";
 import { toast, Toaster } from "react-hot-toast";
 import GenerateCodeDialog from "./Partials/GenerateCodeDialog";
 import axios from "axios";
+import Pagination from "@/Components/Pagination";
 
 interface User {
   name: string;
@@ -362,32 +363,41 @@ export default function Index({
           <CardBody className="space-y-4 p-4">
             <div className="flex flex-wrap items-center gap-4">
               <div className="relative w-full md:w-72">
+                <Typography as="label" htmlFor="cari-nama" type="small" color="default" className="font-semibold">
+                  Cari
+                </Typography>
                 <Input
+                  id="cari-nama"
                   placeholder="Cari kode atau user..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onKeyUp={(e) => e.key === "Enter" && handleSearch()}
                   className="pl-10 dark:text-white"
-                />
-                <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                >
+                  <Input.Icon>
+                    <SearchIcon className="h-4 w-4 text-slate-400" />
+                  </Input.Icon>
+                </Input>
               </div>
 
               <div className="w-full md:w-64">
+                <Typography as="label" htmlFor="filter-buku" type="small" color="default" className="font-semibold" onClick={() => setIsPopoverOpen(!isPopoverOpen)}>
+                  Filter Buku
+                </Typography>
                 <Popover placement="bottom-start" open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
-                  <Popover.Trigger>
-                    <Button
-                      variant="outline"
-                      className="flex w-full items-center justify-between text-left font-normal capitalize"
-                      color="secondary"
-                      onClick={() => setIsPopoverOpen(!isPopoverOpen)}
-                    >
-                      <span className="truncate">
-                        {selectedBook === "all" ? "Semua Buku" : selectedBook.title}
-                      </span>
-                      <ChevronDownIcon className="ml-2 h-4 w-4 opacity-50" />
-                    </Button>
+                  <Popover.Trigger
+                    as={Button}
+                    variant="outline"
+                    className="flex w-full items-center justify-between text-left font-normal capitalize"
+                    color="secondary"
+                    onClick={() => setIsPopoverOpen(!isPopoverOpen)}
+                  >
+                    <span className="truncate">
+                      {selectedBook === "all" ? "Semua Buku" : selectedBook.title}
+                    </span>
+                    <ChevronDownIcon className="ml-2 h-4 w-4 opacity-50" />
                   </Popover.Trigger>
-                  <Popover.Content className="z-[999] w-72 border-slate-200 p-0 shadow-xl dark:border-slate-800 dark:bg-slate-900">
+                  <Popover.Content className="z-[999] w-[80%] md:w-72 border-slate-200 p-0 shadow-xl dark:border-slate-800 dark:bg-slate-900">
                     <div className="relative border-b border-slate-100 p-2 dark:border-slate-800">
                       <Input
                         placeholder="Cari buku..."
@@ -422,6 +432,9 @@ export default function Index({
               </div>
 
               <div className="w-full md:w-32">
+                <Typography as="label" htmlFor="jumlah-item" type="small" color="default" className="font-semibold">
+                  Jumlah item
+                </Typography>
                 <Select
                   value={perPage}
                   onValueChange={(val) => {
@@ -429,7 +442,7 @@ export default function Index({
                     visitIndex({ per_page: val });
                   }}
                 >
-                  <Select.Trigger className="dark:text-white" placeholder="25" />
+                  <Select.Trigger id="jumlah-item" placeholder="25" />
                   <Select.List>
                     <Select.Option value="10">10 per Hal</Select.Option>
                     <Select.Option value="25">25 per Hal</Select.Option>
@@ -440,8 +453,11 @@ export default function Index({
               </div>
 
               <div className="w-full md:w-48">
+                <Typography as="label" htmlFor="urutkan-berdasarkan" type="small" color="default" className="font-semibold">
+                  Urutkan Berdasarkan
+                </Typography>
                 <Select value={`${sortBy}|${sortDirection}`} onValueChange={handleSortChange}>
-                  <Select.Trigger className="dark:text-white" placeholder="Urutkan" />
+                  <Select.Trigger id="urutkan-berdasarkan" placeholder="Urutkan" />
                   <Select.List>
                     <Select.Option value="created_at|desc">Terbaru</Select.Option>
                     <Select.Option value="created_at|asc">Terlama</Select.Option>
@@ -454,7 +470,7 @@ export default function Index({
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
               <div>
-                <Typography variant="small" className="mb-1 font-medium text-slate-500 dark:text-slate-400">
+                <Typography as="label" htmlFor="tier" type="small" color="default" className="font-semibold">
                   Tier
                 </Typography>
                 <Select
@@ -465,7 +481,7 @@ export default function Index({
                     visitIndex({ tier: nextValue || undefined });
                   }}
                 >
-                  <Select.Trigger className="dark:text-white" placeholder="Semua Tier" />
+                  <Select.Trigger id="tier" placeholder="Semua Tier" />
                   <Select.List>
                     <Select.Option value="">Semua Tier</Select.Option>
                     {Object.entries(tierOptions).map(([value, label]) => (
@@ -478,7 +494,7 @@ export default function Index({
               </div>
 
               <div>
-                <Typography variant="small" className="mb-1 font-medium text-slate-500 dark:text-slate-400">
+                <Typography as="label" htmlFor="status-kode" type="small" color="default" className="font-semibold">
                   Status Kode
                 </Typography>
                 <Select
@@ -489,7 +505,7 @@ export default function Index({
                     visitIndex({ status: nextValue || undefined });
                   }}
                 >
-                  <Select.Trigger className="dark:text-white" placeholder="Semua Status" />
+                  <Select.Trigger id="status-kode" placeholder="Semua Status" />
                   <Select.List>
                     <Select.Option value="">Semua Status</Select.Option>
                     <Select.Option value="available">Available</Select.Option>
@@ -501,7 +517,7 @@ export default function Index({
               </div>
 
               <div>
-                <Typography variant="small" className="mb-1 font-medium text-slate-500 dark:text-slate-400">
+                <Typography as="label" htmlFor="jenis-kode" type="small" color="default" className="font-semibold">
                   Jenis Kode
                 </Typography>
                 <Select
@@ -512,7 +528,7 @@ export default function Index({
                     visitIndex({ type: nextValue || undefined });
                   }}
                 >
-                  <Select.Trigger className="dark:text-white" placeholder="Semua Jenis" />
+                  <Select.Trigger id="jenis-code" placeholder="Semua Jenis" />
                   <Select.List>
                     <Select.Option value="">Semua Jenis</Select.Option>
                     <Select.Option value="public">Public</Select.Option>
@@ -522,7 +538,7 @@ export default function Index({
               </div>
 
               <div>
-                <Typography variant="small" className="mb-1 font-medium text-slate-500 dark:text-slate-400">
+                <Typography as="label" htmlFor="sudah-aktif" type="small" color="default" className="font-semibold">
                   Sudah Aktif
                 </Typography>
                 <Select
@@ -533,7 +549,7 @@ export default function Index({
                     visitIndex({ activation_state: nextValue || undefined });
                   }}
                 >
-                  <Select.Trigger className="dark:text-white" placeholder="Semua Kondisi" />
+                  <Select.Trigger id="sudah-aktif" placeholder="Semua Kondisi" />
                   <Select.List>
                     <Select.Option value="">Semua Kondisi</Select.Option>
                     <Select.Option value="activated">Sudah Aktif</Select.Option>
@@ -561,6 +577,8 @@ export default function Index({
             </div>
           </CardBody>
         </Card>
+
+        <Pagination paginated={activationCodes} />
 
         <Card className="border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div className="overflow-x-auto">
@@ -736,20 +754,7 @@ export default function Index({
           </div>
         </Card>
 
-        <div className="mt-8 flex justify-center gap-2">
-          {activationCodes.meta.links.map((link, key) => (
-            <Button
-              key={key}
-              variant={link.active ? "solid" : "ghost"}
-              size="sm"
-              color={link.active ? "primary" : "secondary"}
-              className={`flex items-center gap-2 ${!link.url ? "cursor-not-allowed opacity-50" : ""}`}
-              onClick={() => link.url && router.get(link.url, buildQueryParams(), { preserveState: true, replace: true })}
-              dangerouslySetInnerHTML={{ __html: link.label }}
-              disabled={!link.url}
-            />
-          ))}
-        </div>
+        <Pagination paginated={activationCodes} />
       </div>
 
       <GenerateCodeDialog open={openGenerateDialog} setOpen={setOpenGenerateDialog} />

@@ -464,7 +464,7 @@ export default function Index({
                 </div>
               </div>
               <div className="mt-4">
-                <Input value={provinceSearch} onChange={(event) => setProvinceSearch(event.target.value)} placeholder="Cari provinsi..." className="dark:text-white">
+                <Input value={provinceSearch} onChange={(event) => setProvinceSearch(event.target.value)} placeholder="Cari provinsi..." >
                   <Input.Icon><SearchIcon className="h-4 w-4" /></Input.Icon>
                 </Input>
               </div>
@@ -514,7 +514,7 @@ export default function Index({
                 </div>
               </div>
               <div className="mt-4">
-                <Input value={regencySearch} onChange={(event) => setRegencySearch(event.target.value)} placeholder="Cari kabupaten/kota..." disabled={!selectedProvince} className="dark:text-white">
+                <Input value={regencySearch} onChange={(event) => setRegencySearch(event.target.value)} placeholder="Cari kabupaten/kota..." disabled={!selectedProvince} >
                   <Input.Icon><SearchIcon className="h-4 w-4" /></Input.Icon>
                 </Input>
               </div>
@@ -576,7 +576,7 @@ export default function Index({
                 </div>
               </div>
               <div className="mt-4">
-                <Input value={districtSearch} onChange={(event) => setDistrictSearch(event.target.value)} placeholder="Cari kecamatan..." disabled={!selectedRegency} className="dark:text-white">
+                <Input value={districtSearch} onChange={(event) => setDistrictSearch(event.target.value)} placeholder="Cari kecamatan..." disabled={!selectedRegency} >
                   <Input.Icon><SearchIcon className="h-4 w-4" /></Input.Icon>
                 </Input>
               </div>
@@ -631,7 +631,7 @@ export default function Index({
                 </div>
               </div>
               <div className="mt-4">
-                <Input value={villageSearch} onChange={(event) => setVillageSearch(event.target.value)} placeholder="Cari desa..." disabled={!selectedDistrict} className="dark:text-white">
+                <Input value={villageSearch} onChange={(event) => setVillageSearch(event.target.value)} placeholder="Cari desa..." disabled={!selectedDistrict} >
                   <Input.Icon><SearchIcon className="h-4 w-4" /></Input.Icon>
                 </Input>
               </div>
@@ -664,16 +664,16 @@ export default function Index({
       <Dialog open={dialog?.entity === "province" && dialog.mode !== "delete"} onOpenChange={closeDialog} size="sm">
         <Dialog.Overlay>
           <Dialog.Content className="dark:border-slate-800 dark:bg-slate-900">
-            <Typography type="h6" className="dark:text-white">{dialog?.mode === "edit" ? "Edit Provinsi" : "Tambah Provinsi"}</Typography>
+            <Typography type="h6" >{dialog?.mode === "edit" ? "Edit Provinsi" : "Tambah Provinsi"}</Typography>
             <div className="mt-5 space-y-4">
               <div>
                 <Typography type="small" className="mb-1 font-semibold dark:text-white">Kode Provinsi</Typography>
-                <Input value={provinceForm.data.code} onChange={(event) => provinceForm.setData("code", event.target.value)} placeholder="Contoh: 31" isError={!!provinceForm.errors.code} className="dark:text-white" />
+                <Input value={provinceForm.data.code} onChange={(event) => provinceForm.setData("code", event.target.value)} placeholder="Contoh: 31" isError={!!provinceForm.errors.code} />
                 {provinceForm.errors.code && <Typography type="small" color="error" className="mt-1 block">{provinceForm.errors.code}</Typography>}
               </div>
               <div>
                 <Typography type="small" className="mb-1 font-semibold dark:text-white">Nama Provinsi</Typography>
-                <Input value={provinceForm.data.name} onChange={(event) => provinceForm.setData("name", event.target.value)} placeholder="Contoh: DKI Jakarta" isError={!!provinceForm.errors.name} className="dark:text-white" />
+                <Input value={provinceForm.data.name} onChange={(event) => provinceForm.setData("name", event.target.value)} placeholder="Contoh: DKI Jakarta" isError={!!provinceForm.errors.name} />
                 {provinceForm.errors.name && <Typography type="small" color="error" className="mt-1 block">{provinceForm.errors.name}</Typography>}
               </div>
             </div>
@@ -688,12 +688,12 @@ export default function Index({
       <Dialog open={dialog?.entity === "regency" && dialog.mode !== "delete"} onOpenChange={closeDialog} size="sm">
         <Dialog.Overlay>
           <Dialog.Content className="dark:border-slate-800 dark:bg-slate-900">
-            <Typography type="h6" className="dark:text-white">{dialog?.mode === "edit" ? "Edit Kabupaten/Kota" : "Tambah Kabupaten/Kota"}</Typography>
+            <Typography type="h6" >{dialog?.mode === "edit" ? "Edit Kabupaten/Kota" : "Tambah Kabupaten/Kota"}</Typography>
             <div className="mt-5 space-y-4">
               <div>
                 <Typography type="small" className="mb-1 font-semibold dark:text-white">Provinsi Induk</Typography>
                 <Select value={regencyForm.data.province_id ? String(regencyForm.data.province_id) : undefined} onValueChange={(value) => regencyForm.setData("province_id", Number(value) || 0)}>
-                  <Select.Trigger className="dark:text-white" placeholder="Pilih provinsi" />
+                  <Select.Trigger placeholder="Pilih provinsi" />
                   <Select.List>
                     {provinceItems.map((province) => <Select.Option key={province.id} value={String(province.id)}>{province.name}</Select.Option>)}
                   </Select.List>
@@ -703,13 +703,13 @@ export default function Index({
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
                   <Typography type="small" className="mb-1 font-semibold dark:text-white">Kode</Typography>
-                  <Input value={regencyForm.data.code} onChange={(event) => regencyForm.setData("code", event.target.value)} placeholder="Contoh: 3171" isError={!!regencyForm.errors.code} className="dark:text-white" />
+                  <Input value={regencyForm.data.code} onChange={(event) => regencyForm.setData("code", event.target.value)} placeholder="Contoh: 3171" isError={!!regencyForm.errors.code} />
                   {regencyForm.errors.code && <Typography type="small" color="error" className="mt-1 block">{regencyForm.errors.code}</Typography>}
                 </div>
                 <div>
                   <Typography type="small" className="mb-1 font-semibold dark:text-white">Tipe</Typography>
                   <Select value={regencyForm.data.type || undefined} onValueChange={(value) => regencyForm.setData("type", value || "kabupaten")}>
-                    <Select.Trigger className="dark:text-white" placeholder="Pilih tipe" />
+                    <Select.Trigger placeholder="Pilih tipe" />
                     <Select.List>
                       {TYPE_OPTIONS.map((option) => <Select.Option key={option.value} value={option.value}>{option.label}</Select.Option>)}
                     </Select.List>
@@ -719,7 +719,7 @@ export default function Index({
               </div>
               <div>
                 <Typography type="small" className="mb-1 font-semibold dark:text-white">Nama Kabupaten/Kota</Typography>
-                <Input value={regencyForm.data.name} onChange={(event) => regencyForm.setData("name", event.target.value)} placeholder="Contoh: Jakarta Selatan" isError={!!regencyForm.errors.name} className="dark:text-white" />
+                <Input value={regencyForm.data.name} onChange={(event) => regencyForm.setData("name", event.target.value)} placeholder="Contoh: Jakarta Selatan" isError={!!regencyForm.errors.name} />
                 {regencyForm.errors.name && <Typography type="small" color="error" className="mt-1 block">{regencyForm.errors.name}</Typography>}
               </div>
             </div>
@@ -733,12 +733,12 @@ export default function Index({
       <Dialog open={dialog?.entity === "district" && dialog.mode !== "delete"} onOpenChange={closeDialog} size="sm">
         <Dialog.Overlay>
           <Dialog.Content className="dark:border-slate-800 dark:bg-slate-900">
-            <Typography type="h6" className="dark:text-white">{dialog?.mode === "edit" ? "Edit Kecamatan" : "Tambah Kecamatan"}</Typography>
+            <Typography type="h6" >{dialog?.mode === "edit" ? "Edit Kecamatan" : "Tambah Kecamatan"}</Typography>
             <div className="mt-5 space-y-4">
               <div>
                 <Typography type="small" className="mb-1 font-semibold dark:text-white">Kabupaten/Kota Induk</Typography>
                 <Select value={districtForm.data.regency_id ? String(districtForm.data.regency_id) : undefined} onValueChange={(value) => districtForm.setData("regency_id", Number(value) || 0)}>
-                  <Select.Trigger className="dark:text-white" placeholder="Pilih kabupaten/kota" />
+                  <Select.Trigger placeholder="Pilih kabupaten/kota" />
                   <Select.List>
                     {regencyItems.map((regency) => <Select.Option key={regency.id} value={String(regency.id)}>{regency.name}</Select.Option>)}
                   </Select.List>
@@ -747,12 +747,12 @@ export default function Index({
               </div>
               <div>
                 <Typography type="small" className="mb-1 font-semibold dark:text-white">Kode Kecamatan</Typography>
-                <Input value={districtForm.data.code} onChange={(event) => districtForm.setData("code", event.target.value)} placeholder="Contoh: 3171010" isError={!!districtForm.errors.code} className="dark:text-white" />
+                <Input value={districtForm.data.code} onChange={(event) => districtForm.setData("code", event.target.value)} placeholder="Contoh: 3171010" isError={!!districtForm.errors.code} />
                 {districtForm.errors.code && <Typography type="small" color="error" className="mt-1 block">{districtForm.errors.code}</Typography>}
               </div>
               <div>
                 <Typography type="small" className="mb-1 font-semibold dark:text-white">Nama Kecamatan</Typography>
-                <Input value={districtForm.data.name} onChange={(event) => districtForm.setData("name", event.target.value)} placeholder="Contoh: Kebayoran Baru" isError={!!districtForm.errors.name} className="dark:text-white" />
+                <Input value={districtForm.data.name} onChange={(event) => districtForm.setData("name", event.target.value)} placeholder="Contoh: Kebayoran Baru" isError={!!districtForm.errors.name} />
                 {districtForm.errors.name && <Typography type="small" color="error" className="mt-1 block">{districtForm.errors.name}</Typography>}
               </div>
             </div>
@@ -767,12 +767,12 @@ export default function Index({
       <Dialog open={dialog?.entity === "village" && dialog.mode !== "delete"} onOpenChange={closeDialog} size="sm">
         <Dialog.Overlay>
           <Dialog.Content className="dark:border-slate-800 dark:bg-slate-900">
-            <Typography type="h6" className="dark:text-white">{dialog?.mode === "edit" ? "Edit Desa" : "Tambah Desa"}</Typography>
+            <Typography type="h6" >{dialog?.mode === "edit" ? "Edit Desa" : "Tambah Desa"}</Typography>
             <div className="mt-5 space-y-4">
               <div>
                 <Typography type="small" className="mb-1 font-semibold dark:text-white">Kecamatan Induk</Typography>
                 <Select value={villageForm.data.district_id ? String(villageForm.data.district_id) : undefined} onValueChange={(value) => villageForm.setData("district_id", Number(value) || 0)}>
-                  <Select.Trigger className="dark:text-white" placeholder="Pilih kecamatan" />
+                  <Select.Trigger placeholder="Pilih kecamatan" />
                   <Select.List>
                     {districtItems.map((district) => <Select.Option key={district.id} value={String(district.id)}>{district.name}</Select.Option>)}
                   </Select.List>
@@ -781,12 +781,12 @@ export default function Index({
               </div>
               <div>
                 <Typography type="small" className="mb-1 font-semibold dark:text-white">Kode Desa</Typography>
-                <Input value={villageForm.data.code} onChange={(event) => villageForm.setData("code", event.target.value)} placeholder="Contoh: 3171010001" isError={!!villageForm.errors.code} className="dark:text-white" />
+                <Input value={villageForm.data.code} onChange={(event) => villageForm.setData("code", event.target.value)} placeholder="Contoh: 3171010001" isError={!!villageForm.errors.code} />
                 {villageForm.errors.code && <Typography type="small" color="error" className="mt-1 block">{villageForm.errors.code}</Typography>}
               </div>
               <div>
                 <Typography type="small" className="mb-1 font-semibold dark:text-white">Nama Desa</Typography>
-                <Input value={villageForm.data.name} onChange={(event) => villageForm.setData("name", event.target.value)} placeholder="Contoh: Gandaria Utara" isError={!!villageForm.errors.name} className="dark:text-white" />
+                <Input value={villageForm.data.name} onChange={(event) => villageForm.setData("name", event.target.value)} placeholder="Contoh: Gandaria Utara" isError={!!villageForm.errors.name} />
                 {villageForm.errors.name && <Typography type="small" color="error" className="mt-1 block">{villageForm.errors.name}</Typography>}
               </div>
             </div>
@@ -801,7 +801,7 @@ export default function Index({
       <Dialog open={dialog?.mode === "delete"} onOpenChange={closeDialog} size="sm">
         <Dialog.Overlay>
           <Dialog.Content className="dark:border-slate-800 dark:bg-slate-900">
-            <Typography type="h6" className="dark:text-white">Hapus Data Daerah</Typography>
+            <Typography type="h6" >Hapus Data Daerah</Typography>
             <Typography className="mt-2 text-slate-600 dark:text-slate-300">
               Data <strong>{dialog?.item?.name as string}</strong> akan dihapus beserta turunan yang terkait jika ada. Tindakan ini tidak dapat dibatalkan.
             </Typography>

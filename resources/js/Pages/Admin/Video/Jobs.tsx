@@ -270,12 +270,11 @@ export default function Jobs() {
                   placeholder="Cari ID job..."
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
-                  className="dark:text-white"
                 />
               </div>
               <div className="w-full md:max-w-xs">
                 <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value ?? "all")}>
-                  <Select.Trigger className="dark:text-white">
+                  <Select.Trigger>
                     {() => statusOptions.find((option) => option.value === statusFilter)?.label ?? "Pilih status"}
                   </Select.Trigger>
                   <Select.List>
@@ -425,7 +424,7 @@ export default function Jobs() {
               <div className="space-y-5">
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <Typography type="h6" className="dark:text-white">
+                    <Typography type="h6">
                       Detail Tugas
                     </Typography>
                     <Typography className="mt-1 text-sm text-slate-500 dark:text-slate-400">

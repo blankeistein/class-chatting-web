@@ -348,9 +348,13 @@ export default function Index({
 
         <Card className="border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <Card.Body className="flex flex-col items-center justify-between gap-4 p-4 md:flex-row">
-            <div className="flex w-full flex-1 flex-col items-stretch gap-3 sm:flex-row md:w-auto">
+            <div className="order-2 md:order-1 flex w-full flex-1 flex-col items-stretch gap-3 sm:flex-row md:w-auto">
               <div className="w-full sm:w-72">
+                <Typography as="label" htmlFor="cari" type="small" color="default" className="font-semibold">
+                  Cari
+                </Typography>
                 <Input
+                  id="cari"
                   placeholder="Cari nama atau tags..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -363,6 +367,9 @@ export default function Index({
                 </Input>
               </div>
               <div className="w-full sm:w-48">
+                <Typography as="label" htmlFor="cari-berdasarkan" type="small" color="default" className="font-semibold">
+                  Urutkan Berdasarkan
+                </Typography>
                 <Select
                   value={sort.value}
                   onValueChange={(value) => {
@@ -377,7 +384,7 @@ export default function Index({
                     }
                   }}
                 >
-                  <Select.Trigger placeholder="Urutkan" className="dark:text-white">
+                  <Select.Trigger id="cari-berdasarkan" placeholder="Urutkan" >
                     {() => sort.label || "Urutkan"}
                   </Select.Trigger>
                   <Select.List>
@@ -390,6 +397,9 @@ export default function Index({
                 </Select>
               </div>
               <div className="w-full sm:w-48">
+                <Typography as="label" htmlFor="jumlah-item" type="small" color="default" className="font-semibold">
+                  Jumlah Item
+                </Typography>
                 <Select value={perPage} onValueChange={(val) => {
                   if (val) {
                     setPerPage(val);
@@ -400,7 +410,7 @@ export default function Index({
                     );
                   }
                 }}>
-                  <Select.Trigger placeholder="per Hal" className="dark:text-white" />
+                  <Select.Trigger id="jumlah-item" placeholder="per Hal" />
                   <Select.List>
                     <Select.Option value="25">25 per Hal</Select.Option>
                     <Select.Option value="50">50 per Hal</Select.Option>
@@ -410,7 +420,7 @@ export default function Index({
               </div>
             </div>
 
-            <div className="flex self-end border-l border-slate-200 pl-4 dark:border-slate-700 md:self-auto">
+            <div className="order-1 md:order-2 flex self-end md:border-l md:border-slate-200 pl-4 dark:border-slate-700 md:self-auto">
               <IconButton
                 variant={viewMode === "list" ? "solid" : "ghost"}
                 color="secondary"
@@ -575,7 +585,7 @@ export default function Index({
       <Dialog open={isDeleteOpen} onOpenChange={() => setIsDeleteOpen(false)} size="sm">
         <Dialog.Overlay>
           <Dialog.Content className="dark:border-slate-800">
-            <Typography type="h6" className="dark:text-white">
+            <Typography type="h6">
               Hapus Video
             </Typography>
             <Typography className="mb-6 mt-2 text-foreground">

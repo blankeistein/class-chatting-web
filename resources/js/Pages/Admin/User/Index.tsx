@@ -73,7 +73,7 @@ export default function Index({ users: paginatedUsers, filters }: { users: any, 
   }, [paginatedUsers.data]);
 
   const handleFilter = () => {
-    router.get(route('admin.users.index'), { search, sort: sort.value, role: role.value }, {
+    router.get(route('admin.users.index'), { search, sort: sort.value, role: role.value, perPage }, {
       preserveState: true,
       replace: true,
       only: ['users', 'filters']
@@ -208,29 +208,12 @@ export default function Index({ users: paginatedUsers, filters }: { users: any, 
 
         {/* Toolbar Section */}
         <Card className="shadow-sm border border-slate-200 dark:border-slate-800 dark:bg-slate-900">
-          <Card.Body className="flex flex-col gap-2">
+          <Card.Body className="flex flex-col gap-2 p-4">
             <div className="flex flex-col lg:flex-row items-stretch gap-3 w-full md:w-auto flex-1">
-              <div className="w-full md:w-48">
-                <Select
-                  value={perPage}
-                  onValueChange={(val) => {
-                    setPerPage(val);
-                    router.get(route('admin.users.index'), { search, sort: sort.value, role: role.value, perPage: val }, { preserveState: true, replace: true });
-                  }}
-                >
-                  <Select.Trigger placeholder="per Hal" className="dark:text-white">
-                    {() => perPage + " Item" || "per Hal"}
-                  </Select.Trigger>
-                  <Select.List>
-                    {["25", "50", "100"].map((opt) => (
-                      <Select.Option key={opt} value={opt}>
-                        {opt} Item
-                      </Select.Option>
-                    ))}
-                  </Select.List>
-                </Select>
-              </div>
               <div className="w-full md:w-56">
+                <Typography as="label" htmlFor="role" type="small" color="default" className="font-semibold">
+                  Role
+                </Typography>
                 <Select
                   value={role.value}
                   onValueChange={(val) => {
@@ -241,7 +224,7 @@ export default function Index({ users: paginatedUsers, filters }: { users: any, 
                     }
                   }}
                 >
-                  <Select.Trigger placeholder="Filter Role" className="dark:text-white">
+                  <Select.Trigger id="role" placeholder="Filter Role" >
                     {() => role.label || "Filter Role"}
                   </Select.Trigger>
                   <Select.List>
@@ -254,6 +237,9 @@ export default function Index({ users: paginatedUsers, filters }: { users: any, 
                 </Select>
               </div>
               <div className="w-full md:w-48">
+                <Typography as="label" htmlFor="urutkan-berdasarkan" type="small" color="default" className="font-semibold">
+                  Urutkan Berdasarkan
+                </Typography>
                 <Select
                   value={sort.value}
                   onValueChange={(val) => {
@@ -264,7 +250,7 @@ export default function Index({ users: paginatedUsers, filters }: { users: any, 
                     }
                   }}
                 >
-                  <Select.Trigger placeholder="Urutkan" className="dark:text-white">
+                  <Select.Trigger id="urutkan-berdasarkan" placeholder="Urutkan" >
                     {() => sort.label || "Urutkan"}
                   </Select.Trigger>
                   <Select.List>
@@ -276,10 +262,37 @@ export default function Index({ users: paginatedUsers, filters }: { users: any, 
                   </Select.List>
                 </Select>
               </div>
+              <div className="w-full md:w-48">
+                <Typography as="label" htmlFor="jumlah-item" type="small" color="default" className="font-semibold">
+                  Jumlah Item
+                </Typography>
+                <Select
+                  value={perPage}
+                  onValueChange={(val) => {
+                    setPerPage(val);
+                    router.get(route('admin.users.index'), { search, sort: sort.value, role: role.value, perPage: val }, { preserveState: true, replace: true });
+                  }}
+                >
+                  <Select.Trigger id="jumlah-item" placeholder="per Hal" >
+                    {() => perPage + " per Hal" || "per Hal"}
+                  </Select.Trigger>
+                  <Select.List>
+                    {["25", "50", "100"].map((opt) => (
+                      <Select.Option key={opt} value={opt}>
+                        {opt} Item
+                      </Select.Option>
+                    ))}
+                  </Select.List>
+                </Select>
+              </div>
             </div>
             <div className="flex flex-col lg:flex-row items-stretch gap-3 w-full md:w-auto flex-1">
               <div className="w-full">
+                <Typography as="label" htmlFor="cari" type="small" color="default" className="font-semibold">
+                  Cari
+                </Typography>
                 <Input
+                  id="cari"
                   placeholder="Cari nama, email, atau username..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -466,7 +479,7 @@ export default function Index({ users: paginatedUsers, filters }: { users: any, 
       <Dialog open={isDeleteOpen} onOpenChange={() => setIsDeleteOpen(false)} size="sm" >
         <Dialog.Overlay>
           <Dialog.Content className="dark:border-slate-800">
-            <Typography type="h6" className="dark:text-white">Hapus User</Typography>
+            <Typography type="h6">Hapus User</Typography>
             <Typography className="mb-6 mt-2 text-foreground">
               Apakah Anda yakin ingin menghapus user <strong>{currentUser?.name}</strong>? Tindakan ini tidak dapat dibatalkan.
             </Typography>

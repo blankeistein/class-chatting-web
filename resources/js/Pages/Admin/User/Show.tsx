@@ -90,7 +90,7 @@ export default function Show({ user }: { user: User }) {
             </div>
 
             <div>
-              <Typography type="h6" className="dark:text-white">
+              <Typography type="h6">
                 Detail Akun
               </Typography>
               <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">

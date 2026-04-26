@@ -42,6 +42,15 @@ class BookController extends Controller
         return Inertia::render('Admin/Buku/Create');
     }
 
+    public function show($id)
+    {
+        $book = Book::findOrFail($id);
+
+        return Inertia::render('Admin/Buku/Show', [
+            'book' => new BookResource($book),
+        ]);
+    }
+
     public function store(Request $request)
     {
         $request->validate([

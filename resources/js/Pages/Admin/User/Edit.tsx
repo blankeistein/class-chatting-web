@@ -83,7 +83,6 @@ export default function Edit({ user }: { user: User }) {
                     value={data.name}
                     onChange={(e) => setData("name", e.target.value)}
                     isError={!!errors.name}
-                    className="dark:text-white"
                   >
                     <Input.Icon><UserIcon className="w-4 h-4" /></Input.Icon>
                   </Input>
@@ -104,7 +103,6 @@ export default function Edit({ user }: { user: User }) {
                     value={data.username}
                     onChange={(e) => setData("username", e.target.value)}
                     isError={!!errors.username}
-                    className="dark:text-white"
                   >
                     <Input.Icon><span className="text-sm font-bold">@</span></Input.Icon>
                   </Input>
@@ -126,7 +124,6 @@ export default function Edit({ user }: { user: User }) {
                     value={data.email}
                     onChange={(e) => setData("email", e.target.value)}
                     isError={!!errors.email}
-                    className="dark:text-white"
                   >
                     <Input.Icon><MailIcon className="w-4 h-4" /></Input.Icon>
                   </Input>
@@ -147,7 +144,6 @@ export default function Edit({ user }: { user: User }) {
                     value={data.phone}
                     onChange={(e) => setData("phone", e.target.value)}
                     isError={!!errors.phone}
-                    className="dark:text-white"
                   >
                     <Input.Icon><PhoneIcon className="w-4 h-4" /></Input.Icon>
                   </Input>
@@ -166,7 +162,7 @@ export default function Edit({ user }: { user: User }) {
                     value={data.role}
                     onValueChange={(val) => setData("role", val)}
                   >
-                    <Select.Trigger placeholder="Pilih Role" className="dark:text-white">
+                    <Select.Trigger placeholder="Pilih Role">
                       {() => data.role === 'admin' ? "Admin" : "User"}
                     </Select.Trigger>
                     <Select.List>
@@ -215,7 +211,6 @@ export default function Edit({ user }: { user: User }) {
                       value={data.password}
                       onChange={(e) => setData("password", e.target.value)}
                       isError={!!errors.password}
-                      className="dark:text-white"
                     >
                       <Input.Icon><LockIcon className="w-4 h-4" /></Input.Icon>
                     </Input>
@@ -237,7 +232,6 @@ export default function Edit({ user }: { user: User }) {
                       value={data.password_confirmation}
                       onChange={(e) => setData("password_confirmation", e.target.value)}
                       isError={!!errors.password_confirmation}
-                      className="dark:text-white"
                     >
                       <Input.Icon><LockIcon className="w-4 h-4" /></Input.Icon>
                     </Input>

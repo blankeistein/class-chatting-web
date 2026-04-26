@@ -315,9 +315,12 @@ export default function Index({ schools: paginatedSchools, filters, filterOption
         <Card className="shadow-sm border border-slate-200 dark:border-slate-800 dark:bg-slate-900">
           <Card.Body className="p-4 space-y-4">
             <div className="flex flex-col gap-2 md:flex-row md:items-center">
-              <div className="w-full md:w-96">
+              <div className="order-2 w-full md:w-96">
+                <Typography as="label" htmlFor="urutkan-berdasarkan" type="small" color="default" className="font-semibold">
+                  Urutkan Berdasarkan
+                </Typography>
                 <Select value={sort} onValueChange={(value) => setSort(value || "name|asc")}>
-                  <Select.Trigger placeholder="Urutkan berdasarkan">
+                  <Select.Trigger id="urutkan-berdasarkan" placeholder="Urutkan berdasarkan">
                     {() => {
                       const labels: Record<string, string> = {
                         "created_at|desc": "Terbaru",
@@ -342,9 +345,12 @@ export default function Index({ schools: paginatedSchools, filters, filterOption
                 </Select>
               </div>
 
-              <div className="w-full md:w-52">
+              <div className="order-3 w-full md:w-52">
+                <Typography as="label" htmlFor="jumlah-item" type="small" color="default" className="font-semibold">
+                  Jumlah Item
+                </Typography>
                 <Select value={perPage} onValueChange={(value) => setPerPage(value || "20")}>
-                  <Select.Trigger placeholder="25 data">
+                  <Select.Trigger id="jumlah-item" placeholder="25 data">
                     {() => `${perPage} data`}
                   </Select.Trigger>
                   <Select.List>
@@ -355,29 +361,49 @@ export default function Index({ schools: paginatedSchools, filters, filterOption
                 </Select>
               </div>
 
-              <Input
-                placeholder="Cari nama sekolah atau NPSN atau kode sekolah..."
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    handleFilter();
-                  }
-                }}
-                className="dark:text-white"
-              >
-              </Input>
-              <IconButton variant="outline" color="secondary" onClick={handleFilter} className="shrink-0">
-                <Search className="w-4 h-4" />
-              </IconButton>
               <IconButton
                 color={hasActiveFilters ? "primary" : "secondary"}
                 variant={hasActiveFilters ? "solid" : "outline"}
                 onClick={() => setIsFilterOpen(true)}
-                className="shrink-0"
+                className="order-4 hidden md:block shrink-0 ml-auto"
               >
                 <Filter className="w-4 h-4" />
               </IconButton>
+              <Button
+                color={hasActiveFilters ? "primary" : "secondary"}
+                variant={hasActiveFilters ? "solid" : "outline"}
+                onClick={() => setIsFilterOpen(true)}
+                className="order-1 md:hidden w-full"
+              >
+                <Filter className="w-4 h-4 mr-2" />
+                Filter
+              </Button>
+            </div>
+
+            <div className="w-full">
+              <div className="w-full">
+                <Typography as="label" htmlFor="cari" type="small" color="default" className="font-semibold">
+                  Cari
+                </Typography>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="cari"
+                    placeholder="Cari nama sekolah atau NPSN atau kode sekolah..."
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        handleFilter();
+                      }
+                    }}
+
+                  >
+                  </Input>
+                  <IconButton variant="outline" color="secondary" onClick={handleFilter} className="shrink-0">
+                    <Search className="w-4 h-4" />
+                  </IconButton>
+                </div>
+              </div>
             </div>
           </Card.Body>
         </Card>
@@ -509,7 +535,7 @@ export default function Index({ schools: paginatedSchools, filters, filterOption
           <Dialog.Content className="dark:border-slate-800">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <Typography type="h6" className="dark:text-white">
+                <Typography type="h6" >
                   Filter Sekolah
                 </Typography>
                 <Typography className="mt-1 text-sm text-slate-500 dark:text-slate-400">
@@ -530,7 +556,7 @@ export default function Index({ schools: paginatedSchools, filters, filterOption
                   setDistrictId("");
                 }}
               >
-                <Select.Trigger placeholder="Semua provinsi" className="dark:text-white">
+                <Select.Trigger placeholder="Semua provinsi" >
                   {() => filterOptions.provinces.find((item) => String(item.id) === provinceId)?.name || "Semua provinsi"}
                 </Select.Trigger>
                 <Select.List className="overflow-auto">
@@ -551,7 +577,7 @@ export default function Index({ schools: paginatedSchools, filters, filterOption
                 }}
                 disabled={!provinceId}
               >
-                <Select.Trigger placeholder="Semua kabupaten/kota" className="dark:text-white">
+                <Select.Trigger placeholder="Semua kabupaten/kota" >
                   {() => filteredRegencies.find((item) => String(item.id) === regencyId)?.name || "Semua kabupaten/kota"}
                 </Select.Trigger>
                 <Select.List className="overflow-auto">
@@ -569,7 +595,7 @@ export default function Index({ schools: paginatedSchools, filters, filterOption
                 onValueChange={(value) => setDistrictId(value || "")}
                 disabled={!regencyId}
               >
-                <Select.Trigger placeholder="Semua kecamatan" className="dark:text-white">
+                <Select.Trigger placeholder="Semua kecamatan" >
                   {() => filteredDistricts.find((item) => String(item.id) === districtId)?.name || "Semua kecamatan"}
                 </Select.Trigger>
                 <Select.List className="overflow-auto">
@@ -583,7 +609,7 @@ export default function Index({ schools: paginatedSchools, filters, filterOption
               </Select>
 
               <Select value={status} onValueChange={(value) => setStatus(value || "")}>
-                <Select.Trigger placeholder="Semua status" className="dark:text-white">
+                <Select.Trigger placeholder="Semua status" >
                   {() => status || "Semua status"}
                 </Select.Trigger>
                 <Select.List>
@@ -595,7 +621,7 @@ export default function Index({ schools: paginatedSchools, filters, filterOption
 
               <div className="md:col-span-2">
                 <Select value={bentukPendidikan} onValueChange={(value) => setBentukPendidikan(value || "")}>
-                  <Select.Trigger placeholder="Semua bentuk pendidikan" className="dark:text-white">
+                  <Select.Trigger placeholder="Semua bentuk pendidikan" >
                     {() => bentukPendidikan || "Semua bentuk pendidikan"}
                   </Select.Trigger>
                   <Select.List className="overflow-auto">
@@ -634,7 +660,7 @@ export default function Index({ schools: paginatedSchools, filters, filterOption
       <Dialog open={isDeleteOpen} onOpenChange={() => setIsDeleteOpen(false)} size="sm">
         <Dialog.Overlay>
           <Dialog.Content className="dark:border-slate-800">
-            <Typography type="h6" className="dark:text-white">Hapus Sekolah</Typography>
+            <Typography type="h6" >Hapus Sekolah</Typography>
             <Typography className="mb-6 mt-2 text-foreground">
               Apakah Anda yakin ingin menghapus sekolah <strong>{currentSchool?.name}</strong>?
             </Typography>

@@ -390,9 +390,6 @@ export default function Import() {
               )}
 
               <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
-                <Button type="button" variant="ghost" color="secondary" onClick={() => router.get(route("admin.schools.index"))}>
-                  Kembali
-                </Button>
                 <Button type="submit" disabled={importForm.processing || !importForm.data.file || isPreviewLoading} className="flex items-center gap-2">
                   <UploadCloudIcon className="h-4 w-4" />
                   {importForm.processing ? "Import..." : "Import CSV"}

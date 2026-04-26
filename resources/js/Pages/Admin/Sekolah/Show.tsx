@@ -98,7 +98,7 @@ export default function Show({ school }: { school: { data: School } }) {
         <Card className="mx-auto max-w-5xl overflow-hidden border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <CardBody className="space-y-6 p-6">
             <div>
-              <Typography type="h6" className="dark:text-white">
+              <Typography type="h6">
                 Identitas
               </Typography>
               <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -112,7 +112,7 @@ export default function Show({ school }: { school: { data: School } }) {
             </div>
 
             <div>
-              <Typography type="h6" className="dark:text-white">
+              <Typography type="h6">
                 Wilayah
               </Typography>
               <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -123,7 +123,7 @@ export default function Show({ school }: { school: { data: School } }) {
             </div>
 
             <div>
-              <Typography type="h6" className="dark:text-white">
+              <Typography type="h6">
                 Alamat dan Koordinat
               </Typography>
               <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">

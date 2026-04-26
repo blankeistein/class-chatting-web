@@ -136,7 +136,6 @@ export default function Create({ provinces, regencies, districts, villages }: { 
                       value={data.code}
                       onChange={(event) => setData("code", event.target.value)}
                       isError={!!errors.code}
-                      className="dark:text-white"
                     />
                     <IconButton type="button" variant="outline" color="secondary" onClick={() => setData("code", generateSchoolCode())}>
                       <RefreshCwIcon className="h-4 w-4" />
@@ -155,7 +154,6 @@ export default function Create({ provinces, regencies, districts, villages }: { 
                     value={data.npsn}
                     onChange={(event) => setData("npsn", event.target.value)}
                     isError={!!errors.npsn}
-                    className="dark:text-white"
                   />
                   {errors.npsn && <Typography type="small" color="error">{errors.npsn}</Typography>}
                 </div>
@@ -170,7 +168,6 @@ export default function Create({ provinces, regencies, districts, villages }: { 
                     value={data.name}
                     onChange={(event) => setData("name", event.target.value)}
                     isError={!!errors.name}
-                    className="dark:text-white"
                   />
                   {errors.name && <Typography type="small" color="error">{errors.name}</Typography>}
                 </div>
@@ -185,7 +182,6 @@ export default function Create({ provinces, regencies, districts, villages }: { 
                     value={data.bentuk_pendidikan}
                     onChange={(event) => setData("bentuk_pendidikan", event.target.value)}
                     isError={!!errors.bentuk_pendidikan}
-                    className="dark:text-white"
                   />
                   {errors.bentuk_pendidikan && <Typography type="small" color="error">{errors.bentuk_pendidikan}</Typography>}
                 </div>
@@ -198,7 +194,7 @@ export default function Create({ provinces, regencies, districts, villages }: { 
                     value={data.status}
                     onValueChange={(value) => setData("status", value)}
                   >
-                    <Select.Trigger placeholder="Pilih status" className="dark:text-white">
+                    <Select.Trigger placeholder="Pilih status">
                       {() => data.status || "Pilih status"}
                     </Select.Trigger>
                     <Select.List>
@@ -221,7 +217,7 @@ export default function Create({ provinces, regencies, districts, villages }: { 
                       setData("district_id", 0);
                     }}
                   >
-                    <Select.Trigger placeholder="Pilih provinsi" className="dark:text-white">
+                    <Select.Trigger placeholder="Pilih provinsi">
                       {() => provinces.find((item) => item.id === data.province_id)?.name || "Pilih provinsi"}
                     </Select.Trigger>
                     <Select.List className="overflow-auto">
@@ -247,7 +243,7 @@ export default function Create({ provinces, regencies, districts, villages }: { 
                     }}
                     disabled={!data.province_id}
                   >
-                    <Select.Trigger placeholder="Pilih kabupaten/kota" className="dark:text-white">
+                    <Select.Trigger placeholder="Pilih kabupaten/kota">
                       {() => filteredRegencies.find((item) => item.id === data.regency_id)?.name || "Pilih kabupaten/kota"}
                     </Select.Trigger>
                     <Select.List className="overflow-auto">
@@ -272,7 +268,7 @@ export default function Create({ provinces, regencies, districts, villages }: { 
                     }}
                     disabled={!data.regency_id}
                   >
-                    <Select.Trigger placeholder="Pilih kecamatan" className="dark:text-white">
+                    <Select.Trigger placeholder="Pilih kecamatan">
                       {() => filteredDistricts.find((item) => item.id === data.district_id)?.name || "Pilih kecamatan"}
                     </Select.Trigger>
                     <Select.List className="overflow-auto">
@@ -295,7 +291,6 @@ export default function Create({ provinces, regencies, districts, villages }: { 
                     placeholder="Masukkan alamat sekolah"
                     value={data.address}
                     onChange={(event) => setData("address", event.target.value)}
-                    className="dark:text-white"
                   />
                   {errors.address && <Typography type="small" color="error">{errors.address}</Typography>}
                 </div>
@@ -311,7 +306,6 @@ export default function Create({ provinces, regencies, districts, villages }: { 
                     value={data.rt}
                     onChange={(event) => setData("rt", event.target.value)}
                     isError={!!errors.rt}
-                    className="dark:text-white"
                   />
                   {errors.rt && <Typography type="small" color="error">{errors.rt}</Typography>}
                 </div>
@@ -327,7 +321,6 @@ export default function Create({ provinces, regencies, districts, villages }: { 
                     value={data.rw}
                     onChange={(event) => setData("rw", event.target.value)}
                     isError={!!errors.rw}
-                    className="dark:text-white"
                   />
                   {errors.rw && <Typography type="small" color="error">{errors.rw}</Typography>}
                 </div>
@@ -343,7 +336,6 @@ export default function Create({ provinces, regencies, districts, villages }: { 
                     value={data.latitute}
                     onChange={(event) => setData("latitute", event.target.value)}
                     isError={!!errors.latitute}
-                    className="dark:text-white"
                   />
                   {errors.latitute && <Typography type="small" color="error">{errors.latitute}</Typography>}
                 </div>
@@ -359,7 +351,6 @@ export default function Create({ provinces, regencies, districts, villages }: { 
                     value={data.longitude}
                     onChange={(event) => setData("longitude", event.target.value)}
                     isError={!!errors.longitude}
-                    className="dark:text-white"
                   />
                   {errors.longitude && <Typography type="small" color="error">{errors.longitude}</Typography>}
                 </div>

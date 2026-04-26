@@ -104,7 +104,6 @@ export default function Edit({ book }: { book: { data: Book } }) {
                     value={data.title}
                     onChange={(e) => setData("title", e.target.value)}
                     isError={!!errors.title}
-                    className="dark:text-white"
                   />
                   {errors.title && (
                     <Typography type="small" color="error" className="mt-1 block">
@@ -124,7 +123,6 @@ export default function Edit({ book }: { book: { data: Book } }) {
                       value={data.url}
                       onChange={(e) => setData("url", e.target.value)}
                       isError={!!errors.url}
-                      className="dark:text-white"
                     >
                       <Input.Icon><LinkIcon className="w-4 h-4" /></Input.Icon>
                     </Input>
@@ -146,7 +144,6 @@ export default function Edit({ book }: { book: { data: Book } }) {
                       value={data.version}
                       onChange={(e) => setData("version", parseInt(e.target.value) || 1)}
                       isError={!!errors.version}
-                      className="dark:text-white"
                     >
                       <Input.Icon><HashIcon className="w-4 h-4" /></Input.Icon>
                     </Input>
@@ -180,7 +177,6 @@ export default function Edit({ book }: { book: { data: Book } }) {
                     value={currentTag}
                     onChange={(e) => setCurrentTag(e.target.value)}
                     onKeyDown={handleTagAdd}
-                    className="dark:text-white"
                   >
                     <Input.Icon><TagIcon className="w-4 h-4" /></Input.Icon>
                   </Input>

@@ -444,10 +444,11 @@ export default function Index({
                 >
                   <Select.Trigger id="jumlah-item" placeholder="25" />
                   <Select.List>
-                    <Select.Option value="10">10 per Hal</Select.Option>
                     <Select.Option value="25">25 per Hal</Select.Option>
                     <Select.Option value="50">50 per Hal</Select.Option>
                     <Select.Option value="100">100 per Hal</Select.Option>
+                    <Select.Option value="500">500 per Hal</Select.Option>
+                    <Select.Option value="1000">1000 per Hal</Select.Option>
                   </Select.List>
                 </Select>
               </div>

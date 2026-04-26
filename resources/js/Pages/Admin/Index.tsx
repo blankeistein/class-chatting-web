@@ -29,13 +29,6 @@ import {
   TicketIcon
 } from "lucide-react";
 
-const popularBooks = [
-  { name: "Panduan Belajar Membaca", sales: 85, color: "blue" },
-  { name: "Matematika Dasar", sales: 65, color: "green" },
-  { name: "Ilmu Pengetahuan Alam", sales: 45, color: "orange" },
-  { name: "Sejarah Indonesia", sales: 30, color: "red" },
-];
-
 interface Stats {
   total_books: number;
   total_users: number;

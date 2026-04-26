@@ -13,13 +13,14 @@ import {
   Tooltip,
   Typography,
 } from "@material-tailwind/react";
-import { ArchiveIcon, BellIcon, BookIcon, Building2Icon, ChevronDownIcon, GithubIcon, Grid3X3, Grip, LayoutDashboardIcon, LayoutGrid, LogOutIcon, MailIcon, MapPinnedIcon, MenuIcon, MoonIcon, PiIcon, PinIcon, SunIcon, TicketIcon, Trash2Icon, UserCircle2Icon, VideoIcon, XIcon } from "lucide-react";
+import { ArchiveIcon, ArrowLeft, BellIcon, BookIcon, Building2Icon, ChevronDownIcon, GithubIcon, Grid3X3, Grip, LayoutDashboardIcon, LayoutGrid, LogOutIcon, MailIcon, MapPinnedIcon, MenuIcon, MoonIcon, PiIcon, PinIcon, SunIcon, TicketIcon, Trash2Icon, UserCircle2Icon, VideoIcon, XIcon } from "lucide-react";
 import { useTheme } from "../Contexts/ThemeContext";
 import { Link, router, usePage } from "@inertiajs/react";
 import { route } from "ziggy-js";
 import { AuthProps } from "@/types/global";
 import { NotificationMenu } from "../Components/NotificationMenu";
 import { signOutFirebase } from "../lib/firebase";
+import { AppsLinks } from "./AdminLayout";
 
 type ChildLinkType = {
   icon: React.ForwardRefExoticComponent<React.SVGProps<SVGSVGElement>>;
@@ -37,89 +38,18 @@ type LinkType = {
   children?: ChildLinkType[];
 };
 
-const Links: LinkType[] = [
+const ClassChattingLinks: LinkType[] = [
   {
-    icon: LayoutDashboardIcon,
-    title: "Dashboard",
+    title: "Buku",
+    icon: BookIcon,
     routeName: "admin.dashboard",
-  },
-  {
-    icon: TicketIcon,
-    title: "Kode Aktivasi",
-    routeName: "admin.activation-code.index",
-  },
-  {
-    icon: ArchiveIcon,
-    title: "Konten",
-    children: [
-      {
-        title: "Buku",
-        icon: BookIcon,
-        routeName: "admin.books.index",
-      },
-      {
-        title: "Video",
-        icon: VideoIcon,
-        routeName: "admin.videos.index",
-      },
-    ],
-  },
-  {
-    title: "Sekolah",
-    icon: Building2Icon,
-    routeName: "admin.schools.index",
-  },
-  {
-    icon: MapPinnedIcon,
-    title: "Daerah",
-    routeName: "admin.regions.index",
-  },
-
-  {
-    icon: UserCircle2Icon,
-    title: "User",
-    routeName: "admin.users.index",
   },
 ];
 
-type AppLinkType = {
-  icon: string;
-  title: string;
-  routeName: string;
-};
-
-export const AppsLinks: AppLinkType[] = [
-  {
-    icon: "/assets/images/icons/class-chatting.webp",
-    title: "Class Chatting",
-    routeName: "admin.apps.class-chatting",
-  },
-  {
-    icon: "/assets/images/icons/class-chatting-ulangan-online.webp",
-    title: "Ulangan Online",
-    routeName: "admin.dashboard",
-  },
-  {
-    icon: "/assets/images/icons/anak-indonesia-menghafal.webp",
-    title: "Anak Indonesia Menghafal",
-    routeName: "admin.dashboard",
-  },
-  {
-    icon: "/assets/images/icons/class-chatting-for-kids.webp",
-    title: "For Kids",
-    routeName: "admin.dashboard",
-  },
-  {
-    icon: "/assets/images/icons/class-chatting-layar-lebar.webp",
-    title: "Layar Lebar",
-    routeName: "admin.dashboard",
-  }
-]
-
-const NavList = ({ isCollapsed = false }: { isCollapsed?: boolean }) => {
+const NavList = ({ links, isCollapsed = false }: { links: LinkType[], isCollapsed?: boolean }) => {
   const { url } = usePage();
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
-    Links.reduce<Record<string, boolean>>((groups, link) => {
+    links.reduce<Record<string, boolean>>((groups, link) => {
       if (link.children) {
         groups[link.title] = link.children.some(({ routeName }) => route().current(`${routeName}*`));
       }
@@ -130,7 +60,7 @@ const NavList = ({ isCollapsed = false }: { isCollapsed?: boolean }) => {
 
   useEffect(() => {
     setOpenGroups((currentGroups) =>
-      Links.reduce<Record<string, boolean>>((groups, link) => {
+      links.reduce<Record<string, boolean>>((groups, link) => {
         if (link.children) {
           const hasActiveChild = link.children.some(({ routeName }) => route().current(`${routeName}*`));
           groups[link.title] = currentGroups[link.title] || hasActiveChild;
@@ -150,7 +80,7 @@ const NavList = ({ isCollapsed = false }: { isCollapsed?: boolean }) => {
 
   return (
     <List>
-      {Links.map(({ icon: Icon, title, href, routeName, badge, children }) => {
+      {links.map(({ icon: Icon, title, href, routeName, badge, children }) => {
         const isSelected = routeName ? route().current(routeName + '*') : false;
         const hasChildren = Boolean(children?.length);
         const hasActiveChild = children?.some((child) => route().current(`${child.routeName}*`)) ?? false;
@@ -283,11 +213,11 @@ const NavList = ({ isCollapsed = false }: { isCollapsed?: boolean }) => {
   )
 }
 
-function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
+function Sidebar({ links, isCollapsed }: { links: LinkType[], isCollapsed: boolean }) {
 
   return (
     <div className={`p-2 transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-[280px]'} hidden lg:block overflow-hidden`}>
-      <Card className="h-full max-h-screen">
+      <Card className="grid grid-rows-[max-content_auto_max-content] h-full max-h-screen">
         <Card.Header className={`flex items-center gap-4 mb-0 mt-3 h-max transition-all duration-300 ${isCollapsed ? 'mx-1 px-1 justify-center' : 'mx-4'}`}>
           <img src="/assets/images/icons/lestari-ilmu.webp" alt="logo" className="h-8 w-8 flex-shrink-0" />
 
@@ -300,9 +230,15 @@ function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
             </Typography>
           )}
         </Card.Header>
-        <Card.Body className={`p-4 mt-2 ${isCollapsed ? 'px-2' : ''}`}>
-          <NavList isCollapsed={isCollapsed} />
+        <Card.Body className={`h-full p-4 mt-2 ${isCollapsed ? 'px-2' : ''}`}>
+          <NavList links={links} isCollapsed={isCollapsed} />
         </Card.Body>
+        <Card.Footer>
+          <Button as={Link} href={route('admin.dashboard')} variant="outline" className="w-full">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Kembali
+          </Button>
+        </Card.Footer>
       </Card>
     </div>
   );
@@ -340,7 +276,7 @@ function ProfileMenu() {
   );
 }
 
-function TopNavbar({ onToggleSidebar }: { onToggleSidebar: () => void }) {
+function TopNavbar({ appName, onToggleSidebar }: { appName: string, onToggleSidebar: () => void }) {
   const [openNav, setOpenNav] = useState(false);
 
   useEffect(() => {
@@ -358,6 +294,17 @@ function TopNavbar({ onToggleSidebar }: { onToggleSidebar: () => void }) {
   }, []);
 
   const { theme, toggleTheme } = useTheme();
+
+  let links: LinkType[] = [];
+
+  switch (appName) {
+    case "Class Chatting":
+      links = ClassChattingLinks;
+      break;
+    default:
+      links = ClassChattingLinks;
+      break;
+  }
 
   return (
     <>
@@ -424,7 +371,7 @@ function TopNavbar({ onToggleSidebar }: { onToggleSidebar: () => void }) {
       <Drawer open={openNav} onOpenChange={() => setOpenNav(!openNav)}>
         <Drawer.Overlay>
           <Drawer.Panel placement="left">
-            <div>
+            <div className="grid grid-rows-[max-content_auto_max-content] h-full">
               <div className="flex items-center gap-4 mb-4 px-2">
                 <img src="/assets/images/icons/lestari-ilmu.webp" alt="logo" className="h-8 w-8" />
                 <Typography
@@ -434,7 +381,13 @@ function TopNavbar({ onToggleSidebar }: { onToggleSidebar: () => void }) {
                   Class Chatting Web
                 </Typography>
               </div>
-              <NavList />
+              <NavList links={links} />
+              <div>
+                <Button as={Link} href={route('admin.dashboard')} variant="outline" className="w-full">
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Kembali
+                </Button>
+              </div>
             </div>
           </Drawer.Panel>
         </Drawer.Overlay>
@@ -443,7 +396,7 @@ function TopNavbar({ onToggleSidebar }: { onToggleSidebar: () => void }) {
   );
 }
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default function AdminAppLayout({ appName, children }: { appName: string, children: React.ReactNode }) {
   const contentRef = React.useRef<HTMLDivElement>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -454,11 +407,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return removeListener;
   }, []);
 
+  let links: LinkType[] = [];
+
+  switch (appName) {
+    case "Class Chatting":
+      links = ClassChattingLinks;
+      break;
+    default:
+      links = ClassChattingLinks;
+      break;
+  }
+
   return (
     <div className="h-screen bg-background flex overflow-hidden">
-      <Sidebar isCollapsed={isCollapsed} />
+      <Sidebar links={links} isCollapsed={isCollapsed} />
       <div ref={contentRef} className="flex-1 overflow-auto">
-        <TopNavbar onToggleSidebar={() => setIsCollapsed(!isCollapsed)} />
+        <TopNavbar appName={appName} onToggleSidebar={() => setIsCollapsed(!isCollapsed)} />
         {children}
         <footer className="p-2 flex items-center justify-between border-t border-surface mt-auto">
           <Typography className="text-sm text-surface-foreground/60">

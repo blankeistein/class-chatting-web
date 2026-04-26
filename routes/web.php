@@ -65,6 +65,14 @@ Route::middleware('auth')->group(function () {
         Route::resource('videos', VideoController::class);
         Route::delete('users/bulk-delete', [UserController::class, 'bulkDelete'])->name('users.bulk-delete');
         Route::resource('users', UserController::class);
+
+        Route::get('apps', function () {
+            return redirect()->route('admin.apps.class-chatting');
+        })->name('apps');
+
+        Route::get('apps/class-chatting', function () {
+            return Inertia::render('Admin/Apps/ClassChatting');
+        })->name('apps.class-chatting');
     });
 });
 

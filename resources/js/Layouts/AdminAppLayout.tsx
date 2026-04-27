@@ -42,7 +42,7 @@ const ClassChattingLinks: LinkType[] = [
   {
     title: "Buku",
     icon: BookIcon,
-    routeName: "admin.dashboard",
+    routeName: "admin.apps.class-chatting.book",
   },
 ];
 

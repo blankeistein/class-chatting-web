@@ -1,5 +1,6 @@
 import { FirebaseApp, getApp, getApps, initializeApp } from "firebase/app";
 import { Auth, getAuth, signInWithCustomToken, signOut } from "firebase/auth";
+import { Database, getDatabase } from "firebase/database";
 import { Firestore, getFirestore } from "firebase/firestore";
 
 type FirebaseSession = {
@@ -12,6 +13,7 @@ type FirebaseWebConfig = {
     authDomain: string;
     projectId: string;
     appId: string;
+    databaseURL?: string;
     messagingSenderId?: string;
     storageBucket?: string;
 };
@@ -23,6 +25,7 @@ function resolveFirebaseWebConfig(): FirebaseWebConfig | null {
     const authDomain = import.meta.env.VITE_FIREBASE_AUTH_DOMAIN;
     const projectId = import.meta.env.VITE_FIREBASE_PROJECT_ID;
     const appId = import.meta.env.VITE_FIREBASE_APP_ID;
+    const databaseURL = import.meta.env.VITE_FIREBASE_DATABASE_URL;
     const messagingSenderId = import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID;
     const storageBucket = import.meta.env.VITE_FIREBASE_STORAGE_BUCKET;
 
@@ -40,6 +43,7 @@ function resolveFirebaseWebConfig(): FirebaseWebConfig | null {
         authDomain,
         projectId,
         appId,
+        databaseURL,
         messagingSenderId,
         storageBucket,
     };
@@ -63,6 +67,16 @@ export function getFirebaseFirestore(): Firestore | null {
     }
 
     return getFirestore(app);
+}
+
+export function getFirebaseDatabase(): Database | null {
+    const app = getFirebaseApp();
+
+    if (! app) {
+        return null;
+    }
+
+    return getDatabase(app);
 }
 
 export function getFirebaseAuth(): Auth | null {

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import axios from "axios";
 import { Head } from "@inertiajs/react";
 import {
@@ -8,20 +8,31 @@ import {
   Dialog,
   IconButton,
   Input,
+  Select,
+  Checkbox,
   Typography,
+  Menu,
 } from "@material-tailwind/react";
 import {
   ArrowDownIcon,
   ArrowDownUp,
   ArrowUpIcon,
   BookIcon,
+  Copy,
+  Icon,
   LayoutGridIcon,
+  ListIcon,
   LoaderCircleIcon,
+  LockIcon,
+  MoreVertical,
+  PencilIcon,
   PlusIcon,
   RefreshCcwIcon,
   SaveIcon,
   SearchIcon,
   Trash2Icon,
+  Unlock,
+  UnlockIcon,
   XIcon,
 } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
@@ -116,20 +127,28 @@ const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat("id-ID").format(amount);
 };
 
+const createEditForm = (book: FirebaseBook): FirebaseBook => ({
+  ...book,
+});
+
 export default function Book() {
   const database = React.useMemo(() => getFirebaseDatabase(), []);
   const [books, setBooks] = React.useState<FirebaseBook[]>([]);
   const [search, setSearch] = React.useState("");
+  const [viewMode, setViewMode] = React.useState<"grid" | "table">("grid");
   const [isLoading, setIsLoading] = React.useState(true);
   const [isSavingOrder, setIsSavingOrder] = React.useState(false);
   const [isOrderMode, setIsOrderMode] = React.useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
   const [mysqlBooks, setMysqlBooks] = React.useState<MysqlBook[]>([]);
   const [mysqlSearch, setMysqlSearch] = React.useState("");
   const deferredMysqlSearch = React.useDeferredValue(mysqlSearch);
   const [isMysqlLoading, setIsMysqlLoading] = React.useState(false);
   const [activeMysqlBookId, setActiveMysqlBookId] = React.useState<number | null>(null);
   const [activeDeleteKey, setActiveDeleteKey] = React.useState<string | null>(null);
+  const [activeEditKey, setActiveEditKey] = React.useState<string | null>(null);
+  const [editForm, setEditForm] = React.useState<FirebaseBook | null>(null);
 
   React.useEffect(() => {
     if (!database) {
@@ -315,31 +334,93 @@ export default function Book() {
     }
   };
 
+  const openEditDialog = (book: FirebaseBook) => {
+    setEditForm(createEditForm(book));
+    setIsEditDialogOpen(true);
+  };
+
+  const handleEditFormChange = (field: keyof FirebaseBook, value: string | number | boolean) => {
+    setEditForm((currentForm) => {
+      if (!currentForm) {
+        return currentForm;
+      }
+
+      return {
+        ...currentForm,
+        [field]: value,
+      };
+    });
+  };
+
+  const handleSaveEdit = async () => {
+    if (!database || !editForm) {
+      toast.error("Form edit belum siap.");
+
+      return;
+    }
+
+    if (!editForm.nameBook.trim()) {
+      toast.error("Judul buku wajib diisi.");
+
+      return;
+    }
+
+    setActiveEditKey(editForm.originalKey);
+
+    try {
+      await update(ref(database, `${ALL_BOOKS_PATH}/${editForm.originalKey}`), {
+        coverBook: editForm.coverBook,
+        idBook: editForm.idBook,
+        idBookPath: editForm.idBookPath,
+        idPlaystore: editForm.idPlaystore,
+        keyword: editForm.keyword,
+        lock: editForm.lock,
+        nameBook: editForm.nameBook,
+        orderBook: editForm.orderBook,
+        price: editForm.price,
+        status: editForm.status,
+        urlBook: editForm.urlBook,
+        version: editForm.version,
+      });
+      toast.success("Data buku berhasil diperbarui.");
+      setIsEditDialogOpen(false);
+      setEditForm(null);
+    } catch (error) {
+      toast.error("Gagal memperbarui data buku.");
+    } finally {
+      setActiveEditKey(null);
+    }
+  };
+
+  const copyToClipboard = useCallback((text: string) => {
+    if ("clipboard" in navigator) {
+      navigator.clipboard.writeText(text).then(() => {
+        toast.success("Link buku berhasil disalin ke clipboard.");
+      }).catch(() => {
+        toast.error("Gagal menyalin link buku.");
+      });
+    } else {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand("copy");
+        toast.success("Link buku berhasil disalin ke clipboard.");
+      } catch {
+        toast.error("Gagal menyalin link buku.");
+      } finally {
+        document.body.removeChild(textarea);
+      }
+    }
+  }, []);
+
   return (
     <>
       <Head title="Manajemen Buku" />
-      <Toaster position="top-right" />
+      <Toaster position="top-center" />
 
       <div className="min-h-screen space-y-6 p-4 md:p-6">
-        <div className="overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-amber-50 via-white to-cyan-50 shadow-sm dark:border-slate-800 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900">
-          <div className="flex flex-col gap-6 p-6 xl:flex-row xl:items-start xl:justify-between">
-            <div className="max-w-3xl">
-              <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-slate-600 shadow-sm ring-1 ring-slate-200 backdrop-blur dark:bg-slate-800/80 dark:text-slate-300 dark:ring-slate-700">
-                <LayoutGridIcon className="h-3.5 w-3.5" />
-                Class Chatting / AllBooks
-              </div>
-              <Typography variant="h3" className="text-slate-900 dark:text-white">
-                Manajemen buku Realtime Database
-              </Typography>
-              <Typography className="mt-3 max-w-2xl text-slate-600 dark:text-slate-300">
-                Kelola daftar buku pada path Firebase Realtime Database <span className="font-mono">/AllBooks</span>, tambahkan dari data buku MySQL, ubah urutan tampil, dan hapus item tanpa memengaruhi data buku utama di MySQL.
-              </Typography>
-            </div>
-
-
-          </div>
-        </div>
-
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <Typography variant="h4" className="font-bold text-slate-800 dark:text-white">
@@ -360,8 +441,23 @@ export default function Book() {
             </Button>
             <div className="flex flex-wrap gap-2">
               <IconButton
+                variant={viewMode === "grid" ? "solid" : "outline"}
+                onClick={() => setViewMode("grid")}
+                title="Mode grid"
+              >
+                <LayoutGridIcon className="h-4 w-4" />
+              </IconButton>
+              <IconButton
+                variant={viewMode === "table" ? "solid" : "outline"}
+                onClick={() => setViewMode("table")}
+                title="Mode tabel"
+              >
+                <ListIcon className="h-4 w-4" />
+              </IconButton>
+              <IconButton
                 variant={isOrderMode ? "solid" : "outline"}
                 onClick={() => setIsOrderMode((value) => !value)}
+                title="Mode order book"
               >
                 <ArrowDownUp className="h-4 w-4" />
               </IconButton>
@@ -393,20 +489,18 @@ export default function Book() {
               <Chip.Label>{books.length} buku</Chip.Label>
             </Chip>
             {isOrderMode && (
-              <Chip size="sm" variant="ghost" className="bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
-                <Chip.Label>Order mode aktif</Chip.Label>
-              </Chip>
-            )}
-            {isOrderMode && (
-              <Button
-                color="success"
-                className="flex items-center gap-2"
-                onClick={saveOrder}
-                disabled={isSavingOrder}
-              >
-                {isSavingOrder ? <LoaderCircleIcon className="h-4 w-4 animate-spin" /> : <SaveIcon className="h-4 w-4" />}
-                Simpan
-              </Button>
+              <>
+                <Chip size="sm" variant="ghost" className="bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+                  <Chip.Label>Order mode aktif</Chip.Label>
+                </Chip>
+                <Button variant="outline" onClick={() => setIsOrderMode(false)}>
+                  Batal
+                </Button>
+                <Button color="success" onClick={saveOrder} disabled={isSavingOrder}>
+                  {isSavingOrder ? <LoaderCircleIcon className="h-4 w-4 animate-spin mr-2" /> : <SaveIcon className="h-4 w-4 mr-2" />}
+                  Simpan
+                </Button>
+              </>
             )}
           </div>
         </div>
@@ -421,115 +515,231 @@ export default function Book() {
             ))}
           </div>
         ) : filteredBooks.length > 0 ? (
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-            {filteredBooks.map((book, index) => {
-              const originalIndex = books.findIndex((item) => item.originalKey === book.originalKey);
-              const isDeleting = activeDeleteKey === book.originalKey;
+          viewMode === "table" ? (
+            <Card className="overflow-hidden border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
+                  <thead className="bg-slate-50 dark:bg-slate-950/60">
+                    <tr className="text-left text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                      <th className="px-4 py-3"></th>
+                      <th className="px-4 py-3">Buku</th>
+                      <th className="px-4 py-3">Keyword</th>
+                      <th className="px-4 py-3">Status</th>
+                      <th className="px-4 py-3">Versi</th>
+                      <th className="px-4 py-3">Lock</th>
+                      <th className="px-4 py-3 text-right">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {filteredBooks.map((book) => {
+                      const originalIndex = books.findIndex((item) => item.originalKey === book.originalKey);
+                      const isDeleting = activeDeleteKey === book.originalKey;
 
-              return (
-                <Card key={book.originalKey} className="border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                  <div className="flex gap-4">
-                    <div className="flex w-20 shrink-0 flex-col items-center gap-2">
-                      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
-                        <span className="text-sm font-bold">#{book.orderBook}</span>
-                      </div>
+                      return (
+                        <tr key={book.originalKey} className="align-top">
+                          <td className="px-4 py-4">
+                            <div className="flex items-center gap-2">
+                              {isOrderMode && !search ? (
+                                <div className="flex flex-col gap-1">
+                                  <IconButton
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => moveBook(originalIndex, "up")}
+                                    disabled={originalIndex <= 0}
+                                  >
+                                    <ArrowUpIcon className="h-4 w-4" />
+                                  </IconButton>
+                                  <IconButton
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => moveBook(originalIndex, "down")}
+                                    disabled={originalIndex >= books.length - 1}
+                                  >
+                                    <ArrowDownIcon className="h-4 w-4" />
+                                  </IconButton>
+                                </div>
+                              ) : (
+                                <span className="font-semibold text-slate-700 dark:text-slate-200">#{book.orderBook}</span>
+                              )
+                              }
+                            </div>
+                          </td>
+                          <td className="px-4 py-4">
+                            <div className="flex min-w-[20rem] items-center gap-3">
+                              <div className="h-20 w-12 overflow-hidden rounded-lg border border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-950">
+                                {book.coverBook ? (
+                                  <img
+                                    src={book.coverBook}
+                                    alt={book.nameBook}
+                                    className="h-full w-full object-cover"
+                                    onError={(event) => {
+                                      (event.target as HTMLImageElement).src = "https://placehold.co/120x180?text=No+Cover";
+                                    }}
+                                  />
+                                ) : (
+                                  <div className="flex h-full items-center justify-center text-slate-400">
+                                    <BookIcon className="h-5 w-5" />
+                                  </div>
+                                )}
+                              </div>
+                              <div className="min-w-0">
+                                <Typography className="line-clamp-2 font-semibold text-slate-800 dark:text-white">
+                                  {book.nameBook}
+                                </Typography>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-4 py-4 text-sm text-slate-600 dark:text-slate-300">{book.keyword || "-"}</td>
+                          <td className="px-4 py-4">
+                            <Chip size="sm" variant="ghost" color={book.status === "publish" ? "success" : "warning"}>
+                              <Chip.Label>{book.status}</Chip.Label>
+                            </Chip>
+                          </td>
+                          <td className="px-4 py-4 text-sm text-slate-600 dark:text-slate-300">{book.version}</td>
+                          <td className="px-4 py-4 text-sm text-slate-600 dark:text-slate-300">{book.lock ? <LockIcon className="w-4 h-4" /> : <UnlockIcon className="w-4 h-4" />}</td>
+                          <td className="px-4 py-4">
+                            <Menu placement="bottom-end">
+                              <Menu.Trigger as={IconButton} variant="ghost" size="sm">
+                                <MoreVertical className="h-4 w-4" />
+                              </Menu.Trigger>
+                              <Menu.Content>
+                                <Menu.Item onClick={() => openEditDialog(book)}>
+                                  <PencilIcon className="h-4 w-4 mr-2" />
+                                  Edit
+                                </Menu.Item>
+                                <Menu.Item onClick={() => copyToClipboard(book.urlBook)}>
+                                  <Copy className="h-4 w-4 mr-2" />
+                                  Salin Link
+                                </Menu.Item>
+                                <Menu.Item
+                                  className="text-error"
+                                  onClick={() => handleDeleteBook(book)}
+                                  disabled={isDeleting}>
+                                  {isDeleting ? <LoaderCircleIcon className="h-4 w-4 animate-spin mr-2" /> : <Trash2Icon className="h-4 w-4 mr-2" />}
+                                  Hapus
+                                </Menu.Item>
+                              </Menu.Content>
+                            </Menu>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+              {filteredBooks.map((book, index) => {
+                const originalIndex = books.findIndex((item) => item.originalKey === book.originalKey);
+                const isDeleting = activeDeleteKey === book.originalKey;
 
-                      {isOrderMode && !search && (
-                        <div className="flex flex-col gap-1">
-                          <IconButton
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => moveBook(originalIndex, "up")}
-                            disabled={originalIndex <= 0}
-                          >
-                            <ArrowUpIcon className="h-4 w-4" />
-                          </IconButton>
-                          <IconButton
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => moveBook(originalIndex, "down")}
-                            disabled={originalIndex >= books.length - 1}
-                          >
-                            <ArrowDownIcon className="h-4 w-4" />
-                          </IconButton>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="h-28 w-20 shrink-0 overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-950">
-                      {book.coverBook ? (
+                return (
+                  <Card key={book.originalKey} className="border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                    <Card.Header className="relative overflow-hidden p-0">
+                      <div className="h-[320px] w-full shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-950">
                         <img
                           src={book.coverBook}
                           alt={book.nameBook}
                           className="h-full w-full object-cover"
                           onError={(event) => {
-                            (event.target as HTMLImageElement).src = "https://placehold.co/200x300?text=No+Cover";
+                            (event.target as HTMLImageElement).src = "/assets/images/book-thumbnail.webp";
                           }}
                         />
-                      ) : (
-                        <div className="flex h-full items-center justify-center text-slate-400">
-                          <BookIcon className="h-8 w-8" />
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <Typography className="line-clamp-2 font-semibold text-slate-800 dark:text-white">
-                            {book.nameBook}
-                          </Typography>
-                          <Typography className="mt-1 break-all font-mono text-xs text-slate-500 dark:text-slate-400">
-                            {book.idBook}
-                          </Typography>
-                        </div>
-
-                        <div className="flex gap-2">
-                          <Chip size="sm" variant="ghost" className={book.status === "publish" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"}>
-                            <Chip.Label>{book.status}</Chip.Label>
-                          </Chip>
-                          <Button
-                            color="error"
-                            size="sm"
-                            className="flex items-center gap-2"
-                            onClick={() => handleDeleteBook(book)}
-                            disabled={isDeleting}
-                          >
-                            {isDeleting ? <LoaderCircleIcon className="h-4 w-4 animate-spin" /> : <Trash2Icon className="h-4 w-4" />}
-                            Hapus
-                          </Button>
-                        </div>
                       </div>
-
-                      <div className="mt-4 grid grid-cols-1 gap-2 text-sm text-slate-600 dark:text-slate-300 md:grid-cols-2">
-                        <div>
-                          <span className="font-medium">Keyword:</span> {book.keyword || "-"}
+                      <div className="p-2 !absolute top-2 left-0 w-full flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          {
+                            isOrderMode && !search ? (
+                              <Chip size="sm" color="warning">
+                                <Chip.Label>#{book.orderBook}</Chip.Label>
+                              </Chip>
+                            ) : (
+                              <IconButton size="sm">
+                                {book.lock ? <LockIcon className="h-4 w-4" /> : <UnlockIcon className="h-4 w-4" />}
+                              </IconButton>
+                            )
+                          }
                         </div>
-                        <div>
-                          <span className="font-medium">Versi:</span> {book.version}
-                        </div>
-                        <div>
-                          <span className="font-medium">Harga:</span> Rp {formatCurrency(book.price)}
-                        </div>
-                        <div>
-                          <span className="font-medium">Lock:</span> {book.lock ? "Ya" : "Tidak"}
-                        </div>
+                        <Menu placement="bottom-end">
+                          <Menu.Trigger as={IconButton} className="rounded-full" size="sm">
+                            <MoreVertical className="w-4 h-4" />
+                          </Menu.Trigger>
+                          <Menu.Content>
+                            <Menu.Item onClick={() => openEditDialog(book)}>
+                              <PencilIcon className="h-4 w-4 mr-2" />
+                              Edit
+                            </Menu.Item>
+                            <Menu.Item onClick={() => copyToClipboard(book.urlBook)}>
+                              <Copy className="h-4 w-4 mr-2" />
+                              Salin Link
+                            </Menu.Item>
+                            <Menu.Item
+                              className="text-error"
+                              onClick={() => handleDeleteBook(book)}
+                              disabled={isDeleting}>
+                              {isDeleting ? <LoaderCircleIcon className="h-4 w-4 animate-spin mr-2" /> : <Trash2Icon className="h-4 w-4 mr-2" />}
+                              Hapus
+                            </Menu.Item>
+                          </Menu.Content>
+                        </Menu>
                       </div>
-
-                      <div className="mt-3">
-                        <Typography className="text-xs text-slate-500 dark:text-slate-400">
-                          URL Buku
-                        </Typography>
-                        <Typography className="mt-1 break-all text-xs text-slate-600 dark:text-slate-300">
-                          {book.urlBook || "-"}
-                        </Typography>
+                    </Card.Header>
+                    <Card.Body>
+                      <div className="grid grid-rows-[auto_max-content] gap-4">
+                        <div className="w-full flex flex-col items-start justify-between gap-2">
+                          <div className="flex gap-2">
+                            <Chip size="sm" variant="ghost" color={book.status === "publish" ? "success" : "warning"}>
+                              <Chip.Label>{book.status}</Chip.Label>
+                            </Chip>
+                          </div>
+                          <div className="min-w-0">
+                            <Typography className="line-clamp-2 font-semibold text-slate-800 dark:text-white">
+                              {book.nameBook}
+                            </Typography>
+                          </div>
+                          <div className="w-full">
+                            <Typography as="p" className="text-sm mb-1">
+                              Keyword:
+                            </Typography>
+                            <div className="flex items-center gap-1">
+                              {
+                                (book.keyword || "")?.split(',').map((keyword) => keyword.trim()).filter((keyword) => keyword).map((keyword) => (
+                                  <Chip key={keyword} size="sm" variant="outline" >
+                                    <Chip.Label>{keyword}</Chip.Label>
+                                  </Chip>
+                                ))
+                              }
+                            </div>
+                          </div>
+                        </div>
+                        {isOrderMode && !search && (
+                          <div className="flex items-center gap-2 mt-auto">
+                            <IconButton
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => moveBook(originalIndex, "up")}
+                              disabled={originalIndex <= 0}
+                            >
+                              <ArrowUpIcon className="h-4 w-4" />
+                            </IconButton>
+                            <IconButton
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => moveBook(originalIndex, "down")}
+                              disabled={originalIndex >= books.length - 1}
+                            >
+                              <ArrowDownIcon className="h-4 w-4" />
+                            </IconButton>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
+                    </Card.Body>
+                  </Card>
+                );
+              })}
+            </div>
+          )
         ) : (
           <Card className="border border-dashed border-slate-300 bg-slate-50 p-10 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-slate-200 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
@@ -639,6 +849,198 @@ export default function Book() {
             <div className="flex justify-end border-t border-slate-100 px-5 py-4 dark:border-slate-800">
               <Button variant="ghost" color="secondary" onClick={() => setIsAddDialogOpen(false)}>
                 Tutup
+              </Button>
+            </div>
+          </Dialog.Content>
+        </Dialog.Overlay>
+      </Dialog>
+
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen} size="lg">
+        <Dialog.Overlay>
+          <Dialog.Content className="grid max-h-[90vh] grid-rows-[auto_1fr_auto] overflow-hidden p-0 dark:border-slate-800">
+            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">
+              <div>
+                <Typography variant="h5" className="font-bold text-slate-800 dark:text-white">
+                  Edit data buku
+                </Typography>
+              </div>
+              <IconButton
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setIsEditDialogOpen(false);
+                  setEditForm(null);
+                }}
+              >
+                <XIcon className="h-4 w-4" />
+              </IconButton>
+            </div>
+
+            <div className="space-y-4 overflow-y-auto px-5 py-4">
+              {editForm && (
+                <>
+                  <Typography className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                    Path Firebase item: <span className="font-mono">{editForm.originalKey}</span>
+                  </Typography>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="w-full">
+                      <Typography
+                        as="label"
+                        htmlFor="judul-buku"
+                        type="small"
+                        color="default"
+                        className="font-semibold"
+                      >
+                        Judul Buku
+                      </Typography>
+                      <Input id="judul-buku" value={editForm.nameBook} onChange={(event) => handleEditFormChange("nameBook", event.target.value)} />
+                    </div>
+                    <div className="w-full">
+                      <Typography
+                        as="label"
+                        htmlFor="keyword"
+                        type="small"
+                        color="default"
+                        className="font-semibold"
+                      >
+                        Keyword
+                      </Typography>
+                      <Input id="keyword" value={editForm.keyword} onChange={(event) => handleEditFormChange("keyword", event.target.value)} />
+                    </div>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="w-full">
+                      <Typography
+                        as="label"
+                        htmlFor="id-buku"
+                        type="small"
+                        color="default"
+                        className="font-semibold"
+                      >
+                        ID Buku
+                      </Typography>
+                      <Input id="id-buku" value={editForm.idBook} onChange={(event) => handleEditFormChange("idBook", event.target.value)} />
+                    </div>
+                    <div className="w-full">
+                      <Typography
+                        as="label"
+                        htmlFor="id-playstore"
+                        type="small"
+                        color="default"
+                        className="font-semibold"
+                      >
+                        ID Playstore
+                      </Typography>
+                      <Input id="id-playstore" value={editForm.idPlaystore} onChange={(event) => handleEditFormChange("idPlaystore", event.target.value)} />
+                    </div>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="w-full">
+                      <Typography
+                        as="label"
+                        htmlFor="cover-url"
+                        type="small"
+                        color="default"
+                        className="font-semibold"
+                      >
+                        Cover URL
+                      </Typography>
+                      <Input id="cover-url" value={editForm.coverBook} onChange={(event) => handleEditFormChange("coverBook", event.target.value)} />
+                    </div>
+                    <div className="w-full">
+                      <Typography
+                        as="label"
+                        htmlFor="url-book"
+                        type="small"
+                        color="default"
+                        className="font-semibold"
+                      >
+                        URL Buku
+                      </Typography>
+                      <Input id="url-book" value={editForm.urlBook} onChange={(event) => handleEditFormChange("urlBook", event.target.value)} />
+                    </div>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <div className="w-full">
+                      <Typography
+                        as="label"
+                        htmlFor="harga"
+                        type="small"
+                        color="default"
+                        className="font-semibold"
+                      >
+                        Harga
+                      </Typography>
+                      <Input id="harga" type="number" value={String(editForm.price)} onChange={(event) => handleEditFormChange("price", Number(event.target.value) || 0)} />
+                    </div>
+                    <div className="w-full">
+                      <Typography
+                        as="label"
+                        htmlFor="versi"
+                        type="small"
+                        color="default"
+                        className="font-semibold"
+                      >
+                        Versi
+                      </Typography>
+                      <Input id="versi" type="number" value={String(editForm.version)} onChange={(event) => handleEditFormChange("version", Number(event.target.value) || 1)} />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="w-full">
+                        <Typography
+                          as="label"
+                          htmlFor="status"
+                          type="small"
+                          color="default"
+                          className="font-semibold"
+                        >
+                          Status
+                        </Typography>
+                        <Select value={editForm.status} onValueChange={(value) => handleEditFormChange("status", value ?? "draft")}>
+                          <Select.Trigger id="status" placeholder="Pilih status" />
+                          <Select.List>
+                            <Select.Option value="publish">publish</Select.Option>
+                            <Select.Option value="draft">draft</Select.Option>
+                          </Select.List>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Checkbox id="lock" checked={editForm.lock} onChange={(event) => handleEditFormChange("lock", event.target.checked)}>
+                      <Checkbox.Indicator />
+                    </Checkbox>
+                    <Typography
+                      as="label"
+                      htmlFor="lock"
+                      className="cursor-pointer text-foreground"
+                    >
+                      Kunci buku
+                    </Typography>
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-2 border-t border-slate-100 px-5 py-4 dark:border-slate-800">
+              <Button
+                variant="ghost"
+                color="secondary"
+                onClick={() => {
+                  setIsEditDialogOpen(false);
+                  setEditForm(null);
+                }}
+              >
+                Batal
+              </Button>
+              <Button
+                color="success"
+                className="flex items-center gap-2"
+                onClick={handleSaveEdit}
+                disabled={!editForm || activeEditKey === editForm.originalKey}
+              >
+                {editForm && activeEditKey === editForm.originalKey ? <LoaderCircleIcon className="h-4 w-4 animate-spin" /> : <SaveIcon className="h-4 w-4" />}
+                Simpan
               </Button>
             </div>
           </Dialog.Content>

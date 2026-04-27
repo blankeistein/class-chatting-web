@@ -10,8 +10,20 @@ import {
 } from "@material-tailwind/react";
 import AdminLayout from "@/Layouts/AdminLayout";
 import { Head, router, useForm } from "@inertiajs/react";
-import { ArrowLeftIcon, SaveIcon, ImageIcon, XIcon, TagIcon, LinkIcon, HashIcon } from "lucide-react";
+import { ArrowLeftIcon, SaveIcon, ImageIcon, XIcon, TagIcon, LinkIcon, HashIcon, RefreshCcwIcon } from "lucide-react";
 import { toast, Toaster } from "react-hot-toast";
+
+const generateCustomID = (length: number = 32): string => {
+  const characters: string = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  let result: string = '';
+
+  for (let i = 0; i < length; i++) {
+    const randomIndex: number = Math.floor(Math.random() * characters.length);
+    result += characters.charAt(randomIndex);
+  }
+
+  return result;
+};
 
 export default function Create() {
   const [thumbPreviewUrl, setThumbPreviewUrl] = useState<string | null>(null);
@@ -20,6 +32,7 @@ export default function Create() {
 
   const { data, setData, post, processing, errors } = useForm({
     title: "",
+    uuid: generateCustomID(32),
     tags: [] as string[],
     url: "",
     version: 1,
@@ -48,6 +61,10 @@ export default function Create() {
 
   const removeTag = (index: number) => {
     setData("tags", data.tags.filter((_, i) => i !== index));
+  };
+
+  const generateUuid = () => {
+    setData("uuid", generateCustomID(32));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -89,6 +106,34 @@ export default function Create() {
               <Card className="shadow-sm border border-slate-200 dark:border-slate-800 dark:bg-slate-900 overflow-hidden">
                 <CardBody className="p-6 space-y-6">
                   <div className="space-y-1">
+                    <Typography as="label" htmlFor="uuid" type="small" className="font-semibold dark:text-white">
+                      UID Buku
+                    </Typography>
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                      <Input
+                        id="uuid"
+                        placeholder="Masukkan UID custom"
+                        value={data.uuid}
+                        onChange={(e) => setData("uuid", e.target.value)}
+                        isError={!!errors.uuid}
+                      />
+                      <IconButton
+                        type="button"
+                        variant="ghost"
+                        color="secondary"
+                        onClick={generateUuid}
+                      >
+                        <RefreshCcwIcon className="w-4 h-4" />
+                      </IconButton>
+                    </div>
+                    {errors.uuid && (
+                      <Typography type="small" color="error" className="mt-1 block">
+                        {errors.uuid}
+                      </Typography>
+                    )}
+                  </div>
+
+                  <div className="space-y-1">
                     <Typography as="label" htmlFor="title" type="small" className="font-semibold dark:text-white">
                       Judul Buku
                     </Typography>
@@ -105,7 +150,6 @@ export default function Create() {
                       </Typography>
                     )}
                   </div>
-
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-1">
                       <Typography as="label" htmlFor="url" type="small" className="font-semibold dark:text-white">

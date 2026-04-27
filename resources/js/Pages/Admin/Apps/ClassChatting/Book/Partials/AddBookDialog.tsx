@@ -1,4 +1,4 @@
-import React, { Dispatch, SetStateAction } from "react";
+import React, { Dispatch, SetStateAction, useDeferredValue, useEffect, useState } from "react";
 import axios from "axios";
 import {
   Button,
@@ -12,7 +12,7 @@ import {
 import { LoaderCircleIcon, PlusIcon, SearchIcon, XIcon } from "lucide-react";
 import { toast } from "react-hot-toast";
 
-export type MysqlBook = {
+export type Book = {
   id: number;
   uuid: string;
   title: string;
@@ -26,7 +26,7 @@ type AddBookDialogProps = {
   open: boolean;
   existingRealtimeIds: string[];
   onOpenChange: Dispatch<SetStateAction<boolean>>;
-  onAddBook: (book: MysqlBook) => Promise<void>;
+  onAddBook: (book: Book) => Promise<void>;
 };
 
 export default function AddBookDialog({
@@ -35,37 +35,35 @@ export default function AddBookDialog({
   onOpenChange,
   onAddBook,
 }: AddBookDialogProps) {
-  const [mysqlBooks, setMysqlBooks] = React.useState<MysqlBook[]>([]);
-  const [mysqlSearch, setMysqlSearch] = React.useState("");
-  const deferredMysqlSearch = React.useDeferredValue(mysqlSearch);
-  const [isMysqlLoading, setIsMysqlLoading] = React.useState(false);
-  const [activeMysqlBookId, setActiveMysqlBookId] = React.useState<number | null>(null);
+  const [books, setBooks] = useState<Book[]>([]);
+  const [search, setSearch] = useState("");
+  const deferredSearch = useDeferredValue(search);
+  const [isLoading, setIsLoading] = useState(false);
+  const [activeBookId, setActiveBookId] = useState<number | null>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!open) {
       return;
     }
 
     const controller = new AbortController();
     const timeoutId = window.setTimeout(async () => {
-      setIsMysqlLoading(true);
+      setIsLoading(true);
 
       try {
-        const response = await axios.get<MysqlBook[]>(route("admin.books.selection"), {
-          params: { search: deferredMysqlSearch },
+        const response = await axios.get<{ data: Book[] }>("/api/v1/books", {
+          params: { search: deferredSearch },
           signal: controller.signal,
         });
 
-        console.log("Fetched MySQL books:", response.data);
-
-        setMysqlBooks(response.data);
+        setBooks(response.data.data);
       } catch (error) {
         if (!axios.isCancel(error)) {
-          setMysqlBooks([]);
+          setBooks([]);
           toast.error("Gagal mengambil daftar buku MySQL.");
         }
       } finally {
-        setIsMysqlLoading(false);
+        setIsLoading(false);
       }
     }, 300);
 
@@ -73,15 +71,15 @@ export default function AddBookDialog({
       controller.abort();
       window.clearTimeout(timeoutId);
     };
-  }, [deferredMysqlSearch, open]);
+  }, [deferredSearch, open]);
 
-  const handleAdd = async (book: MysqlBook) => {
-    setActiveMysqlBookId(book.id);
+  const handleAdd = async (book: Book) => {
+    setActiveBookId(book.id);
 
     try {
       await onAddBook(book);
     } finally {
-      setActiveMysqlBookId(null);
+      setActiveBookId(null);
     }
   };
 
@@ -105,8 +103,8 @@ export default function AddBookDialog({
 
           <div className="space-y-4 overflow-y-auto px-5 py-4">
             <Input
-              value={mysqlSearch}
-              onChange={(event) => setMysqlSearch(event.target.value)}
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
               placeholder="Cari judul buku MySQL..."
             >
               <Input.Icon>
@@ -115,15 +113,15 @@ export default function AddBookDialog({
             </Input>
 
             <div className="space-y-3 pr-1">
-              {isMysqlLoading ? (
+              {isLoading ? (
                 Array.from({ length: 4 }).map((_, index) => (
                   <div key={index} className="h-24 animate-pulse rounded-2xl border border-slate-200 bg-slate-100" />
                 ))
-              ) : mysqlBooks.length > 0 ? (
-                mysqlBooks.map((book) => {
+              ) : books.length > 0 ? (
+                books.map((book) => {
                   const realtimeId = book.uuid.replace(/-/g, "").toUpperCase();
                   const existsInRealtime = existingRealtimeIds.includes(realtimeId);
-                  const isAdding = activeMysqlBookId === book.id;
+                  const isAdding = activeBookId === book.id;
 
                   return (
                     <Card key={book.id} className="border border-slate-200 p-4 shadow-none dark:border-slate-800">
@@ -167,7 +165,7 @@ export default function AddBookDialog({
               ) : (
                 <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center dark:border-slate-700 dark:bg-slate-900">
                   <Typography className="font-medium text-slate-700 dark:text-slate-200">
-                    Data buku MySQL tidak ditemukan
+                    Data buku tidak ditemukan
                   </Typography>
                   <Typography className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                     Coba ubah kata kunci pencarian.

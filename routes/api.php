@@ -14,6 +14,7 @@ Route::get('/user', function (Request $request) {
 
 Route::post('/v1/book/activate', [BookController::class, 'activate'])->middleware('throttle:60,1');
 Route::get('/v1/book/level/{code}', [BookController::class, 'activation_check_level']);
+Route::get('/v1/books', [BookController::class, 'index']);
 
 Route::prefix('v1/regions')->group(function () {
     Route::get('/provinces', [RegionController::class, 'provinces']);

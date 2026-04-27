@@ -255,7 +255,7 @@ function ProfileMenu({ user }: { user: User | null }) {
     router.delete(route('logout'));
   };
 
-  const handleReAuth = async (): Promise<void> => {
+  const handleReAuthentication = async (): Promise<void> => {
     router.get(route('admin.authenticate-firebase-user'), undefined, {
       onSuccess: async (page) => {
         const firebaseAuth = (page.props as {
@@ -290,9 +290,9 @@ function ProfileMenu({ user }: { user: User | null }) {
         <Menu.Item>
           <UserCircle2Icon className="mr-2 h-4 w-4" /> My Profile
         </Menu.Item>
-        <Menu.Item onClick={handleReAuth} disabled={user !== null}>
+        <Menu.Item onClick={handleReAuthentication} disabled={user !== null}>
           <UserRoundCog className="h-4 w-4 mr-2" />
-          ReAuth
+          Re Authentication
         </Menu.Item>
         <hr className="!my-1 -mx-1 border-surface" />
         <Menu.Item className="text-error hover:bg-error/10 hover:text-error focus:bg-error/10 focus:text-error" onClick={() => void handleLogout()}>

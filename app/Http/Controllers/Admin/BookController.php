@@ -55,14 +55,15 @@ class BookController extends Controller
     {
         $request->validate([
             'title' => 'required|string|max:255',
+            'uuid' => 'nullable|string|max:255|unique:books,uuid',
             'cover_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
             'tags' => 'nullable|array',
             'url' => 'nullable|url',
             'version' => 'nullable|integer',
         ]);
 
-        $data = $request->only(['title', 'tags', 'url', 'version']);
-        $data['uuid'] = (string) Str::uuid();
+        $data = $request->only(['title', 'uuid', 'tags', 'url', 'version']);
+        $data['uuid'] = filled($data['uuid'] ?? null) ? $data['uuid'] : (string) Str::uuid();
 
         if ($request->hasFile('cover_image')) {
             $path = $request->file('cover_image')->store('books', 'public');

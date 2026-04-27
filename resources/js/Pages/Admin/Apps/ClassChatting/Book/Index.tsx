@@ -33,7 +33,7 @@ import AdminAppLayout from "@/Layouts/AdminAppLayout";
 import { getFirebaseDatabase } from "@/lib/firebase";
 import BookEditDialog, { type FirebaseBookForm } from "./Partials/EditBookDialog";
 import { GridBookCard } from "./Partials/GridBookCard";
-import AddBookDialog, { type MysqlBook } from "./Partials/AddBookDialog";
+import AddBookDialog, { type Book } from "./Partials/AddBookDialog";
 
 type FirebaseBook = FirebaseBookForm;
 
@@ -57,9 +57,9 @@ const normalizeBook = (key: string, value: Partial<FirebaseBook>): FirebaseBook 
   };
 };
 
-const createRealtimePayloadFromMysql = (book: MysqlBook, orderBook: number) => {
-  const baseId = book.uuid.replace(/-/g, "").toUpperCase();
-  const keyword = book.tags?.[0] ?? "";
+const createRealtimePayloadFromMysql = (book: Book, orderBook: number) => {
+  const baseId = book.uuid;
+  const keyword = book.tags?.join(",") ?? "";
 
   return {
     coverBook: book.coverUrl,
@@ -200,7 +200,7 @@ export default function Index() {
     }
   }, [database, books]);
 
-  const handleAddBook = useCallback(async (book: MysqlBook) => {
+  const handleAddBook = useCallback(async (book: Book) => {
     if (!database) {
       toast.error("Firebase Realtime Database belum siap.");
 

@@ -77,7 +77,7 @@ Route::middleware('auth')->group(function () {
         })->name('apps.class-chatting');
 
         Route::get('apps/class-chatting/book', function () {
-            return Inertia::render('Admin/Apps/ClassChatting/Book');
+            return Inertia::render('Admin/Apps/ClassChatting/Book/Index');
         })->name('apps.class-chatting.book');
     });
 });

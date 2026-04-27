@@ -1,5 +1,5 @@
 import { Card, Chip, IconButton, Menu, Typography } from "@material-tailwind/react";
-import { ArrowDownIcon, ArrowUpIcon, Copy, LoaderCircleIcon, LockIcon, MoreVertical, PencilIcon, Trash2Icon, UnlockIcon } from "lucide-react";
+import { ArrowDownIcon, ArrowUpIcon, Copy, EyeIcon, LoaderCircleIcon, LockIcon, MoreVertical, PencilIcon, Trash2Icon, UnlockIcon } from "lucide-react";
 import { memo, useMemo } from "react";
 import { FirebaseBookForm } from "./EditBookDialog";
 
@@ -13,6 +13,7 @@ type GridBookCardProps = {
   canMoveUp: boolean;
   canMoveDown: boolean;
   isDeleting: boolean;
+  onView: (book: FirebaseBook) => void;
   onToggleLock: (book: FirebaseBook, nextLock: boolean) => void;
   onEdit: (book: FirebaseBook) => void;
   onCopyLink: (url: string) => void;
@@ -29,6 +30,7 @@ export const GridBookCard = memo(function GridBookCard({
   canMoveUp,
   canMoveDown,
   isDeleting,
+  onView,
   onToggleLock,
   onEdit,
   onCopyLink,
@@ -46,7 +48,7 @@ export const GridBookCard = memo(function GridBookCard({
   return (
     <Card className="border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <Card.Header className="relative overflow-hidden p-0">
-        <div className="h-[320px] w-full shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-950">
+        <div className="group relative h-[320px] w-full shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-950">
           <img
             src={book.coverBook || "/assets/images/book-thumbnail.webp"}
             alt={book.nameBook}
@@ -55,8 +57,16 @@ export const GridBookCard = memo(function GridBookCard({
               (event.target as HTMLImageElement).src = "/assets/images/book-thumbnail.webp";
             }}
           />
+          {/* Melihat Info Buku */}
+          <button
+            type="button"
+            className="absolute left-0 top-0 z-10 flex h-full w-full items-center justify-center rounded-lg bg-[rgba(0,0,0,.5)] scale-0 cursor-pointer transition-transform duration-500 group-hover:scale-100"
+            onClick={() => onView(book)}
+          >
+            <EyeIcon className="h-6 w-6 text-white" />
+          </button>
         </div>
-        <div className="p-2 !absolute top-2 left-0 flex w-full items-center justify-between">
+        <div className="p-2 !absolute top-2 left-0 flex w-full items-center justify-between z-20">
           <div className="flex items-center gap-2">
             {isOrderMode && !hasActiveSearch ? (
               <Chip size="sm" color="warning">
@@ -73,6 +83,10 @@ export const GridBookCard = memo(function GridBookCard({
               <MoreVertical className="w-4 h-4" />
             </Menu.Trigger>
             <Menu.Content>
+              <Menu.Item onClick={() => onView(book)}>
+                <EyeIcon className="h-4 w-4 mr-2" />
+                Lihat
+              </Menu.Item>
               <Menu.Item onClick={() => onEdit(book)}>
                 <PencilIcon className="h-4 w-4 mr-2" />
                 Edit

@@ -107,12 +107,6 @@ export default function BookEditDialog({
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="w-full">
-                    <Typography as="label" htmlFor="id-buku" type="small" color="default" className="font-semibold">
-                      ID Buku
-                    </Typography>
-                    <Input id="id-buku" value={editForm.idBook} onChange={(event) => handleEditFormChange("idBook", event.target.value)} />
-                  </div>
-                  <div className="w-full">
                     <Typography as="label" htmlFor="id-playstore" type="small" color="default" className="font-semibold">
                       ID Playstore
                     </Typography>

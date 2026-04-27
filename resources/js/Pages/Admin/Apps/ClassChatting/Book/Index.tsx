@@ -15,6 +15,7 @@ import {
   ArrowUpIcon,
   BookIcon,
   Copy,
+  EyeIcon,
   LayoutGridIcon,
   ListIcon,
   LoaderCircleIcon,
@@ -34,6 +35,7 @@ import { getFirebaseDatabase } from "@/lib/firebase";
 import BookEditDialog, { type FirebaseBookForm } from "./Partials/EditBookDialog";
 import { GridBookCard } from "./Partials/GridBookCard";
 import AddBookDialog, { type Book } from "./Partials/AddBookDialog";
+import BookDetailDialog from "./Partials/BookDetailDialog";
 
 type FirebaseBook = FirebaseBookForm;
 
@@ -110,6 +112,8 @@ export default function Index() {
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
   const [activeDeleteKey, setActiveDeleteKey] = React.useState<string | null>(null);
   const [activeEditKey, setActiveEditKey] = React.useState<string | null>(null);
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = React.useState(false);
+  const [selectedBook, setSelectedBook] = React.useState<FirebaseBook | null>(null);
   const [editForm, setEditForm] = React.useState<FirebaseBookForm | null>(null);
 
   React.useEffect(() => {
@@ -267,6 +271,11 @@ export default function Index() {
     setIsEditDialogOpen(true);
   }, []);
 
+  const openDetailDialog = useCallback((book: FirebaseBook) => {
+    setSelectedBook(book);
+    setIsDetailDialogOpen(true);
+  }, []);
+
   const handleSaveEdit = useCallback(async (newForm: FirebaseBookForm) => {
     if (!database || !newForm) {
       toast.error("Form edit belum siap.");
@@ -285,7 +294,6 @@ export default function Index() {
     try {
       await update(ref(database, `${ALL_BOOKS_PATH}/${newForm.originalKey}`), {
         coverBook: newForm.coverBook,
-        idBook: newForm.idBook,
         idBookPath: newForm.idBookPath,
         idPlaystore: newForm.idPlaystore,
         keyword: newForm.keyword,
@@ -546,6 +554,11 @@ export default function Index() {
                                 <MoreVertical className="h-4 w-4" />
                               </Menu.Trigger>
                               <Menu.Content>
+                                {/* Melihat Info Buku */}
+                                <Menu.Item onClick={() => openDetailDialog(book)}>
+                                  <EyeIcon className="h-4 w-4 mr-2" />
+                                  Lihat
+                                </Menu.Item>
                                 <Menu.Item onClick={() => openEditDialog(book)}>
                                   <PencilIcon className="h-4 w-4 mr-2" />
                                   Edit
@@ -587,6 +600,7 @@ export default function Index() {
                     canMoveUp={originalIndex > 0}
                     canMoveDown={originalIndex < books.length - 1}
                     isDeleting={isDeleting}
+                    onView={openDetailDialog}
                     onToggleLock={updateLockStatus}
                     onEdit={openEditDialog}
                     onCopyLink={copyToClipboard}
@@ -630,6 +644,17 @@ export default function Index() {
           setEditForm(null);
         }}
         onSave={handleSaveEdit}
+      />
+
+      <BookDetailDialog
+        open={isDetailDialogOpen}
+        book={selectedBook}
+        onOpenChange={setIsDetailDialogOpen}
+        onClose={() => {
+          setIsDetailDialogOpen(false);
+          setSelectedBook(null);
+        }}
+        onCopyLink={copyToClipboard}
       />
     </>
   );

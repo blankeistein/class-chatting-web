@@ -1,6 +1,24 @@
 import React, { useCallback } from "react";
 import { Head } from "@inertiajs/react";
 import {
+  closestCenter,
+  DndContext,
+  KeyboardSensor,
+  MouseSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import {
   Button,
   Card,
   Chip,
@@ -25,6 +43,7 @@ import {
   PlusIcon,
   SaveIcon,
   SearchIcon,
+  GripVerticalIcon,
   Trash2Icon,
   UnlockIcon,
 } from "lucide-react";
@@ -100,7 +119,151 @@ const createEditForm = (book: FirebaseBook): FirebaseBookForm => ({
   ...book,
 });
 
+type SortableBookTableRowProps = {
+  book: FirebaseBook;
+  books: FirebaseBook[];
+  isOrderMode: boolean;
+  hasActiveSearch: boolean;
+  isDeleting: boolean;
+  activeDeleteKey: string | null;
+  onView: (book: FirebaseBook) => void;
+  onEdit: (book: FirebaseBook) => void;
+  onCopyLink: (url: string) => void;
+  onDelete: (book: FirebaseBook) => void;
+};
+
+function SortableBookTableRow({
+  book,
+  books,
+  isOrderMode,
+  hasActiveSearch,
+  isDeleting,
+  onView,
+  onEdit,
+  onCopyLink,
+  onDelete,
+}: SortableBookTableRowProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: book.originalKey,
+    disabled: !isOrderMode || hasActiveSearch,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <tr
+      ref={setNodeRef}
+      style={style}
+      className={`align-top ${isDragging ? "relative z-10 opacity-70" : ""}`}
+    >
+      <td className="px-4 py-4">
+        {isOrderMode && !hasActiveSearch ? (
+          <button
+            type="button"
+            className="inline-flex cursor-grab items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-slate-600 active:cursor-grabbing dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+            {...attributes}
+            {...listeners}
+          >
+            <GripVerticalIcon className="h-4 w-4" />
+            <span className="font-semibold">#{book.orderBook}</span>
+          </button>
+        ) : (
+          <span className="font-semibold text-slate-700 dark:text-slate-200">#{book.orderBook}</span>
+        )}
+      </td>
+      <td className="px-4 py-4">
+        <div className="flex min-w-[20rem] items-center gap-3">
+          <div className="h-20 w-12 overflow-hidden rounded-lg border border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-950">
+            {book.coverBook ? (
+              <img
+                src={book.coverBook}
+                alt={book.nameBook}
+                className="h-full w-full object-cover"
+                onError={(event) => {
+                  (event.target as HTMLImageElement).src = "https://placehold.co/120x180?text=No+Cover";
+                }}
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center text-slate-400">
+                <BookIcon className="h-5 w-5" />
+              </div>
+            )}
+          </div>
+          <div className="min-w-0">
+            <Typography className="line-clamp-2 font-semibold text-slate-800 dark:text-white">
+              {book.nameBook}
+            </Typography>
+          </div>
+        </div>
+      </td>
+      <td className="px-4 py-4 text-sm text-slate-600 dark:text-slate-300">{book.keyword || "-"}</td>
+      <td className="px-4 py-4">
+        <Chip size="sm" variant="ghost" color={book.status === "publish" ? "success" : "warning"}>
+          <Chip.Label>{book.status}</Chip.Label>
+        </Chip>
+      </td>
+      <td className="px-4 py-4 text-sm text-slate-600 dark:text-slate-300">{book.version}</td>
+      <td className="px-4 py-4 text-sm text-slate-600 dark:text-slate-300">{book.lock ? <LockIcon className="w-4 h-4" /> : <UnlockIcon className="w-4 h-4" />}</td>
+      <td className="px-4 py-4">
+        <Menu placement="bottom-end">
+          <Menu.Trigger as={IconButton} variant="ghost" size="sm">
+            <MoreVertical className="h-4 w-4" />
+          </Menu.Trigger>
+          <Menu.Content>
+            <Menu.Item onClick={() => onView(book)}>
+              <EyeIcon className="h-4 w-4 mr-2" />
+              Lihat
+            </Menu.Item>
+            <Menu.Item onClick={() => onEdit(book)}>
+              <PencilIcon className="h-4 w-4 mr-2" />
+              Edit
+            </Menu.Item>
+            <Menu.Item onClick={() => onCopyLink(book.urlBook)}>
+              <Copy className="h-4 w-4 mr-2" />
+              Salin Link
+            </Menu.Item>
+            <Menu.Item
+              className="text-error"
+              onClick={() => onDelete(book)}
+              disabled={isDeleting}
+            >
+              {isDeleting ? <LoaderCircleIcon className="h-4 w-4 animate-spin mr-2" /> : <Trash2Icon className="h-4 w-4 mr-2" />}
+              Hapus
+            </Menu.Item>
+          </Menu.Content>
+        </Menu>
+      </td>
+    </tr>
+  );
+}
+
 export default function Index() {
+  const sensors = useSensors(
+    useSensor(MouseSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 150,
+        tolerance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
   const database = React.useMemo(() => getFirebaseDatabase(), []);
   const [books, setBooks] = React.useState<FirebaseBook[]>([]);
   const [search, setSearch] = React.useState("");
@@ -360,9 +523,31 @@ export default function Index() {
     moveBook(index, "down");
   }, []);
 
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    setBooks((currentBooks) => {
+      const oldIndex = currentBooks.findIndex((book) => book.originalKey === active.id);
+      const newIndex = currentBooks.findIndex((book) => book.originalKey === over.id);
+
+      if (oldIndex === -1 || newIndex === -1) {
+        return currentBooks;
+      }
+
+      return resequenceBooks(arrayMove(currentBooks, oldIndex, newIndex));
+    });
+  }, []);
+
   const existingRealtimeIds = React.useMemo(() => {
     return books.map((book) => book.idBook);
   }, [books]);
+
+  const canDragSort = isOrderMode && !hasActiveSearch;
+  const sortableIds = React.useMemo(() => filteredBooks.map((book) => book.originalKey), [filteredBooks]);
 
   return (
     <>
@@ -444,6 +629,11 @@ export default function Index() {
                 <Chip size="sm" variant="ghost" className="bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
                   <Chip.Label>Order mode aktif</Chip.Label>
                 </Chip>
+                {!hasActiveSearch && (
+                  <Chip size="sm" variant="ghost" className="bg-sky-100 text-sky-700 dark:bg-sky-500/10 dark:text-sky-300">
+                    <Chip.Label>Drag & drop untuk ubah urutan</Chip.Label>
+                  </Chip>
+                )}
                 <Button variant="outline" onClick={() => setIsOrderMode(false)}>
                   Batal
                 </Button>
@@ -466,152 +656,78 @@ export default function Index() {
             ))}
           </div>
         ) : filteredBooks.length > 0 ? (
-          viewMode === "table" ? (
-            <Card className="overflow-hidden border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
-                  <thead className="bg-slate-50 dark:bg-slate-950/60">
-                    <tr className="text-left text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                      <th className="px-4 py-3"></th>
-                      <th className="px-4 py-3">Buku</th>
-                      <th className="px-4 py-3">Keyword</th>
-                      <th className="px-4 py-3">Status</th>
-                      <th className="px-4 py-3">Versi</th>
-                      <th className="px-4 py-3">Lock</th>
-                      <th className="px-4 py-3 text-right">Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                    {filteredBooks.map((book) => {
-                      const originalIndex = books.findIndex((item) => item.originalKey === book.originalKey);
-                      const isDeleting = activeDeleteKey === book.originalKey;
-
-                      return (
-                        <tr key={book.originalKey} className="align-top">
-                          <td className="px-4 py-4">
-                            <div className="flex items-center gap-2">
-                              {isOrderMode && !search ? (
-                                <div className="flex flex-col gap-1">
-                                  <IconButton
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => moveBook(originalIndex, "up")}
-                                    disabled={originalIndex <= 0}
-                                  >
-                                    <ArrowUpIcon className="h-4 w-4" />
-                                  </IconButton>
-                                  <IconButton
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => moveBook(originalIndex, "down")}
-                                    disabled={originalIndex >= books.length - 1}
-                                  >
-                                    <ArrowDownIcon className="h-4 w-4" />
-                                  </IconButton>
-                                </div>
-                              ) : (
-                                <span className="font-semibold text-slate-700 dark:text-slate-200">#{book.orderBook}</span>
-                              )
-                              }
-                            </div>
-                          </td>
-                          <td className="px-4 py-4">
-                            <div className="flex min-w-[20rem] items-center gap-3">
-                              <div className="h-20 w-12 overflow-hidden rounded-lg border border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-950">
-                                {book.coverBook ? (
-                                  <img
-                                    src={book.coverBook}
-                                    alt={book.nameBook}
-                                    className="h-full w-full object-cover"
-                                    onError={(event) => {
-                                      (event.target as HTMLImageElement).src = "https://placehold.co/120x180?text=No+Cover";
-                                    }}
-                                  />
-                                ) : (
-                                  <div className="flex h-full items-center justify-center text-slate-400">
-                                    <BookIcon className="h-5 w-5" />
-                                  </div>
-                                )}
-                              </div>
-                              <div className="min-w-0">
-                                <Typography className="line-clamp-2 font-semibold text-slate-800 dark:text-white">
-                                  {book.nameBook}
-                                </Typography>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-4 py-4 text-sm text-slate-600 dark:text-slate-300">{book.keyword || "-"}</td>
-                          <td className="px-4 py-4">
-                            <Chip size="sm" variant="ghost" color={book.status === "publish" ? "success" : "warning"}>
-                              <Chip.Label>{book.status}</Chip.Label>
-                            </Chip>
-                          </td>
-                          <td className="px-4 py-4 text-sm text-slate-600 dark:text-slate-300">{book.version}</td>
-                          <td className="px-4 py-4 text-sm text-slate-600 dark:text-slate-300">{book.lock ? <LockIcon className="w-4 h-4" /> : <UnlockIcon className="w-4 h-4" />}</td>
-                          <td className="px-4 py-4">
-                            <Menu placement="bottom-end">
-                              <Menu.Trigger as={IconButton} variant="ghost" size="sm">
-                                <MoreVertical className="h-4 w-4" />
-                              </Menu.Trigger>
-                              <Menu.Content>
-                                {/* Melihat Info Buku */}
-                                <Menu.Item onClick={() => openDetailDialog(book)}>
-                                  <EyeIcon className="h-4 w-4 mr-2" />
-                                  Lihat
-                                </Menu.Item>
-                                <Menu.Item onClick={() => openEditDialog(book)}>
-                                  <PencilIcon className="h-4 w-4 mr-2" />
-                                  Edit
-                                </Menu.Item>
-                                <Menu.Item onClick={() => copyToClipboard(book.urlBook)}>
-                                  <Copy className="h-4 w-4 mr-2" />
-                                  Salin Link
-                                </Menu.Item>
-                                <Menu.Item
-                                  className="text-error"
-                                  onClick={() => handleDeleteBook(book)}
-                                  disabled={isDeleting}>
-                                  {isDeleting ? <LoaderCircleIcon className="h-4 w-4 animate-spin mr-2" /> : <Trash2Icon className="h-4 w-4 mr-2" />}
-                                  Hapus
-                                </Menu.Item>
-                              </Menu.Content>
-                            </Menu>
-                          </td>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
+              {viewMode === "table" ? (
+                <Card className="overflow-hidden border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
+                      <thead className="bg-slate-50 dark:bg-slate-950/60">
+                        <tr className="text-left text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                          <th className="px-4 py-3"></th>
+                          <th className="px-4 py-3">Buku</th>
+                          <th className="px-4 py-3">Keyword</th>
+                          <th className="px-4 py-3">Status</th>
+                          <th className="px-4 py-3">Versi</th>
+                          <th className="px-4 py-3">Lock</th>
+                          <th className="px-4 py-3 text-right">Aksi</th>
                         </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-              {filteredBooks.map((book) => {
-                const originalIndex = books.findIndex((item) => item.originalKey === book.originalKey);
-                const isDeleting = activeDeleteKey === book.originalKey;
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                        {filteredBooks.map((book) => (
+                          <SortableBookTableRow
+                            key={book.originalKey}
+                            book={book}
+                            books={books}
+                            isOrderMode={isOrderMode}
+                            hasActiveSearch={hasActiveSearch}
+                            isDeleting={activeDeleteKey === book.originalKey}
+                            activeDeleteKey={activeDeleteKey}
+                            onView={openDetailDialog}
+                            onEdit={openEditDialog}
+                            onCopyLink={copyToClipboard}
+                            onDelete={handleDeleteBook}
+                          />
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </Card>
+              ) : (
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+                  {filteredBooks.map((book) => {
+                    const originalIndex = books.findIndex((item) => item.originalKey === book.originalKey);
+                    const isDeleting = activeDeleteKey === book.originalKey;
 
-                return (
-                  <GridBookCard
-                    key={book.originalKey}
-                    book={book}
-                    isOrderMode={isOrderMode}
-                    hasActiveSearch={hasActiveSearch}
-                    originalIndex={originalIndex}
-                    canMoveUp={originalIndex > 0}
-                    canMoveDown={originalIndex < books.length - 1}
-                    isDeleting={isDeleting}
-                    onView={openDetailDialog}
-                    onToggleLock={updateLockStatus}
-                    onEdit={openEditDialog}
-                    onCopyLink={copyToClipboard}
-                    onDelete={handleDeleteBook}
-                    onMoveUp={moveBookUp}
-                    onMoveDown={moveBookDown}
-                  />
-                );
-              })}
-            </div>
-          )
+                    return (
+                      <GridBookCard
+                        key={book.originalKey}
+                        book={book}
+                        isOrderMode={isOrderMode}
+                        hasActiveSearch={hasActiveSearch}
+                        originalIndex={originalIndex}
+                        canMoveUp={originalIndex > 0}
+                        canMoveDown={originalIndex < books.length - 1}
+                        isDeleting={isDeleting}
+                        onView={openDetailDialog}
+                        onToggleLock={updateLockStatus}
+                        onEdit={openEditDialog}
+                        onCopyLink={copyToClipboard}
+                        onDelete={handleDeleteBook}
+                        onMoveUp={moveBookUp}
+                        onMoveDown={moveBookDown}
+                        isSortable={canDragSort}
+                      />
+                    );
+                  })}
+                </div>
+              )}
+            </SortableContext>
+          </DndContext>
         ) : (
           <Card className="border border-dashed border-slate-300 bg-slate-50 p-10 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-slate-200 text-slate-500 dark:bg-slate-800 dark:text-slate-400">

@@ -1,5 +1,7 @@
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { Card, Chip, IconButton, Menu, Typography } from "@material-tailwind/react";
-import { ArrowDownIcon, ArrowUpIcon, Copy, EyeIcon, LoaderCircleIcon, LockIcon, MoreVertical, PencilIcon, Trash2Icon, UnlockIcon } from "lucide-react";
+import { ArrowDownIcon, ArrowUpIcon, Copy, EyeIcon, GripVerticalIcon, LoaderCircleIcon, LockIcon, MoreVertical, PencilIcon, Trash2Icon, UnlockIcon } from "lucide-react";
 import { memo, useMemo } from "react";
 import { FirebaseBookForm } from "./EditBookDialog";
 
@@ -13,6 +15,7 @@ type GridBookCardProps = {
   canMoveUp: boolean;
   canMoveDown: boolean;
   isDeleting: boolean;
+  isSortable?: boolean;
   onView: (book: FirebaseBook) => void;
   onToggleLock: (book: FirebaseBook, nextLock: boolean) => void;
   onEdit: (book: FirebaseBook) => void;
@@ -30,6 +33,7 @@ export const GridBookCard = memo(function GridBookCard({
   canMoveUp,
   canMoveDown,
   isDeleting,
+  isSortable = false,
   onView,
   onToggleLock,
   onEdit,
@@ -38,6 +42,18 @@ export const GridBookCard = memo(function GridBookCard({
   onMoveUp,
   onMoveDown,
 }: GridBookCardProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: book.originalKey,
+    disabled: !isSortable,
+  });
+
   const keywords = useMemo(() => {
     return (book.keyword || "")
       .split(",")
@@ -45,8 +61,17 @@ export const GridBookCard = memo(function GridBookCard({
       .filter((keyword) => keyword);
   }, [book.keyword]);
 
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
   return (
-    <Card className="border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <Card
+      ref={setNodeRef}
+      style={style}
+      className={`border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 ${isDragging ? "z-10 opacity-70" : ""}`}
+    >
       <Card.Header className="relative overflow-hidden p-0">
         <div className="group relative h-[320px] w-full shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-950">
           <img
@@ -69,9 +94,15 @@ export const GridBookCard = memo(function GridBookCard({
         <div className="p-2 !absolute top-2 left-0 flex w-full items-center justify-between z-20">
           <div className="flex items-center gap-2">
             {isOrderMode && !hasActiveSearch ? (
-              <Chip size="sm" color="warning">
-                <Chip.Label>#{book.orderBook}</Chip.Label>
-              </Chip>
+              <button
+                type="button"
+                className="inline-flex cursor-grab items-center gap-1 rounded-full bg-amber-500 px-2 py-1 text-xs font-semibold text-white active:cursor-grabbing"
+                {...attributes}
+                {...listeners}
+              >
+                <GripVerticalIcon className="h-3.5 w-3.5" />
+                <span>#{book.orderBook}</span>
+              </button>
             ) : (
               <IconButton size="sm" onClick={() => onToggleLock(book, !book.lock)} title={book.lock ? "Buka kunci buku" : "Kunci buku"}>
                 {book.lock ? <LockIcon className="h-4 w-4" /> : <UnlockIcon className="h-4 w-4" />}
@@ -129,7 +160,7 @@ export const GridBookCard = memo(function GridBookCard({
               </div>
             </div>
           </div>
-          {isOrderMode && !hasActiveSearch && (
+          {isOrderMode && !hasActiveSearch && !isSortable && (
             <div className="mt-auto flex items-center gap-2">
               <IconButton variant="ghost" size="sm" onClick={() => onMoveUp(originalIndex)} disabled={!canMoveUp}>
                 <ArrowUpIcon className="h-4 w-4" />
@@ -151,6 +182,7 @@ export const GridBookCard = memo(function GridBookCard({
     previousProps.originalIndex === nextProps.originalIndex &&
     previousProps.canMoveUp === nextProps.canMoveUp &&
     previousProps.canMoveDown === nextProps.canMoveDown &&
-    previousProps.isDeleting === nextProps.isDeleting
+    previousProps.isDeleting === nextProps.isDeleting &&
+    previousProps.isSortable === nextProps.isSortable
   );
 });

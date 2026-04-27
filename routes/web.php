@@ -32,6 +32,8 @@ Route::middleware('auth')->group(function () {
             return redirect()->route('admin.dashboard');
         });
 
+        Route::get('/re-auth-firebase', [AuthController::class, 'authenticateFirebaseUser'])->name('authenticate-firebase-user');
+
         Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
         Route::get('videos/jobs', [VideoController::class, 'jobs'])->name('videos.jobs');
 

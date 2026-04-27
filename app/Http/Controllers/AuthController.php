@@ -85,6 +85,19 @@ class AuthController extends Controller
         }
     }
 
+    public function authenticateFirebaseUser(Request $request, FirebaseCustomTokenService $firebaseCustomTokenService)
+    {
+        try {
+            $firebaseAuth = $firebaseCustomTokenService->issueFor(Auth::user());
+
+            return redirect()
+                ->back()
+                ->with('firebase_auth', $firebaseAuth);
+        } catch (Exception $e) {
+            return back()->withErrors('Firebase authentication failed');
+        }
+    }
+
     public function logout(Request $request)
     {
         Auth::logout();

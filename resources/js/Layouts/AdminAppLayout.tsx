@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Avatar,
   Button,
@@ -13,14 +13,16 @@ import {
   Tooltip,
   Typography,
 } from "@material-tailwind/react";
-import { ArchiveIcon, ArrowLeft, BellIcon, BookIcon, Building2Icon, ChevronDownIcon, GithubIcon, Grid3X3, Grip, LayoutDashboardIcon, LayoutGrid, LogOutIcon, MailIcon, MapPinnedIcon, MenuIcon, MoonIcon, PiIcon, PinIcon, SunIcon, TicketIcon, Trash2Icon, UserCircle2Icon, VideoIcon, XIcon } from "lucide-react";
+import { ArchiveIcon, ArrowLeft, BellIcon, BookIcon, Building2Icon, ChevronDownIcon, CircleArrowDown, GithubIcon, Grid3X3, Grip, LayoutDashboardIcon, LayoutGrid, LogOutIcon, MailIcon, MapPinnedIcon, MenuIcon, MoonIcon, PiIcon, PinIcon, SunIcon, TicketIcon, Trash2Icon, UserCircle2Icon, UserRoundCog, VideoIcon, XIcon } from "lucide-react";
 import { useTheme } from "../Contexts/ThemeContext";
 import { Link, router, usePage } from "@inertiajs/react";
 import { route } from "ziggy-js";
 import { AuthProps } from "@/types/global";
 import { NotificationMenu } from "../Components/NotificationMenu";
-import { signOutFirebase } from "../lib/firebase";
+import { getFirebaseAuth, signOutFirebase, syncFirebaseAuth } from "../lib/firebase";
 import { AppsLinks } from "./AdminLayout";
+import { User } from "firebase/auth";
+import toast from "react-hot-toast";
 
 type ChildLinkType = {
   icon: React.ForwardRefExoticComponent<React.SVGProps<SVGSVGElement>>;
@@ -244,7 +246,7 @@ function Sidebar({ links, isCollapsed }: { links: LinkType[], isCollapsed: boole
   );
 }
 
-function ProfileMenu() {
+function ProfileMenu({ user }: { user: User | null }) {
   const props = usePage<AuthProps>().props;
 
   const handleLogout = async (): Promise<void> => {
@@ -253,6 +255,28 @@ function ProfileMenu() {
     router.delete(route('logout'));
   };
 
+  const handleReAuth = async (): Promise<void> => {
+    router.get(route('admin.authenticate-firebase-user'), undefined, {
+      onSuccess: async (page) => {
+        const firebaseAuth = (page.props as {
+          auth?: {
+            firebase?: {
+              uid: string;
+              custom_token: string;
+            } | null;
+          };
+        }).auth?.firebase ?? null;
+
+        await syncFirebaseAuth(firebaseAuth);
+      },
+      onError: (errors) => {
+        Object.values(errors).forEach((error) => {
+          toast.error(error);
+        });
+      }
+    })
+  }
+
   return (
     <Menu placement="bottom-end">
       <Menu.Trigger
@@ -260,15 +284,19 @@ function ProfileMenu() {
         src={props.auth.user?.image}
         alt="profile-picture"
         size="sm"
-        className="border border-primary p-0.5 cursor-pointer"
+        className={`border ${user ? "border-success" : "border-error"} p-0.5 cursor-pointer`}
       />
       <Menu.Content className="z-20">
         <Menu.Item>
-          <UserCircle2Icon className="mr-2 h-[18px] w-[18px]" /> My Profile
+          <UserCircle2Icon className="mr-2 h-4 w-4" /> My Profile
+        </Menu.Item>
+        <Menu.Item onClick={handleReAuth} disabled={user !== null}>
+          <UserRoundCog className="h-4 w-4 mr-2" />
+          ReAuth
         </Menu.Item>
         <hr className="!my-1 -mx-1 border-surface" />
         <Menu.Item className="text-error hover:bg-error/10 hover:text-error focus:bg-error/10 focus:text-error" onClick={() => void handleLogout()}>
-          <LogOutIcon className="mr-2 h-[18px] w-[18px]" />
+          <LogOutIcon className="mr-2 h-4 w-4" />
           Logout
         </Menu.Item>
       </Menu.Content>
@@ -277,6 +305,9 @@ function ProfileMenu() {
 }
 
 function TopNavbar({ appName, onToggleSidebar }: { appName: string, onToggleSidebar: () => void }) {
+  const auth = useMemo(() => getFirebaseAuth(), []);
+  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(auth?.currentUser || null);
   const [openNav, setOpenNav] = useState(false);
 
   useEffect(() => {
@@ -292,6 +323,18 @@ function TopNavbar({ appName, onToggleSidebar }: { appName: string, onToggleSide
       window.removeEventListener("resize", handleResize);
     };
   }, []);
+
+  useEffect(() => {
+    auth?.onAuthStateChanged((user) => {
+      if (user) {
+        setUser(user);
+      } else {
+        setUser(null);
+      }
+
+      setIsLoading(false);
+    });
+  }, [auth])
 
   const { theme, toggleTheme } = useTheme();
 
@@ -363,7 +406,7 @@ function TopNavbar({ appName, onToggleSidebar }: { appName: string, onToggleSide
                   </div>
                 </Menu.Content>
               </Menu>
-              <ProfileMenu />
+              <ProfileMenu user={user} />
             </div>
           </div>
         </Navbar>

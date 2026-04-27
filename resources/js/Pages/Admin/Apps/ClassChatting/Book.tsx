@@ -8,8 +8,6 @@ import {
   Dialog,
   IconButton,
   Input,
-  Select,
-  Checkbox,
   Typography,
   Menu,
 } from "@material-tailwind/react";
@@ -19,7 +17,6 @@ import {
   ArrowUpIcon,
   BookIcon,
   Copy,
-  Icon,
   LayoutGridIcon,
   ListIcon,
   LoaderCircleIcon,
@@ -27,18 +24,17 @@ import {
   MoreVertical,
   PencilIcon,
   PlusIcon,
-  RefreshCcwIcon,
   SaveIcon,
   SearchIcon,
   Trash2Icon,
-  Unlock,
   UnlockIcon,
   XIcon,
 } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
 import { onValue, ref, remove, set, update } from "firebase/database";
 import AdminAppLayout from "@/Layouts/AdminAppLayout";
-import { getFirebaseDatabase } from "@/lib/firebase";
+import { getFirebaseAuth, getFirebaseDatabase } from "@/lib/firebase";
+import BookEditDialog, { type FirebaseBookForm } from "./BookEditDialog";
 
 type MysqlBook = {
   id: number;
@@ -50,21 +46,7 @@ type MysqlBook = {
   version: number;
 };
 
-type FirebaseBook = {
-  originalKey: string;
-  coverBook: string;
-  idBook: string;
-  idBookPath: string;
-  idPlaystore: string;
-  keyword: string;
-  lock: boolean;
-  nameBook: string;
-  orderBook: number;
-  price: number;
-  status: string;
-  urlBook: string;
-  version: number;
-};
+type FirebaseBook = FirebaseBookForm;
 
 const ALL_BOOKS_PATH = "/AllBooks";
 
@@ -123,11 +105,7 @@ const resequenceBooks = (items: FirebaseBook[]) => {
   }));
 };
 
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat("id-ID").format(amount);
-};
-
-const createEditForm = (book: FirebaseBook): FirebaseBook => ({
+const createEditForm = (book: FirebaseBook): FirebaseBookForm => ({
   ...book,
 });
 
@@ -148,7 +126,7 @@ export default function Book() {
   const [activeMysqlBookId, setActiveMysqlBookId] = React.useState<number | null>(null);
   const [activeDeleteKey, setActiveDeleteKey] = React.useState<string | null>(null);
   const [activeEditKey, setActiveEditKey] = React.useState<string | null>(null);
-  const [editForm, setEditForm] = React.useState<FirebaseBook | null>(null);
+  const [editForm, setEditForm] = React.useState<FirebaseBookForm | null>(null);
 
   React.useEffect(() => {
     if (!database) {
@@ -225,7 +203,7 @@ export default function Book() {
     });
   }, [books, search]);
 
-  const moveBook = (index: number, direction: "up" | "down") => {
+  const moveBook = useCallback((index: number, direction: "up" | "down") => {
     setBooks((currentBooks) => {
       const nextIndex = direction === "up" ? index - 1 : index + 1;
 
@@ -239,9 +217,9 @@ export default function Book() {
 
       return resequenceBooks(reorderedBooks);
     });
-  };
+  }, []);
 
-  const saveOrder = async () => {
+  const saveOrder = useCallback(async () => {
     if (!database) {
       toast.error("Firebase Realtime Database belum siap.");
 
@@ -266,9 +244,9 @@ export default function Book() {
     } finally {
       setIsSavingOrder(false);
     }
-  };
+  }, [database, books]);
 
-  const handleAddBook = async (book: MysqlBook) => {
+  const handleAddBook = useCallback(async (book: MysqlBook) => {
     if (!database) {
       toast.error("Firebase Realtime Database belum siap.");
 
@@ -294,9 +272,9 @@ export default function Book() {
     } finally {
       setActiveMysqlBookId(null);
     }
-  };
+  }, [database, books]);
 
-  const handleDeleteBook = async (book: FirebaseBook) => {
+  const handleDeleteBook = useCallback(async (book: FirebaseBook) => {
     if (!database) {
       toast.error("Firebase Realtime Database belum siap.");
 
@@ -332,55 +310,42 @@ export default function Book() {
     } finally {
       setActiveDeleteKey(null);
     }
-  };
+  }, [database, books]);
 
-  const openEditDialog = (book: FirebaseBook) => {
+  const openEditDialog = useCallback((book: FirebaseBook) => {
     setEditForm(createEditForm(book));
     setIsEditDialogOpen(true);
-  };
+  }, []);
 
-  const handleEditFormChange = (field: keyof FirebaseBook, value: string | number | boolean) => {
-    setEditForm((currentForm) => {
-      if (!currentForm) {
-        return currentForm;
-      }
-
-      return {
-        ...currentForm,
-        [field]: value,
-      };
-    });
-  };
-
-  const handleSaveEdit = async () => {
-    if (!database || !editForm) {
+  const handleSaveEdit = useCallback(async (newForm: FirebaseBookForm) => {
+    if (!database || !newForm) {
       toast.error("Form edit belum siap.");
 
       return;
     }
 
-    if (!editForm.nameBook.trim()) {
+    if (!newForm.nameBook.trim()) {
       toast.error("Judul buku wajib diisi.");
 
       return;
     }
 
-    setActiveEditKey(editForm.originalKey);
+    setActiveEditKey(newForm.originalKey);
 
     try {
-      await update(ref(database, `${ALL_BOOKS_PATH}/${editForm.originalKey}`), {
-        coverBook: editForm.coverBook,
-        idBook: editForm.idBook,
-        idBookPath: editForm.idBookPath,
-        idPlaystore: editForm.idPlaystore,
-        keyword: editForm.keyword,
-        lock: editForm.lock,
-        nameBook: editForm.nameBook,
-        orderBook: editForm.orderBook,
-        price: editForm.price,
-        status: editForm.status,
-        urlBook: editForm.urlBook,
-        version: editForm.version,
+      await update(ref(database, `${ALL_BOOKS_PATH}/${newForm.originalKey}`), {
+        coverBook: newForm.coverBook,
+        idBook: newForm.idBook,
+        idBookPath: newForm.idBookPath,
+        idPlaystore: newForm.idPlaystore,
+        keyword: newForm.keyword,
+        lock: newForm.lock,
+        nameBook: newForm.nameBook,
+        orderBook: newForm.orderBook,
+        price: newForm.price,
+        status: newForm.status,
+        urlBook: newForm.urlBook,
+        version: newForm.version,
       });
       toast.success("Data buku berhasil diperbarui.");
       setIsEditDialogOpen(false);
@@ -390,7 +355,21 @@ export default function Book() {
     } finally {
       setActiveEditKey(null);
     }
-  };
+  }, [database]);
+
+  const updateLockStatus = useCallback(async (book: FirebaseBook, lock: boolean) => {
+    if (!database) {
+      return;
+    }
+
+    try {
+      await update(ref(database, `${ALL_BOOKS_PATH}/${book.originalKey}`), { lock });
+      toast.success(`Buku berhasil ${lock ? "dikunci" : "dibuka kuncinya"}.`);
+    }
+    catch (error) {
+      toast.error(`Gagal ${lock ? "mengunci" : "membuka kunci"} buku.`);
+    }
+  }, [database]);
 
   const copyToClipboard = useCallback((text: string) => {
     if ("clipboard" in navigator) {
@@ -441,26 +420,28 @@ export default function Book() {
             </Button>
             <div className="flex flex-wrap gap-2">
               <IconButton
-                variant={viewMode === "grid" ? "solid" : "outline"}
-                onClick={() => setViewMode("grid")}
-                title="Mode grid"
-              >
-                <LayoutGridIcon className="h-4 w-4" />
-              </IconButton>
-              <IconButton
-                variant={viewMode === "table" ? "solid" : "outline"}
-                onClick={() => setViewMode("table")}
-                title="Mode tabel"
-              >
-                <ListIcon className="h-4 w-4" />
-              </IconButton>
-              <IconButton
                 variant={isOrderMode ? "solid" : "outline"}
                 onClick={() => setIsOrderMode((value) => !value)}
                 title="Mode order book"
               >
                 <ArrowDownUp className="h-4 w-4" />
               </IconButton>
+              <div className="flex items-center gap-1 border-l border-secondary pl-2 ml-auto">
+                <IconButton
+                  variant={viewMode === "grid" ? "solid" : "ghost"}
+                  onClick={() => setViewMode("grid")}
+                  title="Mode grid"
+                >
+                  <LayoutGridIcon className="h-4 w-4" />
+                </IconButton>
+                <IconButton
+                  variant={viewMode === "table" ? "solid" : "ghost"}
+                  onClick={() => setViewMode("table")}
+                  title="Mode tabel"
+                >
+                  <ListIcon className="h-4 w-4" />
+                </IconButton>
+              </div>
             </div>
           </div>
         </div>
@@ -630,7 +611,7 @@ export default function Book() {
             </Card>
           ) : (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-              {filteredBooks.map((book, index) => {
+              {filteredBooks.map((book) => {
                 const originalIndex = books.findIndex((item) => item.originalKey === book.originalKey);
                 const isDeleting = activeDeleteKey === book.originalKey;
 
@@ -639,7 +620,7 @@ export default function Book() {
                     <Card.Header className="relative overflow-hidden p-0">
                       <div className="h-[320px] w-full shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-950">
                         <img
-                          src={book.coverBook}
+                          src={book.coverBook || "/assets/images/book-thumbnail.webp"}
                           alt={book.nameBook}
                           className="h-full w-full object-cover"
                           onError={(event) => {
@@ -655,7 +636,7 @@ export default function Book() {
                                 <Chip.Label>#{book.orderBook}</Chip.Label>
                               </Chip>
                             ) : (
-                              <IconButton size="sm">
+                              <IconButton size="sm" onClick={() => updateLockStatus(book, !book.lock)} title={book.lock ? "Buka kunci buku" : "Kunci buku"}>
                                 {book.lock ? <LockIcon className="h-4 w-4" /> : <UnlockIcon className="h-4 w-4" />}
                               </IconButton>
                             )
@@ -855,197 +836,17 @@ export default function Book() {
         </Dialog.Overlay>
       </Dialog>
 
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen} size="lg">
-        <Dialog.Overlay>
-          <Dialog.Content className="grid max-h-[90vh] grid-rows-[auto_1fr_auto] overflow-hidden p-0 dark:border-slate-800">
-            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">
-              <div>
-                <Typography variant="h5" className="font-bold text-slate-800 dark:text-white">
-                  Edit data buku
-                </Typography>
-              </div>
-              <IconButton
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setIsEditDialogOpen(false);
-                  setEditForm(null);
-                }}
-              >
-                <XIcon className="h-4 w-4" />
-              </IconButton>
-            </div>
-
-            <div className="space-y-4 overflow-y-auto px-5 py-4">
-              {editForm && (
-                <>
-                  <Typography className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                    Path Firebase item: <span className="font-mono">{editForm.originalKey}</span>
-                  </Typography>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="w-full">
-                      <Typography
-                        as="label"
-                        htmlFor="judul-buku"
-                        type="small"
-                        color="default"
-                        className="font-semibold"
-                      >
-                        Judul Buku
-                      </Typography>
-                      <Input id="judul-buku" value={editForm.nameBook} onChange={(event) => handleEditFormChange("nameBook", event.target.value)} />
-                    </div>
-                    <div className="w-full">
-                      <Typography
-                        as="label"
-                        htmlFor="keyword"
-                        type="small"
-                        color="default"
-                        className="font-semibold"
-                      >
-                        Keyword
-                      </Typography>
-                      <Input id="keyword" value={editForm.keyword} onChange={(event) => handleEditFormChange("keyword", event.target.value)} />
-                    </div>
-                  </div>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="w-full">
-                      <Typography
-                        as="label"
-                        htmlFor="id-buku"
-                        type="small"
-                        color="default"
-                        className="font-semibold"
-                      >
-                        ID Buku
-                      </Typography>
-                      <Input id="id-buku" value={editForm.idBook} onChange={(event) => handleEditFormChange("idBook", event.target.value)} />
-                    </div>
-                    <div className="w-full">
-                      <Typography
-                        as="label"
-                        htmlFor="id-playstore"
-                        type="small"
-                        color="default"
-                        className="font-semibold"
-                      >
-                        ID Playstore
-                      </Typography>
-                      <Input id="id-playstore" value={editForm.idPlaystore} onChange={(event) => handleEditFormChange("idPlaystore", event.target.value)} />
-                    </div>
-                  </div>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="w-full">
-                      <Typography
-                        as="label"
-                        htmlFor="cover-url"
-                        type="small"
-                        color="default"
-                        className="font-semibold"
-                      >
-                        Cover URL
-                      </Typography>
-                      <Input id="cover-url" value={editForm.coverBook} onChange={(event) => handleEditFormChange("coverBook", event.target.value)} />
-                    </div>
-                    <div className="w-full">
-                      <Typography
-                        as="label"
-                        htmlFor="url-book"
-                        type="small"
-                        color="default"
-                        className="font-semibold"
-                      >
-                        URL Buku
-                      </Typography>
-                      <Input id="url-book" value={editForm.urlBook} onChange={(event) => handleEditFormChange("urlBook", event.target.value)} />
-                    </div>
-                  </div>
-                  <div className="grid gap-4 md:grid-cols-3">
-                    <div className="w-full">
-                      <Typography
-                        as="label"
-                        htmlFor="harga"
-                        type="small"
-                        color="default"
-                        className="font-semibold"
-                      >
-                        Harga
-                      </Typography>
-                      <Input id="harga" type="number" value={String(editForm.price)} onChange={(event) => handleEditFormChange("price", Number(event.target.value) || 0)} />
-                    </div>
-                    <div className="w-full">
-                      <Typography
-                        as="label"
-                        htmlFor="versi"
-                        type="small"
-                        color="default"
-                        className="font-semibold"
-                      >
-                        Versi
-                      </Typography>
-                      <Input id="versi" type="number" value={String(editForm.version)} onChange={(event) => handleEditFormChange("version", Number(event.target.value) || 1)} />
-                    </div>
-                    <div className="space-y-2">
-                      <div className="w-full">
-                        <Typography
-                          as="label"
-                          htmlFor="status"
-                          type="small"
-                          color="default"
-                          className="font-semibold"
-                        >
-                          Status
-                        </Typography>
-                        <Select value={editForm.status} onValueChange={(value) => handleEditFormChange("status", value ?? "draft")}>
-                          <Select.Trigger id="status" placeholder="Pilih status" />
-                          <Select.List>
-                            <Select.Option value="publish">publish</Select.Option>
-                            <Select.Option value="draft">draft</Select.Option>
-                          </Select.List>
-                        </Select>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Checkbox id="lock" checked={editForm.lock} onChange={(event) => handleEditFormChange("lock", event.target.checked)}>
-                      <Checkbox.Indicator />
-                    </Checkbox>
-                    <Typography
-                      as="label"
-                      htmlFor="lock"
-                      className="cursor-pointer text-foreground"
-                    >
-                      Kunci buku
-                    </Typography>
-                  </div>
-                </>
-              )}
-            </div>
-
-            <div className="flex justify-end gap-2 border-t border-slate-100 px-5 py-4 dark:border-slate-800">
-              <Button
-                variant="ghost"
-                color="secondary"
-                onClick={() => {
-                  setIsEditDialogOpen(false);
-                  setEditForm(null);
-                }}
-              >
-                Batal
-              </Button>
-              <Button
-                color="success"
-                className="flex items-center gap-2"
-                onClick={handleSaveEdit}
-                disabled={!editForm || activeEditKey === editForm.originalKey}
-              >
-                {editForm && activeEditKey === editForm.originalKey ? <LoaderCircleIcon className="h-4 w-4 animate-spin" /> : <SaveIcon className="h-4 w-4" />}
-                Simpan
-              </Button>
-            </div>
-          </Dialog.Content>
-        </Dialog.Overlay>
-      </Dialog>
+      <BookEditDialog
+        open={isEditDialogOpen}
+        form={editForm}
+        activeEditKey={activeEditKey}
+        onOpenChange={setIsEditDialogOpen}
+        onClose={() => {
+          setIsEditDialogOpen(false);
+          setEditForm(null);
+        }}
+        onSave={handleSaveEdit}
+      />
     </>
   );
 }

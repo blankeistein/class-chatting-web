@@ -23,26 +23,18 @@ import {
   Card,
   Chip,
   IconButton,
-  Input,
   Typography,
-  Menu,
 } from "@material-tailwind/react";
 import {
-  ArrowDownIcon,
   ArrowDownUp,
-  ArrowUpIcon,
   BookIcon,
   Copy,
   EyeIcon,
-  LayoutGridIcon,
-  ListIcon,
   LoaderCircleIcon,
   LockIcon,
-  MoreVertical,
   PencilIcon,
   PlusIcon,
   SaveIcon,
-  SearchIcon,
   GripVerticalIcon,
   Trash2Icon,
   UnlockIcon,
@@ -55,6 +47,11 @@ import BookEditDialog, { type FirebaseBookForm } from "./Partials/EditBookDialog
 import { GridBookCard } from "./Partials/GridBookCard";
 import AddBookDialog, { type Book } from "./Partials/AddBookDialog";
 import BookDetailDialog from "./Partials/BookDetailDialog";
+import { PageHeader } from "@/Components/PageHeader";
+import { SearchFilterToolbar } from "@/Components/SearchFilterToolbar";
+import { LoadingState } from "@/Components/LoadingState";
+import { ViewModeToggle, ViewMode } from "@/Components/ViewModeToggle";
+import { ActionMenu } from "@/Components/ActionMenu";
 
 type FirebaseBook = FirebaseBookForm;
 
@@ -215,33 +212,33 @@ function SortableBookTableRow({
       <td className="px-4 py-4 text-sm text-slate-600 dark:text-slate-300">{book.version}</td>
       <td className="px-4 py-4 text-sm text-slate-600 dark:text-slate-300">{book.lock ? <LockIcon className="w-4 h-4" /> : <UnlockIcon className="w-4 h-4" />}</td>
       <td className="px-4 py-4">
-        <Menu placement="bottom-end">
-          <Menu.Trigger as={IconButton} variant="ghost" size="sm">
-            <MoreVertical className="h-4 w-4" />
-          </Menu.Trigger>
-          <Menu.Content>
-            <Menu.Item onClick={() => onView(book)}>
-              <EyeIcon className="h-4 w-4 mr-2" />
-              Lihat
-            </Menu.Item>
-            <Menu.Item onClick={() => onEdit(book)}>
-              <PencilIcon className="h-4 w-4 mr-2" />
-              Edit
-            </Menu.Item>
-            <Menu.Item onClick={() => onCopyLink(book.urlBook)}>
-              <Copy className="h-4 w-4 mr-2" />
-              Salin Link
-            </Menu.Item>
-            <Menu.Item
-              className="text-error"
-              onClick={() => onDelete(book)}
-              disabled={isDeleting}
-            >
-              {isDeleting ? <LoaderCircleIcon className="h-4 w-4 animate-spin mr-2" /> : <Trash2Icon className="h-4 w-4 mr-2" />}
-              Hapus
-            </Menu.Item>
-          </Menu.Content>
-        </Menu>
+        <ActionMenu
+          items={[
+            {
+              label: "Lihat",
+              icon: <EyeIcon className="h-4 w-4" />,
+              onClick: () => onView(book),
+            },
+            {
+              label: "Edit",
+              icon: <PencilIcon className="h-4 w-4" />,
+              onClick: () => onEdit(book),
+            },
+            {
+              label: "Salin Link",
+              icon: <Copy className="h-4 w-4" />,
+              onClick: () => onCopyLink(book.urlBook),
+            },
+            {
+              divider: true,
+              label: "Hapus",
+              icon: isDeleting ? <LoaderCircleIcon className="h-4 w-4 animate-spin" /> : <Trash2Icon className="h-4 w-4" />,
+              onClick: () => onDelete(book),
+              disabled: isDeleting,
+              danger: true,
+            },
+          ]}
+        />
       </td>
     </tr>
   );
@@ -267,7 +264,7 @@ export default function Index() {
   const database = React.useMemo(() => getFirebaseDatabase(), []);
   const [books, setBooks] = React.useState<FirebaseBook[]>([]);
   const [search, setSearch] = React.useState("");
-  const [viewMode, setViewMode] = React.useState<"grid" | "table">("grid");
+  const [viewMode, setViewMode] = React.useState<ViewMode>("grid");
   const [isLoading, setIsLoading] = React.useState(true);
   const [isSavingOrder, setIsSavingOrder] = React.useState(false);
   const [isOrderMode, setIsOrderMode] = React.useState(false);
@@ -555,68 +552,45 @@ export default function Index() {
       <Toaster position="top-center" />
 
       <div className="min-h-screen space-y-6 p-4 md:p-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <Typography variant="h4" className="font-bold text-slate-800 dark:text-white">
-              Daftar Buku
-            </Typography>
-            <Typography className="text-slate-500 dark:text-slate-400">
-              Kelola buku digital yang tersedia di aplikasi.
-            </Typography>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              className="flex items-center gap-2 bg-slate-900 dark:bg-white dark:text-slate-900"
-              size="sm"
-              onClick={() => setIsAddDialogOpen(true)}
-            >
-              <PlusIcon className="w-4 h-4" />
-              Tambah Buku
-            </Button>
-            <div className="flex flex-wrap gap-2">
-              <IconButton
-                variant={isOrderMode ? "solid" : "outline"}
-                onClick={() => setIsOrderMode((value) => !value)}
-                title="Mode order book"
+        <PageHeader
+          title="Daftar Buku"
+          description="Kelola buku digital yang tersedia di aplikasi."
+          actions={
+            <div className="flex gap-2">
+              <Button
+                className="flex items-center gap-2 bg-slate-900 dark:bg-white dark:text-slate-900"
+                size="sm"
+                onClick={() => setIsAddDialogOpen(true)}
               >
-                <ArrowDownUp className="h-4 w-4" />
-              </IconButton>
-              <div className="flex items-center gap-1 border-l border-secondary pl-2 ml-auto">
+                <PlusIcon className="w-4 h-4" />
+                Tambah Buku
+              </Button>
+              <div className="flex flex-wrap gap-2">
                 <IconButton
-                  variant={viewMode === "grid" ? "solid" : "ghost"}
-                  onClick={() => setViewMode("grid")}
-                  title="Mode grid"
+                  variant={isOrderMode ? "solid" : "outline"}
+                  onClick={() => setIsOrderMode((value) => !value)}
+                  title="Mode order book"
                 >
-                  <LayoutGridIcon className="h-4 w-4" />
+                  <ArrowDownUp className="h-4 w-4" />
                 </IconButton>
-                <IconButton
-                  variant={viewMode === "table" ? "solid" : "ghost"}
-                  onClick={() => setViewMode("table")}
-                  title="Mode tabel"
-                >
-                  <ListIcon className="h-4 w-4" />
-                </IconButton>
+                <ViewModeToggle
+                  currentMode={viewMode}
+                  onModeChange={setViewMode}
+                  modes={["grid", "table"]}
+                />
               </div>
             </div>
-          </div>
-        </div>
+          }
+        />
 
         <Card className="w-full border border-white/70 bg-white/85 p-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
-          <div className="flex flex-col gap-3">
-            <Typography variant="small" className="font-semibold text-slate-700 dark:text-slate-200">
-              Pencarian dan aksi cepat
-            </Typography>
-            <Input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Cari judul, ID buku, keyword, atau status..."
-              className="dark:text-white"
-            >
-              <Input.Icon>
-                <SearchIcon className="h-4 w-4" />
-              </Input.Icon>
-            </Input>
-          </div>
+          <SearchFilterToolbar
+            searchConfig={{
+              value: search,
+              onChange: setSearch,
+              placeholder: "Cari judul, ID buku, keyword, atau status...",
+            }}
+          />
         </Card>
 
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -647,14 +621,7 @@ export default function Index() {
         </div>
 
         {isLoading ? (
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-            {Array.from({ length: 6 }).map((_, index) => (
-              <div
-                key={index}
-                className="h-32 animate-pulse rounded-2xl border border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-900"
-              />
-            ))}
-          </div>
+          <LoadingState count={6} />
         ) : filteredBooks.length > 0 ? (
           <DndContext
             sensors={sensors}

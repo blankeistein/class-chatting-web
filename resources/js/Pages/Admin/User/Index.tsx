@@ -3,30 +3,27 @@ import {
   Card,
   Typography,
   Button,
-  IconButton,
   Dialog,
-  Menu,
-  Input,
-  Select,
-  Chip,
   Avatar,
+  Chip,
 } from "@material-tailwind/react";
 import AdminLayout from "@/Layouts/AdminLayout";
 import Checkbox from "@/Components/Checkbox";
 import { Head, router, useForm } from "@inertiajs/react";
 import {
   PlusIcon,
-  UserIcon,
   EditIcon,
   Trash2Icon,
-  MoreVerticalIcon,
-  SearchIcon,
   UserCheckIcon,
   UserXIcon,
   EyeIcon,
+  UserIcon,
 } from "lucide-react";
 import { toast, Toaster } from "react-hot-toast";
 import Pagination from "@/Components/Pagination";
+import { PageHeader } from "@/Components/PageHeader";
+import { SearchFilterToolbar, FilterOption } from "@/Components/SearchFilterToolbar";
+import { ActionMenu } from "@/Components/ActionMenu";
 
 interface User {
   id: number;
@@ -40,19 +37,25 @@ interface User {
   created_at: string;
 }
 
-const SORT_OPTIONS = [
+const SORT_OPTIONS: FilterOption[] = [
   { label: "Terbaru", value: "latest" },
   { label: "Terlama", value: "oldest" },
   { label: "Nama (A-Z)", value: "name_asc" },
   { label: "Nama (Z-A)", value: "name_desc" },
 ];
 
-const ROLE_OPTIONS = [
+const ROLE_OPTIONS: FilterOption[] = [
   { label: "Semua Role", value: "" },
   { label: "Admin", value: "admin" },
   { label: "Guru", value: "teacher" },
   { label: "Murid", value: "student" },
   { label: "User", value: "user" },
+];
+
+const PER_PAGE_OPTIONS: FilterOption[] = [
+  { label: "25 Item", value: "25" },
+  { label: "50 Item", value: "50" },
+  { label: "100 Item", value: "100" },
 ];
 
 export default function Index({ users: paginatedUsers, filters }: { users: any, filters?: { search?: string, sort?: string, role?: string } }) {
@@ -80,10 +83,25 @@ export default function Index({ users: paginatedUsers, filters }: { users: any, 
     });
   };
 
-  const handleSearchKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleFilter();
+  const handleSortChange = (val: string) => {
+    const option = SORT_OPTIONS.find(o => o.value === val);
+    if (option) {
+      setSort(option);
+      router.get(route('admin.users.index'), { search, sort: val, role: role.value, perPage }, { preserveState: true, replace: true });
     }
+  };
+
+  const handleRoleChange = (val: string) => {
+    const option = ROLE_OPTIONS.find(o => o.value === val);
+    if (option) {
+      setRole(option);
+      router.get(route('admin.users.index'), { search, sort: sort.value, role: val, perPage }, { preserveState: true, replace: true });
+    }
+  };
+
+  const handlePerPageChange = (val: string) => {
+    setPerPage(val);
+    router.get(route('admin.users.index'), { search, sort: sort.value, role: role.value, perPage: val }, { preserveState: true, replace: true });
   };
 
   // Delete Form
@@ -185,16 +203,10 @@ export default function Index({ users: paginatedUsers, filters }: { users: any, 
         )}
 
         {/* Header Section */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <Typography variant="h4" className="font-bold text-slate-800 dark:text-white">
-              Daftar User
-            </Typography>
-            <Typography className="text-slate-500 dark:text-slate-400">
-              Kelola pengguna aplikasi.
-            </Typography>
-          </div>
-          <div className="flex gap-2">
+        <PageHeader
+          title="Daftar User"
+          description="Kelola pengguna aplikasi."
+          actions={
             <Button
               className="flex items-center gap-2 bg-slate-900 dark:bg-white dark:text-slate-900 shadow-none border border-surface dark:border-none"
               size="sm"
@@ -203,107 +215,47 @@ export default function Index({ users: paginatedUsers, filters }: { users: any, 
               <PlusIcon className="w-4 h-4" />
               Tambah User
             </Button>
-          </div>
-        </div>
+          }
+        />
 
         {/* Toolbar Section */}
         <Card className="shadow-sm border border-slate-200 dark:border-slate-800 dark:bg-slate-900">
           <Card.Body className="flex flex-col gap-2 p-4">
             <div className="flex flex-col lg:flex-row items-stretch gap-3 w-full md:w-auto flex-1">
-              <div className="w-full md:w-56">
-                <Typography as="label" htmlFor="role" type="small" color="default" className="font-semibold">
-                  Role
-                </Typography>
-                <Select
-                  value={role.value}
-                  onValueChange={(val) => {
-                    const option = ROLE_OPTIONS.find(o => o.value === val);
-                    if (option) {
-                      setRole(option);
-                      router.get(route('admin.users.index'), { search, sort: sort.value, role: val, perPage }, { preserveState: true, replace: true });
-                    }
-                  }}
-                >
-                  <Select.Trigger id="role" placeholder="Filter Role" >
-                    {() => role.label || "Filter Role"}
-                  </Select.Trigger>
-                  <Select.List>
-                    {ROLE_OPTIONS.map((opt) => (
-                      <Select.Option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </Select.Option>
-                    ))}
-                  </Select.List>
-                </Select>
-              </div>
-              <div className="w-full md:w-48">
-                <Typography as="label" htmlFor="urutkan-berdasarkan" type="small" color="default" className="font-semibold">
-                  Urutkan Berdasarkan
-                </Typography>
-                <Select
-                  value={sort.value}
-                  onValueChange={(val) => {
-                    const option = SORT_OPTIONS.find(o => o.value === val);
-                    if (option) {
-                      setSort(option);
-                      router.get(route('admin.users.index'), { search, sort: val, role: role.value, perPage }, { preserveState: true, replace: true });
-                    }
-                  }}
-                >
-                  <Select.Trigger id="urutkan-berdasarkan" placeholder="Urutkan" >
-                    {() => sort.label || "Urutkan"}
-                  </Select.Trigger>
-                  <Select.List>
-                    {SORT_OPTIONS.map((opt) => (
-                      <Select.Option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </Select.Option>
-                    ))}
-                  </Select.List>
-                </Select>
-              </div>
-              <div className="w-full md:w-48">
-                <Typography as="label" htmlFor="jumlah-item" type="small" color="default" className="font-semibold">
-                  Jumlah Item
-                </Typography>
-                <Select
-                  value={perPage}
-                  onValueChange={(val) => {
-                    setPerPage(val);
-                    router.get(route('admin.users.index'), { search, sort: sort.value, role: role.value, perPage: val }, { preserveState: true, replace: true });
-                  }}
-                >
-                  <Select.Trigger id="jumlah-item" placeholder="per Hal" >
-                    {() => perPage + " per Hal" || "per Hal"}
-                  </Select.Trigger>
-                  <Select.List>
-                    {["25", "50", "100"].map((opt) => (
-                      <Select.Option key={opt} value={opt}>
-                        {opt} Item
-                      </Select.Option>
-                    ))}
-                  </Select.List>
-                </Select>
-              </div>
-            </div>
-            <div className="flex flex-col lg:flex-row items-stretch gap-3 w-full md:w-auto flex-1">
-              <div className="w-full">
-                <Typography as="label" htmlFor="cari" type="small" color="default" className="font-semibold">
-                  Cari
-                </Typography>
-                <Input
-                  id="cari"
-                  placeholder="Cari nama, email, atau username..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  onKeyDown={handleSearchKeyPress}
-                  className="pr-10 dark:text-white"
-                >
-                  <Input.Icon>
-                    <SearchIcon className="w-4 h-4 cursor-pointer" onClick={handleFilter} />
-                  </Input.Icon>
-                </Input>
-              </div>
+              <SearchFilterToolbar
+                searchConfig={{
+                  value: search,
+                  onChange: setSearch,
+                  placeholder: "Cari nama, email, atau username...",
+                  onSearch: handleFilter,
+                }}
+                filters={[
+                  {
+                    id: "role",
+                    label: "Role",
+                    type: "select",
+                    options: ROLE_OPTIONS,
+                    value: role.value,
+                    onChange: handleRoleChange,
+                  },
+                  {
+                    id: "sort",
+                    label: "Urutkan Berdasarkan",
+                    type: "select",
+                    options: SORT_OPTIONS,
+                    value: sort.value,
+                    onChange: handleSortChange,
+                  },
+                  {
+                    id: "perPage",
+                    label: "Jumlah Item",
+                    type: "select",
+                    options: PER_PAGE_OPTIONS,
+                    value: perPage,
+                    onChange: handlePerPageChange,
+                  },
+                ]}
+              />
             </div>
           </Card.Body>
         </Card>
@@ -419,41 +371,27 @@ export default function Index({ users: paginatedUsers, filters }: { users: any, 
                       </td>
                       <td className="p-4">
                         <div className="flex justify-center">
-                          <Menu placement="bottom-end">
-                            <Menu.Trigger
-                              as={IconButton}
-                              variant="ghost"
-                              size="sm"
-                              color="secondary"
-                              className="rounded-full"
-                            >
-                              <MoreVerticalIcon className="w-5 h-5" />
-                            </Menu.Trigger>
-                            <Menu.Content className="z-20 min-w-[160px] dark:bg-slate-900 border-none shadow-xl">
-                              <Menu.Item
-                                className="flex items-center gap-2 dark:hover:bg-slate-800"
-                                onClick={() => router.get(route("admin.users.show", user.id))}
-                              >
-                                <EyeIcon className="w-4 h-4" />
-                                Lihat Info
-                              </Menu.Item>
-                              <Menu.Item
-                                className="flex items-center gap-2 dark:hover:bg-slate-800"
-                                onClick={() => router.get(route("admin.users.edit", user.id))}
-                              >
-                                <EditIcon className="w-4 h-4 " />
-                                Edit User
-                              </Menu.Item>
-                              <hr className="!my-1 -mx-1 border-slate-100 dark:border-slate-800" />
-                              <Menu.Item
-                                className="flex items-center gap-2 text-error dark:text-red-400 dark:hover:bg-slate-800"
-                                onClick={() => openDelete(user)}
-                              >
-                                <Trash2Icon className="w-4 h-4" />
-                                Hapus
-                              </Menu.Item>
-                            </Menu.Content>
-                          </Menu>
+                          <ActionMenu
+                            items={[
+                              {
+                                label: "Lihat Info",
+                                icon: <EyeIcon className="w-4 h-4" />,
+                                onClick: () => router.get(route("admin.users.show", user.id)),
+                              },
+                              {
+                                label: "Edit User",
+                                icon: <EditIcon className="w-4 h-4" />,
+                                onClick: () => router.get(route("admin.users.edit", user.id)),
+                              },
+                              {
+                                divider: true,
+                                label: "Hapus",
+                                icon: <Trash2Icon className="w-4 h-4" />,
+                                onClick: () => openDelete(user),
+                                danger: true,
+                              },
+                            ]}
+                          />
                         </div>
                       </td>
                     </tr>

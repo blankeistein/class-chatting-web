@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
 import Pagination from "@/Components/Pagination";
+import { PageHeader } from "@/Components/PageHeader";
 
 type School = {
   id: number;
@@ -242,38 +243,31 @@ export default function Index({ schools: paginatedSchools, filters, filterOption
     window.location.href = route("admin.schools.bulk-export", { ids: selectedIds.join(",") });
   };
 
-
-  const paginationLinks = paginatedSchools.meta?.links || paginatedSchools.links || [];
-
   return (
     <>
       <Head title="Manajemen Sekolah" />
       <Toaster position="top-center" />
 
       <div className="p-4 space-y-6 min-h-screen">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <Typography variant="h4" className="font-bold text-slate-800 dark:text-white">
-              Manajemen Sekolah
-            </Typography>
-            <Typography className="text-slate-500 dark:text-slate-400">
-              Kelola data sekolah beserta referensi wilayahnya.
-            </Typography>
-          </div>
-          <div className="w-full md:w-auto flex flex-col md:flex-row items-stretch md:items-center gap-2">
-            <Button
-              size="sm"
-              className="flex items-center gap-2"
-              onClick={() => router.get(route("admin.schools.create"))}
-            >
-              <PlusIcon className="w-4 h-4" />
-              Tambah Sekolah
-            </Button>
-            <IconButton variant="outline" color="secondary" onClick={() => router.get(route("admin.schools.import-page"))}>
-              <UploadCloudIcon className="w-4 h-4" />
-            </IconButton>
-          </div>
-        </div>
+        <PageHeader
+          title="Manajemen Sekolah"
+          description="Kelola data sekolah beserta referensi wilayahnya."
+          actions={
+            <>
+              <Button
+                size="sm"
+                className="flex items-center gap-2"
+                onClick={() => router.get(route("admin.schools.create"))}
+              >
+                <PlusIcon className="w-4 h-4" />
+                Tambah Sekolah
+              </Button>
+              <IconButton variant="outline" color="secondary" onClick={() => router.get(route("admin.schools.import-page"))}>
+                <UploadCloudIcon className="w-4 h-4" />
+              </IconButton>
+            </>
+          }
+        />
 
         {selectedIds.length > 0 && (
           <Card color="secondary" className="fixed bottom-8 left-1/2 z-30 flex w-[90%] -translate-x-1/2 flex-row items-center justify-between gap-3 p-3 text-white shadow-xl lg:w-[620px]">

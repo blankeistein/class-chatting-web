@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { toast, Toaster } from "react-hot-toast";
 import Pagination from "@/Components/Pagination";
+import { PageHeader } from "@/Components/PageHeader";
 
 interface User {
   id: number;
@@ -185,16 +186,10 @@ export default function Index({ users: paginatedUsers, filters }: { users: any, 
         )}
 
         {/* Header Section */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <Typography variant="h4" className="font-bold text-slate-800 dark:text-white">
-              Daftar User
-            </Typography>
-            <Typography className="text-slate-500 dark:text-slate-400">
-              Kelola pengguna aplikasi.
-            </Typography>
-          </div>
-          <div className="flex gap-2">
+        <PageHeader
+          title="Manajemen Pengguna"
+          description="Kelola pengguna aplikasi."
+          actions={
             <Button
               className="flex items-center gap-2 bg-slate-900 dark:bg-white dark:text-slate-900 shadow-none border border-surface dark:border-none"
               size="sm"
@@ -203,8 +198,8 @@ export default function Index({ users: paginatedUsers, filters }: { users: any, 
               <PlusIcon className="w-4 h-4" />
               Tambah User
             </Button>
-          </div>
-        </div>
+          }
+        />
 
         {/* Toolbar Section */}
         <Card className="shadow-sm border border-slate-200 dark:border-slate-800 dark:bg-slate-900">

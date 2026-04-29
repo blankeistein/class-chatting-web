@@ -55,6 +55,7 @@ import BookEditDialog, { type FirebaseBookForm } from "./Partials/EditBookDialog
 import { GridBookCard } from "./Partials/GridBookCard";
 import AddBookDialog, { type Book } from "./Partials/AddBookDialog";
 import BookDetailDialog from "./Partials/BookDetailDialog";
+import { PageHeader } from "@/Components/PageHeader";
 
 type FirebaseBook = FirebaseBookForm;
 
@@ -555,51 +556,47 @@ export default function Index() {
       <Toaster position="top-center" />
 
       <div className="min-h-screen space-y-6 p-4 md:p-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <Typography variant="h4" className="font-bold text-slate-800 dark:text-white">
-              Daftar Buku
-            </Typography>
-            <Typography className="text-slate-500 dark:text-slate-400">
-              Kelola buku digital yang tersedia di aplikasi.
-            </Typography>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              className="flex items-center gap-2 bg-slate-900 dark:bg-white dark:text-slate-900"
-              size="sm"
-              onClick={() => setIsAddDialogOpen(true)}
-            >
-              <PlusIcon className="w-4 h-4" />
-              Tambah Buku
-            </Button>
-            <div className="flex flex-wrap gap-2">
-              <IconButton
-                variant={isOrderMode ? "solid" : "outline"}
-                onClick={() => setIsOrderMode((value) => !value)}
-                title="Mode order book"
+        <PageHeader
+          title="Manajemen Buku"
+          description="Kelola buku digital yang tersedia di aplikasi."
+          actions={
+            <>
+              <Button
+                className="flex items-center gap-2 bg-slate-900 dark:bg-white dark:text-slate-900"
+                size="sm"
+                onClick={() => setIsAddDialogOpen(true)}
               >
-                <ArrowDownUp className="h-4 w-4" />
-              </IconButton>
-              <div className="flex items-center gap-1 border-l border-secondary pl-2 ml-auto">
+                <PlusIcon className="w-4 h-4" />
+                Tambah Buku
+              </Button>
+              <div className="flex flex-wrap gap-2">
                 <IconButton
-                  variant={viewMode === "grid" ? "solid" : "ghost"}
-                  onClick={() => setViewMode("grid")}
-                  title="Mode grid"
+                  variant={isOrderMode ? "solid" : "outline"}
+                  onClick={() => setIsOrderMode((value) => !value)}
+                  title="Mode order book"
                 >
-                  <LayoutGridIcon className="h-4 w-4" />
+                  <ArrowDownUp className="h-4 w-4" />
                 </IconButton>
-                <IconButton
-                  variant={viewMode === "table" ? "solid" : "ghost"}
-                  onClick={() => setViewMode("table")}
-                  title="Mode tabel"
-                >
-                  <ListIcon className="h-4 w-4" />
-                </IconButton>
+                <div className="flex items-center gap-1 border-l border-secondary pl-2 ml-auto">
+                  <IconButton
+                    variant={viewMode === "grid" ? "solid" : "ghost"}
+                    onClick={() => setViewMode("grid")}
+                    title="Mode grid"
+                  >
+                    <LayoutGridIcon className="h-4 w-4" />
+                  </IconButton>
+                  <IconButton
+                    variant={viewMode === "table" ? "solid" : "ghost"}
+                    onClick={() => setViewMode("table")}
+                    title="Mode tabel"
+                  >
+                    <ListIcon className="h-4 w-4" />
+                  </IconButton>
+                </div>
               </div>
-            </div>
-          </div>
-        </div>
+            </>
+          }
+        />
 
         <Card className="w-full border border-white/70 bg-white/85 p-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
           <div className="flex flex-col gap-3">

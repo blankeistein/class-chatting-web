@@ -28,6 +28,7 @@ import {
   Video,
   TicketIcon
 } from "lucide-react";
+import { PageHeader } from "@/Components/PageHeader";
 
 interface Stats {
   total_books: number;
@@ -75,16 +76,10 @@ export default function Index({ stats }: { stats: Stats }) {
       <div className="p-4 space-y-6 min-h-[calc(100vh-8rem)]">
 
         {/* Welcome Section */}
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-          <div>
-            <Typography variant="h4" className="text-slate-800 dark:text-white font-bold">
-              Dashboard Overview
-            </Typography>
-            <Typography className="text-slate-500 dark:text-slate-400">
-              Ringkasan aktivitas dan performa aplikasi hari ini.
-            </Typography>
-          </div>
-        </div>
+        <PageHeader
+          title="Dashboard Overview"
+          description="Ringkasan aktivitas dan performa aplikasi hari ini."
+        />
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

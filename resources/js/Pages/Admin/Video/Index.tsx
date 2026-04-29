@@ -28,6 +28,7 @@ import {
   Icon,
 } from "lucide-react";
 import { toast, Toaster } from "react-hot-toast";
+import { PageHeader } from "@/Components/PageHeader";
 
 interface Video {
   id: number;
@@ -320,31 +321,27 @@ export default function Index({
       <Toaster position="top-center" />
 
       <div className="min-h-screen space-y-6 p-4">
-        <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
-          <div>
-            <Typography variant="h4" className="font-bold text-slate-800 dark:text-white">
-              Daftar Video
-            </Typography>
-            <Typography className="text-slate-500 dark:text-slate-400">
-              Kelola video pembelajaran dan unggah ke server.
-            </Typography>
-          </div>
-          <div className="flex gap-2">
-            <Button as={Link} href={route("admin.videos.jobs")} className="flex items-center gap-2 ">
-              <Server className="h-4 w-4" />
-              Tugas
-            </Button>
-            <Button
-              as={Link}
-              className="flex items-center gap-2"
-              size="sm"
-              href={route("admin.videos.create")}
-            >
-              <PlusIcon className="h-4 w-4" />
-              Unggah Video
-            </Button>
-          </div>
-        </div>
+        <PageHeader
+          title="Manajemen Video"
+          description="Kelola video pembelajaran dan unggah ke server."
+          actions={
+            <>
+              <Button as={Link} href={route("admin.videos.jobs")} className="flex items-center gap-2 ">
+                <Server className="h-4 w-4" />
+                Tugas
+              </Button>
+              <Button
+                as={Link}
+                className="flex items-center gap-2"
+                size="sm"
+                href={route("admin.videos.create")}
+              >
+                <PlusIcon className="h-4 w-4" />
+                Unggah Video
+              </Button>
+            </>
+          }
+        />
 
         <Card className="border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <Card.Body className="flex flex-col items-center justify-between gap-4 p-4 md:flex-row">

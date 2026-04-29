@@ -35,6 +35,7 @@ import { toast, Toaster } from "react-hot-toast";
 import GenerateCodeDialog from "./Partials/GenerateCodeDialog";
 import axios from "axios";
 import Pagination from "@/Components/Pagination";
+import { PageHeader } from "@/Components/PageHeader";
 
 interface User {
   name: string;
@@ -306,23 +307,19 @@ export default function Index({
       <Toaster position="top-center" />
 
       <div className="space-y-6 p-4">
-        <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
-          <div>
-            <Typography variant="h4" className="font-bold text-slate-800 dark:text-white">
-              Kode Aktivasi
-            </Typography>
-            <Typography variant="small" className="text-slate-500 dark:text-slate-400">
-              Kelola dan generate kode aktivasi untuk akses aplikasi.
-            </Typography>
-          </div>
-          <Button
-            className="flex items-center gap-2 bg-slate-900 dark:bg-white dark:text-slate-900"
-            size="sm"
-            onClick={() => setOpenGenerateDialog(true)}
-          >
-            <PlusIcon className="h-4 w-4" /> Generate Kode Baru
-          </Button>
-        </div>
+        <PageHeader
+          title="Manajemen Kode Aktivasi"
+          description="Kelola dan generate kode aktivasi untuk akses aplikasi."
+          actions={
+            <Button
+              className="flex items-center gap-2 bg-slate-900 dark:bg-white dark:text-slate-900"
+              size="sm"
+              onClick={() => setOpenGenerateDialog(true)}
+            >
+              <PlusIcon className="h-4 w-4" /> Generate Kode Baru
+            </Button>
+          }
+        />
 
         {selectedIds.length > 0 && (
           <Card color="secondary" className="fixed bottom-8 left-1/2 z-30 flex w-[90%] -translate-x-1/2 animate-in flex-row items-center justify-between gap-3 p-3 text-white duration-300 fade-in slide-in-from-top-4 lg:w-[600px]">

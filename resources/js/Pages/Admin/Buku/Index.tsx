@@ -22,6 +22,7 @@ import {
   EyeIcon,
 } from "lucide-react";
 import { toast, Toaster } from "react-hot-toast";
+import { PageHeader } from "@/Components/PageHeader";
 
 // --- Types ---
 interface Book {
@@ -283,16 +284,10 @@ export default function Index({ books: paginatedBooks, filters }: { books: any, 
 
       <div className="p-4 space-y-6">
         {/* Header Section */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <Typography variant="h4" className="font-bold text-slate-800 dark:text-white">
-              Daftar Buku
-            </Typography>
-            <Typography className="text-slate-500 dark:text-slate-400">
-              Kelola buku digital yang tersedia di aplikasi.
-            </Typography>
-          </div>
-          <div className="flex gap-2">
+        <PageHeader
+          title="Manajemen Buku"
+          description="Kelola buku digital yang tersedia di aplikasi."
+          actions={
             <Button
               className="flex items-center gap-2 bg-slate-900 dark:bg-white dark:text-slate-900"
               size="sm"
@@ -301,8 +296,8 @@ export default function Index({ books: paginatedBooks, filters }: { books: any, 
               <PlusIcon className="w-4 h-4" />
               Tambah Buku
             </Button>
-          </div>
-        </div>
+          }
+        />
 
         {/* Toolbar & Filter */}
         <Card className="shadow-sm border border-slate-200 dark:border-slate-800 dark:bg-slate-900">

@@ -25,6 +25,7 @@ import {
   Trash2Icon,
 } from "lucide-react";
 import { toast, Toaster } from "react-hot-toast";
+import { PageHeader } from "@/Components/PageHeader";
 
 type Province = {
   id: number;
@@ -398,54 +399,50 @@ export default function Index({
       <Toaster position="top-center" />
 
       <div className="space-y-6 p-4">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <Typography variant="h4" className="font-bold text-slate-900 dark:text-white">
-              Manajemen Daerah
-            </Typography>
-            <Typography className="mt-1 text-slate-500 dark:text-slate-400">
-              Kelola hierarki provinsi, kabupaten atau kota, kecamatan, dan desa.
-            </Typography>
-          </div>
-          <Menu placement="bottom-end">
-            <Menu.Trigger
-              as={Button}
-              size="sm"
-              className="flex items-center gap-2"
-            >
-              <PlusIcon className="h-4 w-4" />
-              Tambah Daerah
-              <ChevronDownIcon className="h-4 w-4" />
-            </Menu.Trigger>
-            <Menu.Content className="z-20 min-w-[220px] border-none shadow-xl dark:bg-slate-900">
-              <Menu.Item className="flex items-center gap-2 dark:hover:bg-slate-800" onClick={() => openProvinceDialog("create")}>
-                <LandmarkIcon className="h-4 w-4" />
-                Tambah Provinsi
-              </Menu.Item>
-              <Menu.Item
-                className={`flex items-center gap-2 dark:hover:bg-slate-800 ${!selectedProvince ? "pointer-events-none opacity-50" : ""}`}
-                onClick={() => selectedProvince && openRegencyDialog("create")}
+        <PageHeader
+          title="Manajemen Daerah"
+          description="Kelola hierarki provinsi, kabupaten atau kota, kecamatan, dan desa."
+          actions={
+            <Menu placement="bottom-end">
+              <Menu.Trigger
+                as={Button}
+                size="sm"
+                className="flex items-center gap-2"
               >
-                <Building2Icon className="h-4 w-4" />
-                Tambah Kabupaten/Kota
-              </Menu.Item>
-              <Menu.Item
-                className={`flex items-center gap-2 dark:hover:bg-slate-800 ${!selectedRegency ? "pointer-events-none opacity-50" : ""}`}
-                onClick={() => selectedRegency && openDistrictDialog("create")}
-              >
-                <MapPinnedIcon className="h-4 w-4" />
-                Tambah Kecamatan
-              </Menu.Item>
-              <Menu.Item
-                className={`flex items-center gap-2 dark:hover:bg-slate-800 ${!selectedDistrict ? "pointer-events-none opacity-50" : ""}`}
-                onClick={() => selectedDistrict && openVillageDialog("create")}
-              >
-                <MapIcon className="h-4 w-4" />
-                Tambah Desa
-              </Menu.Item>
-            </Menu.Content>
-          </Menu>
-        </div>
+                <PlusIcon className="h-4 w-4" />
+                Tambah Daerah
+                <ChevronDownIcon className="h-4 w-4" />
+              </Menu.Trigger>
+              <Menu.Content className="z-20 min-w-[220px] border-none shadow-xl dark:bg-slate-900">
+                <Menu.Item className="flex items-center gap-2 dark:hover:bg-slate-800" onClick={() => openProvinceDialog("create")}>
+                  <LandmarkIcon className="h-4 w-4" />
+                  Tambah Provinsi
+                </Menu.Item>
+                <Menu.Item
+                  className={`flex items-center gap-2 dark:hover:bg-slate-800 ${!selectedProvince ? "pointer-events-none opacity-50" : ""}`}
+                  onClick={() => selectedProvince && openRegencyDialog("create")}
+                >
+                  <Building2Icon className="h-4 w-4" />
+                  Tambah Kabupaten/Kota
+                </Menu.Item>
+                <Menu.Item
+                  className={`flex items-center gap-2 dark:hover:bg-slate-800 ${!selectedRegency ? "pointer-events-none opacity-50" : ""}`}
+                  onClick={() => selectedRegency && openDistrictDialog("create")}
+                >
+                  <MapPinnedIcon className="h-4 w-4" />
+                  Tambah Kecamatan
+                </Menu.Item>
+                <Menu.Item
+                  className={`flex items-center gap-2 dark:hover:bg-slate-800 ${!selectedDistrict ? "pointer-events-none opacity-50" : ""}`}
+                  onClick={() => selectedDistrict && openVillageDialog("create")}
+                >
+                  <MapIcon className="h-4 w-4" />
+                  Tambah Desa
+                </Menu.Item>
+              </Menu.Content>
+            </Menu>
+          }
+        />
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           <StatCard title="Provinsi" value={stats.provinces} caption="Level administratif tertinggi" icon={LandmarkIcon} />

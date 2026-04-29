@@ -309,7 +309,7 @@ function ProfileMenu({ user }: { user: User | null }) {
         size="sm"
         className={`border ${user ? "border-success" : "border-error"} p-0.5 cursor-pointer`}
       />
-      <Menu.Content className="z-20">
+      <Menu.Content className="z-[60]">
         <Menu.Item>
           <UserCircle2Icon className="mr-2 h-4 w-4" /> My Profile
         </Menu.Item>

@@ -22,6 +22,7 @@ import {
   Chip,
   IconButton,
   Input,
+  Select,
   Typography,
 } from "@material-tailwind/react";
 import {
@@ -44,7 +45,6 @@ import AddBookDialog, { type Book as NewBook } from "./Partials/AddBookDialog";
 import BookDetailDialog from "./Partials/BookDetailDialog";
 import { PageHeader } from "@/Components/PageHeader";
 import SortableBookTableRow from "./Partials/SortableBookTableRow";
-import { create } from "domain";
 
 export type Book = {
   originalKey: string;
@@ -77,7 +77,21 @@ export type FirebaseBook = {
   version: number;
 };
 
+type BookCategory = {
+  id: string;
+  name: string;
+  keyword: string;
+  order: number;
+};
+
+type FirebaseBookCategory = {
+  name: string;
+  keyword: string;
+  order: number;
+};
+
 const BOOKS_COLLECTION = "books";
+const BOOK_CATEGORIES_COLLECTION = "book_categories";
 
 const normalizeBook = (key: string, value: Partial<FirebaseBook>): Book => {
   return {
@@ -134,6 +148,32 @@ const resequenceBooks = (items: Book[]) => {
   }));
 };
 
+const normalizeBookCategory = (key: string, value: Partial<FirebaseBookCategory>): BookCategory => {
+  return {
+    id: key,
+    name: value.name ?? "-",
+    keyword: value.keyword ?? "",
+    order: typeof value.order === "number" ? value.order : Number.MAX_SAFE_INTEGER,
+  };
+};
+
+const sortBookCategories = (items: BookCategory[]) => {
+  return [...items].sort((left, right) => {
+    if (left.order !== right.order) {
+      return left.order - right.order;
+    }
+
+    return left.name.localeCompare(right.name);
+  });
+};
+
+const extractBookKeywords = (keywordValue: string): string[] => {
+  return keywordValue
+    .split(",")
+    .map((keyword) => keyword.trim().toLowerCase())
+    .filter(Boolean);
+};
+
 const createEditForm = (book: Book): Book => ({
   ...book,
 });
@@ -157,7 +197,9 @@ export default function Index() {
   );
   const firestore = React.useMemo(() => getFirebaseFirestore(), []);
   const [books, setBooks] = React.useState<Book[]>([]);
+  const [categories, setCategories] = React.useState<BookCategory[]>([]);
   const [search, setSearch] = React.useState("");
+  const [selectedKeyword, setSelectedKeyword] = React.useState("all");
   const [viewMode, setViewMode] = React.useState<"grid" | "table">("grid");
   const [isLoading, setIsLoading] = React.useState(true);
   const [isSavingOrder, setIsSavingOrder] = React.useState(false);
@@ -179,7 +221,8 @@ export default function Index() {
     }
 
     const booksCollection = collection(firestore, BOOKS_COLLECTION);
-    const unsubscribe = onSnapshot(
+    const bookCategoriesCollection = collection(firestore, BOOK_CATEGORIES_COLLECTION);
+    const unsubscribeBooks = onSnapshot(
       booksCollection,
       (snapshot) => {
         const items = snapshot.docs.map((doc) => normalizeBook(doc.id, doc.data() as Partial<FirebaseBook>)) as Book[];
@@ -193,27 +236,45 @@ export default function Index() {
       },
     );
 
-    return () => unsubscribe();
+    const unsubscribeCategories = onSnapshot(
+      bookCategoriesCollection,
+      (snapshot) => {
+        const items = snapshot.docs.map((item) => normalizeBookCategory(item.id, item.data() as Partial<FirebaseBookCategory>));
+        setCategories(sortBookCategories(items));
+      },
+      (error) => {
+        console.error("Error fetching book categories:", error);
+        toast.error("Gagal membaca kategori buku dari Firebase Firestore.");
+      },
+    );
+
+    return () => {
+      unsubscribeBooks();
+      unsubscribeCategories();
+    };
   }, [firestore]);
 
   const filteredBooks = React.useMemo(() => {
     const query = search.trim().toLowerCase();
-
-    if (!query) {
-      return books;
-    }
+    const hasKeywordFilter = selectedKeyword !== "all";
 
     return books.filter((book) => {
-      return [
+      const matchesSearch = !query || [
         book.name,
         book.idBook,
         book.keyword,
         book.status,
       ].some((value) => value.toLowerCase().includes(query));
+
+      const matchesKeyword = !hasKeywordFilter || extractBookKeywords(book.keyword).includes(selectedKeyword);
+
+      return matchesSearch && matchesKeyword;
     });
-  }, [books, search]);
+  }, [books, search, selectedKeyword]);
 
   const hasActiveSearch = search.trim().length > 0;
+  const hasActiveKeywordFilter = selectedKeyword !== "all";
+  const hasActiveFilter = hasActiveSearch || hasActiveKeywordFilter;
 
   const moveBook = useCallback((index: number, direction: "up" | "down") => {
     setBooks((currentBooks) => {
@@ -443,7 +504,7 @@ export default function Index() {
     return books.map((book) => book.idBook);
   }, [books]);
 
-  const canDragSort = isOrderMode && !hasActiveSearch;
+  const canDragSort = isOrderMode && !hasActiveFilter;
   const sortableIds = React.useMemo(() => filteredBooks.map((book) => book.originalKey), [filteredBooks]);
 
   return (
@@ -494,23 +555,52 @@ export default function Index() {
           }
         />
 
-        <Card className="w-full border border-white/70 bg-white/85 p-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
-          <div className="flex flex-col gap-3">
-            <Typography variant="small" className="font-semibold text-slate-700 dark:text-slate-200">
-              Pencarian dan aksi cepat
-            </Typography>
-            <Input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Cari judul, ID buku, keyword, atau status..."
-              className="dark:text-white"
-            >
-              <Input.Icon>
-                <SearchIcon className="h-4 w-4" />
-              </Input.Icon>
-            </Input>
-          </div>
+        <Card className="border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <Card.Body className="space-y-4 p-4">
+            <div className="flex flex-col lg:flex-row gap-2">
+              <div className="flex-1 flex flex-col gap-3">
+                <Typography variant="small" className="font-semibold text-slate-700 dark:text-slate-200">
+                  Pencarian dan aksi cepat
+                </Typography>
+                <Input
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Cari judul, ID buku, keyword, atau status..."
+                  className="dark:text-white"
+                >
+                  <Input.Icon>
+                    <SearchIcon className="h-4 w-4" />
+                  </Input.Icon>
+                </Input>
+              </div>
+              <div className="flex flex-col gap-3">
+                <Typography variant="small" className="font-semibold text-slate-700 dark:text-slate-200">
+                  Filter Kategori
+                </Typography>
+                <Select placement="bottom-end" value={selectedKeyword} onValueChange={(value) => setSelectedKeyword(value ?? "all")}>
+                  <Select.Trigger placeholder="Semua kategori">
+                    {() => {
+                      const selectedCategory = categories.find((category) => category.keyword === selectedKeyword);
+
+                      return selectedKeyword === "all" ? "Semua kategori" : selectedCategory?.name ?? "Semua kategori";
+                    }}
+                  </Select.Trigger>
+                  <Select.List className="overflow-auto">
+                    <Select.Option value="all">
+                      Semua kategori
+                    </Select.Option>
+                    {categories.map((category) => (
+                      <Select.Option key={category.id} value={category.keyword}>
+                        {category.name}
+                      </Select.Option>
+                    ))}
+                  </Select.List>
+                </Select>
+              </div>
+            </div>
+          </Card.Body>
         </Card>
+
 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="ml-auto flex items-center gap-2 flex-wrap">
@@ -522,7 +612,7 @@ export default function Index() {
                 <Chip size="sm" variant="ghost" className="bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
                   <Chip.Label>Order mode aktif</Chip.Label>
                 </Chip>
-                {!hasActiveSearch && (
+                {!hasActiveFilter && (
                   <Chip size="sm" variant="ghost" className="bg-sky-100 text-sky-700 dark:bg-sky-500/10 dark:text-sky-300">
                     <Chip.Label>Drag & drop untuk ubah urutan</Chip.Label>
                   </Chip>
@@ -577,7 +667,7 @@ export default function Index() {
                             book={book}
                             books={books}
                             isOrderMode={isOrderMode}
-                            hasActiveSearch={hasActiveSearch}
+                            hasActiveSearch={hasActiveFilter}
                             isDeleting={activeDeleteKey === book.originalKey}
                             activeDeleteKey={activeDeleteKey}
                             onView={openDetailDialog}
@@ -601,7 +691,7 @@ export default function Index() {
                         key={book.originalKey}
                         book={book}
                         isOrderMode={isOrderMode}
-                        hasActiveSearch={hasActiveSearch}
+                        hasActiveSearch={hasActiveFilter}
                         originalIndex={originalIndex}
                         canMoveUp={originalIndex > 0}
                         canMoveDown={originalIndex < books.length - 1}

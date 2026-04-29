@@ -60,7 +60,7 @@ export default function AddBookDialog({
       } catch (error) {
         if (!axios.isCancel(error)) {
           setBooks([]);
-          toast.error("Gagal mengambil daftar buku MySQL.");
+          toast.error("Gagal mengambil daftar buku. Silakan coba lagi.");
         }
       } finally {
         setIsLoading(false);
@@ -102,7 +102,7 @@ export default function AddBookDialog({
             <Input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Cari judul buku MySQL..."
+              placeholder="Cari judul buku..."
             >
               <Input.Icon>
                 <SearchIcon className="h-4 w-4" />

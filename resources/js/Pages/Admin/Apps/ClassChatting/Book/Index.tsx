@@ -35,7 +35,7 @@ import {
   SearchIcon,
 } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
-import { collection, deleteDoc, doc, onSnapshot, setDoc, updateDoc } from "firebase/firestore";
+import { collection, deleteDoc, doc, onSnapshot, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
 import AdminAppLayout from "@/Layouts/AdminAppLayout";
 import { getFirebaseFirestore } from "@/lib/firebase";
 import BookEditDialog from "./Partials/EditBookDialog";
@@ -44,6 +44,7 @@ import AddBookDialog, { type Book as NewBook } from "./Partials/AddBookDialog";
 import BookDetailDialog from "./Partials/BookDetailDialog";
 import { PageHeader } from "@/Components/PageHeader";
 import SortableBookTableRow from "./Partials/SortableBookTableRow";
+import { create } from "domain";
 
 export type Book = {
   originalKey: string;
@@ -273,7 +274,11 @@ export default function Index() {
     }
 
     try {
-      await setDoc(doc(firestore, BOOKS_COLLECTION, payload.idBookPath), payload);
+      await setDoc(doc(firestore, BOOKS_COLLECTION, payload.idBookPath), {
+        ...payload,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
       toast.success("Buku berhasil ditambahkan ke Firestore.");
     } catch (error) {
       console.error("Error adding book:", error);
@@ -356,6 +361,7 @@ export default function Index() {
         status: newForm.status,
         urlBook: newForm.url,
         version: newForm.version,
+        updatedAt: serverTimestamp(),
       });
       toast.success("Data buku berhasil diperbarui.");
       setIsEditDialogOpen(false);

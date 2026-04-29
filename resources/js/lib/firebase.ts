@@ -1,7 +1,7 @@
 import { FirebaseApp, getApp, getApps, initializeApp } from "firebase/app";
 import { Auth, getAuth, signInWithCustomToken, signOut } from "firebase/auth";
 import { Database, getDatabase } from "firebase/database";
-import { Firestore, getFirestore } from "firebase/firestore";
+import { Firestore, getFirestore, initializeFirestore, persistentLocalCache } from "firebase/firestore";
 
 type FirebaseSession = {
     uid: string;
@@ -29,8 +29,8 @@ function resolveFirebaseWebConfig(): FirebaseWebConfig | null {
     const messagingSenderId = import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID;
     const storageBucket = import.meta.env.VITE_FIREBASE_STORAGE_BUCKET;
 
-    if (! apiKey || ! authDomain || ! projectId || ! appId) {
-        if (! firebaseWarningShown) {
+    if (!apiKey || !authDomain || !projectId || !appId) {
+        if (!firebaseWarningShown) {
             console.warn("Firebase web config is incomplete. Skipping Firebase client auth sync.");
             firebaseWarningShown = true;
         }
@@ -52,27 +52,44 @@ function resolveFirebaseWebConfig(): FirebaseWebConfig | null {
 function getFirebaseApp(): FirebaseApp | null {
     const config = resolveFirebaseWebConfig();
 
-    if (! config) {
+    if (!config) {
         return null;
     }
 
     return getApps().length > 0 ? getApp() : initializeApp(config);
 }
 
+let firestoreInstance: Firestore | null = null;
 export function getFirebaseFirestore(): Firestore | null {
     const app = getFirebaseApp();
 
-    if (! app) {
+    if (!app) {
         return null;
     }
 
-    return getFirestore(app);
+    if (firestoreInstance) {
+        return firestoreInstance;
+    }
+
+    try {
+        // Try to enable IndexedDB persistence first
+        firestoreInstance = initializeFirestore(app, {
+            localCache: persistentLocalCache({
+                cacheSizeBytes: 100 * 1024 * 1024, // 100 MB
+            })
+        });
+        return firestoreInstance;
+    } catch (error) {
+        console.log(error)
+        firestoreInstance = getFirestore(app);
+        return firestoreInstance;
+    }
 }
 
 export function getFirebaseDatabase(): Database | null {
     const app = getFirebaseApp();
 
-    if (! app) {
+    if (!app) {
         return null;
     }
 
@@ -82,7 +99,7 @@ export function getFirebaseDatabase(): Database | null {
 export function getFirebaseAuth(): Auth | null {
     const app = getFirebaseApp();
 
-    if (! app) {
+    if (!app) {
         return null;
     }
 
@@ -92,11 +109,11 @@ export function getFirebaseAuth(): Auth | null {
 export async function syncFirebaseAuth(session: FirebaseSession): Promise<void> {
     const auth = getFirebaseAuth();
 
-    if (! auth) {
+    if (!auth) {
         return;
     }
 
-    if (! session) {
+    if (!session) {
         if (auth.currentUser) {
             await signOut(auth);
         }
@@ -114,7 +131,7 @@ export async function syncFirebaseAuth(session: FirebaseSession): Promise<void> 
 export async function signOutFirebase(): Promise<void> {
     const auth = getFirebaseAuth();
 
-    if (! auth || ! auth.currentUser) {
+    if (!auth || !auth.currentUser) {
         return;
     }
 

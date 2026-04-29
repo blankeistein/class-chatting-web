@@ -59,12 +59,16 @@ const ClassChattingLinks: LinkType[] = [
   },
 ];
 
+const isCurrentRoute = (routeName: string): boolean => {
+  return route().current(routeName);
+};
+
 const NavList = ({ links, isCollapsed = false }: { links: LinkType[], isCollapsed?: boolean }) => {
   const { url } = usePage();
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
     links.reduce<Record<string, boolean>>((groups, link) => {
       if (link.children) {
-        groups[link.title] = link.children.some(({ routeName }) => route().current(`${routeName}*`));
+        groups[link.title] = link.children.some(({ routeName }) => isCurrentRoute(routeName));
       }
 
       return groups;
@@ -75,7 +79,7 @@ const NavList = ({ links, isCollapsed = false }: { links: LinkType[], isCollapse
     setOpenGroups((currentGroups) =>
       links.reduce<Record<string, boolean>>((groups, link) => {
         if (link.children) {
-          const hasActiveChild = link.children.some(({ routeName }) => route().current(`${routeName}*`));
+          const hasActiveChild = link.children.some(({ routeName }) => isCurrentRoute(routeName));
           groups[link.title] = currentGroups[link.title] || hasActiveChild;
         }
 
@@ -96,7 +100,7 @@ const NavList = ({ links, isCollapsed = false }: { links: LinkType[], isCollapse
       {links.map(({ icon: Icon, title, href, routeName, badge, children }) => {
         const isSelected = routeName ? route().current(routeName + '*') : false;
         const hasChildren = Boolean(children?.length);
-        const hasActiveChild = children?.some((child) => route().current(`${child.routeName}*`)) ?? false;
+        const hasActiveChild = children?.some((child) => isCurrentRoute(child.routeName)) ?? false;
         const isGroupOpen = openGroups[title] ?? false;
 
         if (hasChildren && children) {
@@ -116,7 +120,7 @@ const NavList = ({ links, isCollapsed = false }: { links: LinkType[], isCollapse
                     {title}
                   </Typography>
                   {children.map((child) => {
-                    const isChildSelected = route().current(`${child.routeName}*`);
+                    const isChildSelected = isCurrentRoute(child.routeName);
 
                     return (
                       <Menu.Item
@@ -148,7 +152,7 @@ const NavList = ({ links, isCollapsed = false }: { links: LinkType[], isCollapse
               <Collapse open={isGroupOpen}>
                 <div className="mt-1 flex flex-col gap-1 pl-3">
                   {children.map((child) => {
-                    const isChildSelected = route().current(`${child.routeName}*`);
+                    const isChildSelected = isCurrentRoute(child.routeName);
 
                     return (
                       <List.Item

@@ -13,7 +13,7 @@ import {
   Tooltip,
   Typography,
 } from "@material-tailwind/react";
-import { ArchiveIcon, ArrowLeft, BellIcon, BookIcon, Building2Icon, ChevronDownIcon, CircleArrowDown, GithubIcon, Grid3X3, Grip, LayoutDashboardIcon, LayoutGrid, LogOutIcon, MailIcon, MapPinnedIcon, MenuIcon, MoonIcon, PiIcon, PinIcon, SunIcon, TicketIcon, Trash2Icon, UserCircle2Icon, UserRoundCog, VideoIcon, XIcon } from "lucide-react";
+import { ArchiveIcon, ArrowLeft, BellIcon, BookIcon, Building2Icon, ChevronDownIcon, CircleArrowDown, GithubIcon, Grid3X3, Grip, LayoutDashboardIcon, LayoutGrid, ListCollapse, LogOutIcon, MailIcon, MapPinnedIcon, MenuIcon, MoonIcon, PiIcon, PinIcon, SunIcon, TicketIcon, Trash2Icon, UserCircle2Icon, UserRoundCog, VideoIcon, XIcon } from "lucide-react";
 import { useTheme } from "../Contexts/ThemeContext";
 import { Link, router, usePage } from "@inertiajs/react";
 import { route } from "ziggy-js";
@@ -44,7 +44,18 @@ const ClassChattingLinks: LinkType[] = [
   {
     title: "Buku",
     icon: BookIcon,
-    routeName: "admin.apps.class-chatting.book",
+    children: [
+      {
+        title: "Daftar",
+        icon: ListCollapse,
+        routeName: "admin.apps.class-chatting.book"
+      },
+      {
+        title: "Kategori",
+        icon: LayoutGrid,
+        routeName: "admin.apps.class-chatting.book.category"
+      }
+    ]
   },
 ];
 
@@ -219,7 +230,7 @@ function Sidebar({ links, isCollapsed }: { links: LinkType[], isCollapsed: boole
 
   return (
     <div className={`p-2 transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-[280px]'} hidden lg:block overflow-hidden`}>
-      <Card className="grid grid-rows-[max-content_auto_max-content] h-full max-h-screen">
+      <Card className="flex flex-col h-full max-h-screen">
         <Card.Header className={`flex items-center gap-4 mb-0 mt-3 h-max transition-all duration-300 ${isCollapsed ? 'mx-1 px-1 justify-center' : 'mx-4'}`}>
           <img src="/assets/images/icons/lestari-ilmu.webp" alt="logo" className="h-8 w-8 flex-shrink-0" />
 
@@ -236,10 +247,18 @@ function Sidebar({ links, isCollapsed }: { links: LinkType[], isCollapsed: boole
           <NavList links={links} isCollapsed={isCollapsed} />
         </Card.Body>
         <Card.Footer>
-          <Button as={Link} href={route('admin.dashboard')} variant="outline" className="w-full">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Kembali
-          </Button>
+          {
+            isCollapsed ? (
+              <IconButton as={Link} href={route('admin.dashboard')} variant="outline" className="w-full">
+                <ArrowLeft className="w-4 h-4" />
+              </IconButton>
+            ) : (
+              <Button as={Link} href={route('admin.dashboard')} variant="outline" className="w-full">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Kembali
+              </Button>
+            )
+          }
         </Card.Footer>
       </Card>
     </div>
@@ -341,17 +360,17 @@ function TopNavbar({ appName, onToggleSidebar }: { appName: string, onToggleSide
   let links: LinkType[] = [];
 
   switch (appName) {
-    case "Class Chatting":
+    case "class-chatting":
       links = ClassChattingLinks;
       break;
     default:
-      links = ClassChattingLinks;
+      links = [];
       break;
   }
 
   return (
     <>
-      <div className="p-2 mx-auto w-full sticky top-0 z-10">
+      <div className="p-2 mx-auto w-full sticky top-0 z-50">
         <Navbar className="bg-background/50 backdrop-blur-lg">
           <div className="flex items-center gap-2">
             <IconButton

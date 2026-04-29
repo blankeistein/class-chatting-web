@@ -24,14 +24,14 @@ export type Book = {
 
 type AddBookDialogProps = {
   open: boolean;
-  existingRealtimeIds: string[];
+  existingIds: string[];
   onOpenChange: Dispatch<SetStateAction<boolean>>;
   onAddBook: (book: Book) => Promise<void>;
 };
 
 export default function AddBookDialog({
   open,
-  existingRealtimeIds,
+  existingIds,
   onOpenChange,
   onAddBook,
 }: AddBookDialogProps) {
@@ -90,10 +90,7 @@ export default function AddBookDialog({
           <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">
             <div>
               <Typography variant="h5" className="font-bold text-slate-800 dark:text-white">
-                Tambah buku dari database MySQL
-              </Typography>
-              <Typography className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                Pilih buku MySQL untuk dikirim ke path <span className="font-mono">/AllBooks</span>.
+                Tambah buku
               </Typography>
             </div>
             <IconButton variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
@@ -119,8 +116,8 @@ export default function AddBookDialog({
                 ))
               ) : books.length > 0 ? (
                 books.map((book) => {
-                  const realtimeId = book.uuid.replace(/-/g, "").toUpperCase();
-                  const existsInRealtime = existingRealtimeIds.includes(realtimeId);
+                  const id = book.uuid.replace(/-/g, "").toUpperCase();
+                  const existsIn = existingIds.includes(id);
                   const isAdding = activeBookId === book.id;
 
                   return (
@@ -150,13 +147,13 @@ export default function AddBookDialog({
                           </div>
                         </div>
                         <Button
-                          color={existsInRealtime ? "secondary" : "success"}
-                          disabled={existsInRealtime || isAdding}
+                          color={existsIn ? "secondary" : "success"}
+                          disabled={existsIn || isAdding}
                           className="flex items-center justify-center gap-2"
                           onClick={() => handleAdd(book)}
                         >
                           {isAdding ? <LoaderCircleIcon className="h-4 w-4 animate-spin" /> : <PlusIcon className="h-4 w-4" />}
-                          {existsInRealtime ? "Sudah ada" : "Tambah"}
+                          {existsIn ? "Sudah ada" : "Tambah"}
                         </Button>
                       </div>
                     </Card>

@@ -4,11 +4,12 @@ import { Card, Chip, IconButton, Menu, Typography } from "@material-tailwind/rea
 import { ArrowDownIcon, ArrowUpIcon, Copy, EyeIcon, GripVerticalIcon, LoaderCircleIcon, LockIcon, MoreVertical, PencilIcon, Trash2Icon, UnlockIcon } from "lucide-react";
 import { memo, useMemo } from "react";
 import { FirebaseBookForm } from "./EditBookDialog";
+import { Book } from "../Index";
 
 type FirebaseBook = FirebaseBookForm;
 
 type GridBookCardProps = {
-  book: FirebaseBook;
+  book: Book;
   isOrderMode: boolean;
   hasActiveSearch: boolean;
   originalIndex: number;
@@ -16,11 +17,11 @@ type GridBookCardProps = {
   canMoveDown: boolean;
   isDeleting: boolean;
   isSortable?: boolean;
-  onView: (book: FirebaseBook) => void;
-  onToggleLock: (book: FirebaseBook, nextLock: boolean) => void;
-  onEdit: (book: FirebaseBook) => void;
+  onView: (book: Book) => void;
+  onToggleLock: (book: Book, nextLock: boolean) => void;
+  onEdit: (book: Book) => void;
   onCopyLink: (url: string) => void;
-  onDelete: (book: FirebaseBook) => void;
+  onDelete: (book: Book) => void;
   onMoveUp: (index: number) => void;
   onMoveDown: (index: number) => void;
 };
@@ -75,8 +76,8 @@ export const GridBookCard = memo(function GridBookCard({
       <Card.Header className="relative overflow-hidden p-0">
         <div className="group relative h-[320px] w-full shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-950">
           <img
-            src={book.coverBook || "/assets/images/book-thumbnail.webp"}
-            alt={book.nameBook}
+            src={book.cover || "/assets/images/book-thumbnail.webp"}
+            alt={book.name}
             className="h-full w-full object-cover"
             onError={(event) => {
               (event.target as HTMLImageElement).src = "/assets/images/book-thumbnail.webp";
@@ -101,7 +102,7 @@ export const GridBookCard = memo(function GridBookCard({
                 {...listeners}
               >
                 <GripVerticalIcon className="h-3.5 w-3.5" />
-                <span>#{book.orderBook}</span>
+                <span>#{book.order}</span>
               </button>
             ) : (
               <IconButton size="sm" onClick={() => onToggleLock(book, !book.lock)} title={book.lock ? "Buka kunci buku" : "Kunci buku"}>
@@ -122,7 +123,7 @@ export const GridBookCard = memo(function GridBookCard({
                 <PencilIcon className="h-4 w-4 mr-2" />
                 Edit
               </Menu.Item>
-              <Menu.Item onClick={() => onCopyLink(book.urlBook)}>
+              <Menu.Item onClick={() => onCopyLink(book.url)}>
                 <Copy className="h-4 w-4 mr-2" />
                 Salin Link
               </Menu.Item>
@@ -144,7 +145,7 @@ export const GridBookCard = memo(function GridBookCard({
             </div>
             <div className="min-w-0">
               <Typography className="line-clamp-2 font-semibold text-slate-800 dark:text-white">
-                {book.nameBook}
+                {book.name}
               </Typography>
             </div>
             <div className="w-full">

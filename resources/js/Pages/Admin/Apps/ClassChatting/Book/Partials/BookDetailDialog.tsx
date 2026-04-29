@@ -8,19 +8,17 @@ import {
   ShieldCheckIcon,
   XIcon,
 } from "lucide-react";
-import { FirebaseBookForm } from "./EditBookDialog";
-
-type FirebaseBook = FirebaseBookForm;
+import { Book } from "../Index";
 
 type BookDetailDialogProps = {
   open: boolean;
-  book: FirebaseBook | null;
+  book: Book | null;
   onOpenChange: Dispatch<SetStateAction<boolean>>;
   onClose: () => void;
   onCopyLink: (url: string) => void;
 };
 
-const detailItems = (book: FirebaseBook) => [
+const detailItems = (book: Book) => [
   { label: "Firebase Key", value: book.originalKey },
   { label: "ID Buku", value: book.idBook },
   { label: "ID Path", value: book.idBookPath },
@@ -63,10 +61,10 @@ export default function BookDetailDialog({
               <div className="grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
                 <div className="space-y-4">
                   <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-950">
-                    {book.coverBook ? (
+                    {book.cover ? (
                       <img
-                        src={book.coverBook}
-                        alt={book.nameBook}
+                        src={book.cover}
+                        alt={book.name}
                         className="h-full w-full object-cover"
                         onError={(event) => {
                           (event.target as HTMLImageElement).src = "/assets/images/book-thumbnail.webp";
@@ -87,11 +85,8 @@ export default function BookDetailDialog({
 
                 <div className="space-y-5">
                   <div>
-                    <Typography variant="h4" className="font-bold text-slate-800 dark:text-white">
-                      {book.nameBook}
-                    </Typography>
-                    <Typography className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                      URL cover dan metadata diambil dari Firebase Realtime Database.
+                    <Typography variant="h2" className="text-xl font-bold text-slate-800 dark:text-white">
+                      {book.name}
                     </Typography>
                   </div>
 
@@ -123,23 +118,13 @@ export default function BookDetailDialog({
                     </div>
                   </div>
 
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/60">
-                      <Typography className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                        URL Buku
-                      </Typography>
-                      <Typography className="mt-2 break-all text-sm text-slate-700 dark:text-slate-200">
-                        {book.urlBook || "-"}
-                      </Typography>
-                    </div>
-                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/60">
-                      <Typography className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                        Akses
-                      </Typography>
-                      <div className="mt-2 flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
-                        {book.lock ? <LockIcon className="h-4 w-4" /> : <ShieldCheckIcon className="h-4 w-4" />}
-                        <span>{book.lock ? "Buku dengan password" : "Buku dapat diakses publik"}</span>
-                      </div>
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/60">
+                    <Typography className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                      Akses
+                    </Typography>
+                    <div className="mt-2 flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+                      {book.lock ? <LockIcon className="h-4 w-4" /> : <ShieldCheckIcon className="h-4 w-4" />}
+                      <span>{book.lock ? "Buku dengan password" : "Buku dapat diakses publik"}</span>
                     </div>
                   </div>
                 </div>
@@ -154,8 +139,8 @@ export default function BookDetailDialog({
             <Button
               variant="outline"
               className="flex items-center gap-2"
-              onClick={() => book?.urlBook && onCopyLink(book.urlBook)}
-              disabled={!book?.urlBook}
+              onClick={() => book?.url && onCopyLink(book.url)}
+              disabled={!book?.url}
             >
               <CopyIcon className="h-4 w-4" />
               Salin Link
@@ -164,11 +149,11 @@ export default function BookDetailDialog({
               color="primary"
               className="flex items-center gap-2"
               onClick={() => {
-                if (book?.urlBook) {
-                  window.open(book.urlBook, "_blank", "noopener,noreferrer");
+                if (book?.url) {
+                  window.open(book.url, "_blank", "noopener,noreferrer");
                 }
               }}
-              disabled={!book?.urlBook}
+              disabled={!book?.url}
             >
               <ExternalLinkIcon className="h-4 w-4" />
               Buka Link

@@ -9,6 +9,7 @@ import {
   Typography,
 } from "@material-tailwind/react";
 import { LoaderCircleIcon, SaveIcon, XIcon } from "lucide-react";
+import { Book } from "../Index";
 
 export type FirebaseBookForm = {
   originalKey: string;
@@ -28,11 +29,11 @@ export type FirebaseBookForm = {
 
 type BookEditDialogProps = {
   open: boolean;
-  form: FirebaseBookForm | null;
+  form: Book | null;
   activeEditKey: string | null;
   onOpenChange: Dispatch<SetStateAction<boolean>>;
   onClose: () => void;
-  onSave: (book: FirebaseBookForm) => void;
+  onSave: (book: Book) => void;
 };
 
 export default function BookEditDialog({
@@ -43,7 +44,7 @@ export default function BookEditDialog({
   onClose,
   onSave,
 }: BookEditDialogProps) {
-  const [editForm, setEditForm] = useState<FirebaseBookForm | null>(null);
+  const [editForm, setEditForm] = useState<Book | null>(null);
 
   useEffect(() => {
     if (form) {
@@ -57,7 +58,7 @@ export default function BookEditDialog({
     }
   }, [open]);
 
-  const handleEditFormChange = useCallback((field: keyof FirebaseBookForm, value: string | number | boolean) => {
+  const handleEditFormChange = useCallback((field: keyof Book, value: string | number | boolean) => {
     setEditForm((currentForm) => {
       if (!currentForm) {
         return currentForm;
@@ -96,7 +97,7 @@ export default function BookEditDialog({
                     <Typography as="label" htmlFor="judul-buku" type="small" color="default" className="font-semibold">
                       Judul Buku
                     </Typography>
-                    <Input id="judul-buku" value={editForm.nameBook} onChange={(event) => handleEditFormChange("nameBook", event.target.value)} />
+                    <Input id="judul-buku" value={editForm.name} onChange={(event) => handleEditFormChange("name", event.target.value)} />
                   </div>
                   <div className="w-full">
                     <Typography as="label" htmlFor="keyword" type="small" color="default" className="font-semibold">
@@ -118,13 +119,13 @@ export default function BookEditDialog({
                     <Typography as="label" htmlFor="cover-url" type="small" color="default" className="font-semibold">
                       Cover URL
                     </Typography>
-                    <Input id="cover-url" value={editForm.coverBook} onChange={(event) => handleEditFormChange("coverBook", event.target.value)} />
+                    <Input id="cover-url" value={editForm.cover} onChange={(event) => handleEditFormChange("cover", event.target.value)} />
                   </div>
                   <div className="w-full">
                     <Typography as="label" htmlFor="url-book" type="small" color="default" className="font-semibold">
                       URL Buku
                     </Typography>
-                    <Input id="url-book" value={editForm.urlBook} onChange={(event) => handleEditFormChange("urlBook", event.target.value)} />
+                    <Input id="url-book" value={editForm.url} onChange={(event) => handleEditFormChange("url", event.target.value)} />
                   </div>
                 </div>
                 <div className="grid gap-4 md:grid-cols-3">

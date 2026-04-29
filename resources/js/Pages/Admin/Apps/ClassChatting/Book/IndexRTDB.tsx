@@ -16,6 +16,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import {
   Button,
   Card,
@@ -35,60 +36,47 @@ import {
   SearchIcon,
 } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
-import { collection, deleteDoc, doc, onSnapshot, setDoc, updateDoc } from "firebase/firestore";
+import { onValue, ref, remove, set, update } from "firebase/database";
 import AdminAppLayout from "@/Layouts/AdminAppLayout";
-import { getFirebaseFirestore } from "@/lib/firebase";
+import { getFirebaseDatabase } from "@/lib/firebase";
 import BookEditDialog from "./Partials/EditBookDialog";
 import { GridBookCard } from "./Partials/GridBookCard";
 import AddBookDialog, { type Book as NewBook } from "./Partials/AddBookDialog";
 import BookDetailDialog from "./Partials/BookDetailDialog";
 import { PageHeader } from "@/Components/PageHeader";
+import { Book } from "./Index";
 import SortableBookTableRow from "./Partials/SortableBookTableRow";
 
-export type Book = {
-  originalKey: string;
-  cover: string;
+export type FirebaseRTDBBookForm = {
+  coverBook: string;
   idBook: string;
   idBookPath: string;
   idPlaystore: string;
   keyword: string;
   lock: boolean;
-  name: string;
-  order: number;
-  price: number;
-  status: string;
-  url: string;
-  version: number;
-};
-
-export type FirebaseBook = {
-  cover: string;
-  idBook: string;
-  idBookPath: string;
-  idPlaystore: string;
-  keyword: string;
-  lock: boolean;
-  name: string;
-  order: number;
+  nameBook: string;
+  orderBook: number;
   price: number;
   status: string;
   urlBook: string;
   version: number;
 };
 
-const BOOKS_COLLECTION = "books";
+type FirebaseBook = FirebaseRTDBBookForm;
 
-const normalizeBook = (key: string, value: Partial<FirebaseBook>): Book => {
+const ALL_BOOKS_PATH = "/AllBooks";
+
+const normalizeBook = (key: string, value: Partial<FirebaseRTDBBookForm>): Book => {
   return {
     originalKey: key,
-    cover: value.cover ?? "",
+    cover: value.coverBook ?? "",
     idBook: value.idBook ?? key,
     idBookPath: value.idBookPath ?? key,
     idPlaystore: value.idPlaystore ?? value.idBook ?? key,
     keyword: value.keyword ?? "",
     lock: Boolean(value.lock),
-    name: value.name ?? "-",
-    order: typeof value.order === "number" ? value.order : Number.MAX_SAFE_INTEGER,
+    name: value.nameBook ?? "-",
+    order: typeof value.orderBook === "number" ? value.orderBook : Number.MAX_SAFE_INTEGER,
     price: typeof value.price === "number" ? value.price : Number(value.price ?? 0),
     status: value.status ?? "draft",
     url: value.urlBook ?? "",
@@ -96,19 +84,19 @@ const normalizeBook = (key: string, value: Partial<FirebaseBook>): Book => {
   };
 };
 
-const createPayloadBook = (book: NewBook, orderBook: number): FirebaseBook => {
+const createRealtimePayloadFromMysql = (book: NewBook, orderBook: number): FirebaseRTDBBookForm => {
   const baseId = book.uuid;
   const keyword = book.tags?.join(",") ?? "";
 
   return {
-    cover: book.coverUrl,
+    coverBook: book.coverUrl,
     idBook: baseId,
     idBookPath: baseId,
     idPlaystore: baseId,
     keyword,
     lock: false,
-    name: book.title,
-    order: orderBook,
+    nameBook: book.title,
+    orderBook: orderBook,
     price: 0,
     status: "publish",
     urlBook: book.url ?? "",
@@ -129,7 +117,7 @@ const sortBooks = (items: Book[]) => {
 const resequenceBooks = (items: Book[]) => {
   return items.map((book, index) => ({
     ...book,
-    order: index + 1,
+    orderBook: index + 1,
   }));
 };
 
@@ -137,7 +125,7 @@ const createEditForm = (book: Book): Book => ({
   ...book,
 });
 
-export default function Index() {
+export default function IndexRTDB() {
   const sensors = useSensors(
     useSensor(MouseSensor, {
       activationConstraint: {
@@ -154,7 +142,7 @@ export default function Index() {
       coordinateGetter: sortableKeyboardCoordinates,
     }),
   );
-  const firestore = React.useMemo(() => getFirebaseFirestore(), []);
+  const database = React.useMemo(() => getFirebaseDatabase(), []);
   const [books, setBooks] = React.useState<Book[]>([]);
   const [search, setSearch] = React.useState("");
   const [viewMode, setViewMode] = React.useState<"grid" | "table">("grid");
@@ -170,30 +158,30 @@ export default function Index() {
   const [editForm, setEditForm] = React.useState<Book | null>(null);
 
   React.useEffect(() => {
-    if (!firestore) {
+    if (!database) {
       setIsLoading(false);
-      toast.error("Firebase Firestore belum terkonfigurasi. Tambahkan VITE_FIREBASE_PROJECT_ID.");
+      toast.error("Firebase Realtime Database belum terkonfigurasi. Tambahkan VITE_FIREBASE_DATABASE_URL.");
 
       return;
     }
 
-    const booksCollection = collection(firestore, BOOKS_COLLECTION);
-    const unsubscribe = onSnapshot(
-      booksCollection,
+    const booksReference = ref(database, ALL_BOOKS_PATH);
+    const unsubscribe = onValue(
+      booksReference,
       (snapshot) => {
-        const items = snapshot.docs.map((doc) => normalizeBook(doc.id, doc.data() as Partial<FirebaseBook>)) as Book[];
+        const value = snapshot.val() as Record<string, Partial<FirebaseBook>> | null;
+        const items = Object.entries(value ?? {}).map(([key, payload]) => normalizeBook(key, payload)) as Book[];
         setBooks(resequenceBooks(sortBooks(items)));
         setIsLoading(false);
       },
-      (error) => {
-        console.error("Error fetching books:", error);
-        toast.error("Gagal membaca data buku dari Firebase Firestore.");
+      () => {
+        toast.error("Gagal membaca data buku dari Firebase.");
         setIsLoading(false);
       },
     );
 
     return () => unsubscribe();
-  }, [firestore]);
+  }, [database]);
 
   const filteredBooks = React.useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -231,8 +219,8 @@ export default function Index() {
   }, []);
 
   const saveOrder = useCallback(async () => {
-    if (!firestore) {
-      toast.error("Firebase Firestore belum siap.");
+    if (!database) {
+      toast.error("Firebase Realtime Database belum siap.");
 
       return;
     }
@@ -240,83 +228,84 @@ export default function Index() {
     setIsSavingOrder(true);
 
     try {
-      const batch = books.map((book, index) =>
-        updateDoc(doc(firestore, BOOKS_COLLECTION, book.originalKey), { order: index + 1 })
-      );
+      const updates = books.reduce<Record<string, number>>((accumulator, book, index) => {
+        accumulator[`AllBooks/${book.originalKey}/orderBook`] = index + 1;
 
-      await Promise.all(batch);
+        return accumulator;
+      }, {});
+
+      await update(ref(database), updates);
       setBooks((currentBooks) => resequenceBooks(currentBooks));
       setIsOrderMode(false);
       toast.success("Urutan buku berhasil disimpan.");
     } catch (error) {
-      console.error("Error saving order:", error);
       toast.error("Gagal menyimpan urutan buku.");
     } finally {
       setIsSavingOrder(false);
     }
-  }, [firestore, books]);
+  }, [database, books]);
 
   const handleAddBook = useCallback(async (book: NewBook) => {
-    if (!firestore) {
-      toast.error("Firebase Firestore belum siap.");
+    if (!database) {
+      toast.error("Firebase Realtime Database belum siap.");
 
       return;
     }
 
-    const payload = createPayloadBook(book, books.length + 1);
+    const payload = createRealtimePayloadFromMysql(book, books.length + 1);
     const duplicateBook = books.find((item) => item.idBook === payload.idBook || item.originalKey === payload.idBookPath);
 
     if (duplicateBook) {
-      toast.error("Buku ini sudah ada di Firestore.");
+      toast.error("Buku ini sudah ada di Realtime Database.");
 
       return;
     }
 
     try {
-      await setDoc(doc(firestore, BOOKS_COLLECTION, payload.idBookPath), payload);
-      toast.success("Buku berhasil ditambahkan ke Firestore.");
+      await set(ref(database, `${ALL_BOOKS_PATH}/${payload.idBookPath}`), payload);
+      toast.success("Buku berhasil ditambahkan ke Realtime Database.");
     } catch (error) {
-      console.error("Error adding book:", error);
-      toast.error("Gagal menambahkan buku ke Firestore.");
+      toast.error("Gagal menambahkan buku ke Realtime Database.");
     }
-  }, [firestore, books]);
+  }, [database, books]);
 
   const handleDeleteBook = useCallback(async (book: Book) => {
-    if (!firestore) {
-      toast.error("Firebase Firestore belum siap.");
+    if (!database) {
+      toast.error("Firebase Realtime Database belum siap.");
 
       return;
     }
 
-    if (!window.confirm(`Hapus "${book.name}" dari Firestore?`)) {
+    if (!window.confirm(`Hapus "${book.name}" dari Realtime Database?`)) {
       return;
     }
 
     setActiveDeleteKey(book.originalKey);
 
     try {
-      await deleteDoc(doc(firestore, BOOKS_COLLECTION, book.originalKey));
+      await remove(ref(database, `${ALL_BOOKS_PATH}/${book.originalKey}`));
 
       const remainingBooks = resequenceBooks(
         books.filter((item) => item.originalKey !== book.originalKey),
       );
 
-      const updatePromises = remainingBooks.map((item) =>
-        updateDoc(doc(firestore, BOOKS_COLLECTION, item.originalKey), { order: item.order })
-      );
+      const updates = remainingBooks.reduce<Record<string, number>>((accumulator, item) => {
+        accumulator[`AllBooks/${item.originalKey}/orderBook`] = item.orderBook;
 
-      if (updatePromises.length > 0) {
-        await Promise.all(updatePromises);
+        return accumulator;
+      }, {});
+
+      if (Object.keys(updates).length > 0) {
+        await update(ref(database), updates);
       }
 
-      toast.success("Buku berhasil dihapus dari Firestore.");
+      toast.success("Buku berhasil dihapus dari Realtime Database.");
     } catch (error) {
-      console.error("Error deleting book:", error);
-      toast.error("Gagal menghapus buku dari Firestore.");
+      toast.error("Gagal menghapus buku dari Realtime Database.");
     } finally {
       setActiveDeleteKey(null);
     }
-  }, [firestore, books]);
+  }, [database, books]);
 
   const openEditDialog = useCallback((book: Book) => {
     setEditForm(createEditForm(book));
@@ -329,7 +318,7 @@ export default function Index() {
   }, []);
 
   const handleSaveEdit = useCallback(async (newForm: Book) => {
-    if (!firestore || !newForm) {
+    if (!database || !newForm) {
       toast.error("Form edit belum siap.");
 
       return;
@@ -344,14 +333,14 @@ export default function Index() {
     setActiveEditKey(newForm.originalKey);
 
     try {
-      await updateDoc(doc(firestore, BOOKS_COLLECTION, newForm.originalKey), {
-        cover: newForm.cover,
+      await update(ref(database, `${ALL_BOOKS_PATH}/${newForm.originalKey}`), {
+        coverBook: newForm.cover,
         idBookPath: newForm.idBookPath,
         idPlaystore: newForm.idPlaystore,
         keyword: newForm.keyword,
         lock: newForm.lock,
-        name: newForm.name,
-        order: newForm.order,
+        nameBook: newForm.name,
+        orderBook: newForm.order,
         price: newForm.price,
         status: newForm.status,
         urlBook: newForm.url,
@@ -361,27 +350,25 @@ export default function Index() {
       setIsEditDialogOpen(false);
       setEditForm(null);
     } catch (error) {
-      console.error("Error updating book:", error);
       toast.error("Gagal memperbarui data buku.");
     } finally {
       setActiveEditKey(null);
     }
-  }, [firestore]);
+  }, [database]);
 
   const updateLockStatus = useCallback(async (book: Book, lock: boolean) => {
-    if (!firestore) {
+    if (!database) {
       return;
     }
 
     try {
-      await updateDoc(doc(firestore, BOOKS_COLLECTION, book.originalKey), { lock });
+      await update(ref(database, `${ALL_BOOKS_PATH}/${book.originalKey}`), { lock });
       toast.success(`Buku berhasil ${lock ? "dikunci" : "dibuka kuncinya"}.`);
     }
     catch (error) {
-      console.error("Error updating lock status:", error);
       toast.error(`Gagal ${lock ? "mengunci" : "membuka kunci"} buku.`);
     }
-  }, [firestore]);
+  }, [database]);
 
   const copyToClipboard = useCallback((text: string) => {
     if ("clipboard" in navigator) {
@@ -433,7 +420,7 @@ export default function Index() {
     });
   }, []);
 
-  const existingIds = React.useMemo(() => {
+  const existingRealtimeIds = React.useMemo(() => {
     return books.map((book) => book.idBook);
   }, [books]);
 
@@ -507,7 +494,7 @@ export default function Index() {
         </Card>
 
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="ml-auto flex items-center gap-2 flex-wrap">
+          <div className="ml-auto flex items-center gap-2">
             <Chip size="sm" variant="ghost" className="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
               <Chip.Label>{books.length} buku</Chip.Label>
             </Chip>
@@ -624,7 +611,7 @@ export default function Index() {
               Buku tidak ditemukan
             </Typography>
             <Typography className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-              Periksa kata kunci pencarian atau pastikan collection <span className="font-mono">books</span> sudah memiliki data.
+              Periksa kata kunci pencarian atau pastikan path <span className="font-mono">/AllBooks</span> sudah memiliki data.
             </Typography>
           </Card>
         )}
@@ -632,7 +619,7 @@ export default function Index() {
 
       <AddBookDialog
         open={isAddDialogOpen}
-        existingIds={existingIds}
+        existingIds={existingRealtimeIds}
         onOpenChange={setIsAddDialogOpen}
         onAddBook={handleAddBook}
       />
@@ -663,6 +650,6 @@ export default function Index() {
   );
 }
 
-Index.layout = (page: React.ReactNode) => {
+IndexRTDB.layout = (page: React.ReactNode) => {
   return <AdminAppLayout appName="class-chatting">{page}</AdminAppLayout>;
 };

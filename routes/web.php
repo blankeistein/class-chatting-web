@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\ActivationCodeController;
+use App\Http\Controllers\Admin\Apps\ClassChatting\BookController as ClassChattingBookController;
 use App\Http\Controllers\Admin\BookController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\RegionController as AdminRegionController;
@@ -76,9 +77,9 @@ Route::middleware('auth')->group(function () {
             return redirect()->route('admin.apps.class-chatting.book');
         })->name('apps.class-chatting');
 
-        Route::get('apps/class-chatting/book', function () {
-            return Inertia::render('Admin/Apps/ClassChatting/Book/Index');
-        })->name('apps.class-chatting.book');
+        Route::get('apps/class-chatting/book', [ClassChattingBookController::class, 'index'])->name('apps.class-chatting.book');
+        Route::get('apps/class-chatting/book/category', [ClassChattingBookController::class, 'category'])->name('apps.class-chatting.book.category');
+        Route::get('apps/class-chatting/book-rtdb', [ClassChattingBookController::class, 'indexRTDB'])->name('apps.class-chatting.book-rtdb');
     });
 });
 

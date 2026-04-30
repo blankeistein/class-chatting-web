@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\AdminMiddleware;
+use App\Http\Middleware\EnsureFirebaseIdToken;
 use App\Http\Middleware\EnsurePrivateApiKey;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\VerifyFirebaseWebhook;
@@ -31,6 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'admin' => AdminMiddleware::class,
+            'firebase.id_token' => EnsureFirebaseIdToken::class,
             'firebase.webhook' => VerifyFirebaseWebhook::class,
             'private.api' => EnsurePrivateApiKey::class,
         ]);

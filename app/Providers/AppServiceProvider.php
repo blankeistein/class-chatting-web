@@ -66,7 +66,7 @@ class AppServiceProvider extends ServiceProvider
 
         Scramble::configure()
             ->routes(function (Route $route): bool {
-                return Str::startsWith($route->uri(), ['api/v1', 'api/firebase', 'private-api']);
+                return Str::startsWith($route->uri(), ['api/v1', 'api/v2', 'api/firebase', 'private-api']);
             })
             ->expose('docs/api', 'docs/api.json');
 

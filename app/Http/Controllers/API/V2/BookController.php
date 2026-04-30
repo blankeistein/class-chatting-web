@@ -25,17 +25,17 @@ class BookController extends Controller
     )]
     #[HeaderParameter('Authorization', 'Firebase ID token bearer. Format: `Bearer <firebase_id_token>`.', required: true, example: 'Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6Ij...')]
     #[BodyParameter('code', 'Kode aktivasi buku.', required: true, example: 'AKTIVASI-001')]
-    #[BodyParameter('package_name', 'UUID buku yang akan diaktivasi.', required: true, example: 'book-uuid-001')]
+    #[BodyParameter('id', 'UUID buku yang akan diaktivasi.', required: true, example: 'book-uuid-001')]
     #[BodyParameter('tier', 'Tier buku yang diharapkan. Gunakan `1` untuk Regular dan `2` untuk Premium.', required: true, type: 'integer', example: 1)]
     public function activate(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'code' => 'required',
-            'package_name' => 'required',
+            'id' => 'required',
             'tier' => 'required',
         ], [
             'code.required' => 'Mohon masukkan kode aktivasi! [104]',
-            'package_name.required' => 'ID buku kosong. [103]',
+            'id.required' => 'ID buku kosong. [103]',
             'tier.required' => 'Mohon update aplikasi yang anda gunakan! [105]',
         ]);
 
@@ -43,7 +43,7 @@ class BookController extends Controller
             $field = array_key_first($validator->errors()->toArray());
             $errorCodes = [
                 'code' => 104,
-                'package_name' => 103,
+                'id' => 103,
                 'tier' => 105,
             ];
 
@@ -58,7 +58,7 @@ class BookController extends Controller
         $validateData = [
             'code' => trim((string) $validator->validated()['code']),
             'uid' => trim((string) $request->attributes->get('firebase_uid')),
-            'package_name' => trim((string) $validator->validated()['package_name']),
+            'id' => trim((string) $validator->validated()['id']),
             'tier' => $validator->validated()['tier'],
         ];
 
@@ -96,7 +96,7 @@ class BookController extends Controller
                 ]);
             }
 
-            $book = Book::query()->where('uuid', $validateData['package_name'])->first();
+            $book = Book::query()->where('uuid', $validateData['id'])->first();
 
             if (! $book) {
                 return response()->json([
@@ -109,7 +109,7 @@ class BookController extends Controller
 
             $supportedBooksKey = $code->items->pluck('model.uuid')->filter()->toArray();
 
-            if (empty($supportedBooksKey) || ! in_array($validateData['package_name'], $supportedBooksKey, true)) {
+            if (empty($supportedBooksKey) || ! in_array($validateData['id'], $supportedBooksKey, true)) {
                 return response()->json([
                     'status' => 'error',
                     'error_code' => 108,

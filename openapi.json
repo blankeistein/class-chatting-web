@@ -1119,7 +1119,7 @@
                                         "description": "Firebase UID atau identifier unik pengguna yang melakukan aktivasi.",
                                         "example": "firebase-user-001"
                                     },
-                                    "package_name": {
+                                    "id": {
                                         "type": "string",
                                         "description": "UUID buku yang akan diaktivasi.",
                                         "example": "book-uuid-001"
@@ -1134,7 +1134,7 @@
                                     "api_key",
                                     "code",
                                     "uid",
-                                    "package_name",
+                                    "id",
                                     "tier"
                                 ]
                             }

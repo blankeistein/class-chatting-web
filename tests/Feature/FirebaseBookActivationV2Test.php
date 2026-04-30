@@ -14,7 +14,7 @@ uses(RefreshDatabase::class);
 it('rejects v2 activation requests without a firebase bearer token', function () {
     $response = $this->postJson('/api/v2/book/activate', [
         'code' => 'AKTIVASI-001',
-        'package_name' => 'book-uuid-001',
+        'id' => 'book-uuid-001',
         'tier' => ActivationCodeTierEnum::REGULAR->value,
     ]);
 
@@ -62,7 +62,7 @@ it('uses the firebase uid from the verified bearer token instead of the request 
         ->postJson('/api/v2/book/activate', [
             'code' => 'AKTIVASI-001',
             'uid' => 'forged-user-id',
-            'package_name' => 'book-uuid-001',
+            'id' => 'book-uuid-001',
             'tier' => ActivationCodeTierEnum::REGULAR->value,
         ]);
 
@@ -90,7 +90,7 @@ it('rejects v2 activation requests with an invalid firebase bearer token', funct
         ->withHeader('Authorization', 'Bearer invalid-firebase-token')
         ->postJson('/api/v2/book/activate', [
             'code' => 'AKTIVASI-001',
-            'package_name' => 'book-uuid-001',
+            'id' => 'book-uuid-001',
             'tier' => ActivationCodeTierEnum::REGULAR->value,
         ]);
 

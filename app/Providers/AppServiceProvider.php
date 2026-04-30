@@ -5,15 +5,19 @@ namespace App\Providers;
 use App\Models\Book;
 use App\Models\User;
 use Dedoc\Scramble\Scramble;
+use Google\Cloud\Firestore\FirestoreClient;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
+use RuntimeException;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -22,7 +26,30 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(FirestoreClient::class, function (): FirestoreClient {
+            $credentialsPath = base_path((string) config('firebase.projects.app.credentials'));
+
+            if (! File::exists($credentialsPath)) {
+                throw new RuntimeException('File kredensial Firebase tidak ditemukan.');
+            }
+
+            $credentials = json_decode((string) File::get($credentialsPath), true);
+
+            if (! is_array($credentials)) {
+                throw new RuntimeException('Isi file kredensial Firebase tidak valid.');
+            }
+
+            $projectId = Arr::get($credentials, 'project_id', env('FIREBASE_PROJECT_ID'));
+
+            if (! is_string($projectId) || $projectId === '') {
+                throw new RuntimeException('Project ID Firebase tidak valid.');
+            }
+
+            return new FirestoreClient([
+                'projectId' => $projectId,
+                'credentials' => $credentials,
+            ]);
+        });
     }
 
     /**

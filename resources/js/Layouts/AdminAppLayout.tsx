@@ -13,7 +13,7 @@ import {
   Tooltip,
   Typography,
 } from "@material-tailwind/react";
-import { ArchiveIcon, ArrowLeft, BellIcon, BookIcon, Building2Icon, ChevronDownIcon, CircleArrowDown, GithubIcon, Grid3X3, Grip, LayoutDashboardIcon, LayoutGrid, ListCollapse, LogOutIcon, MailIcon, MapPinnedIcon, MenuIcon, MoonIcon, PiIcon, PinIcon, SunIcon, TicketIcon, Trash2Icon, UserCircle2Icon, UserRoundCog, VideoIcon, XIcon } from "lucide-react";
+import { ArchiveIcon, ArrowLeft, BellIcon, BookIcon, Building2Icon, ChevronDownIcon, CircleArrowDown, GithubIcon, Grid3X3, Grip, LayoutDashboardIcon, LayoutGrid, ListCollapse, LogOutIcon, MailIcon, MapPinnedIcon, MenuIcon, MoonIcon, PiIcon, PinIcon, Settings, SettingsIcon, SunIcon, TicketIcon, Trash2Icon, UserCircle2Icon, UserRoundCog, VideoIcon, XIcon } from "lucide-react";
 import { useTheme } from "../Contexts/ThemeContext";
 import { Link, router, usePage } from "@inertiajs/react";
 import { route } from "ziggy-js";
@@ -57,6 +57,11 @@ const ClassChattingLinks: LinkType[] = [
       }
     ]
   },
+  {
+    title: "Pengaturan",
+    icon: SettingsIcon,
+    routeName: "admin.apps.class-chatting.settings"
+  }
 ];
 
 const isCurrentRoute = (routeName: string): boolean => {

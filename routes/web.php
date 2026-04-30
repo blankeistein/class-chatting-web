@@ -80,6 +80,8 @@ Route::middleware('auth')->group(function () {
         Route::get('apps/class-chatting/book', [ClassChattingBookController::class, 'index'])->name('apps.class-chatting.book');
         Route::get('apps/class-chatting/book/category', [ClassChattingBookController::class, 'category'])->name('apps.class-chatting.book.category');
         Route::get('apps/class-chatting/book-rtdb', [ClassChattingBookController::class, 'indexRTDB'])->name('apps.class-chatting.book-rtdb');
+        Route::get('apps/class-chatting/settings', [ClassChattingBookController::class, 'settings'])->name('apps.class-chatting.settings');
+        Route::post('apps/class-chatting/settings', [ClassChattingBookController::class, 'saveSettings'])->name('apps.class-chatting.settings.store');
     });
 });
 

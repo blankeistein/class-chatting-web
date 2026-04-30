@@ -1505,6 +1505,75 @@
                 }
             }
         },
+        "/v2/book/activate": {
+            "post": {
+                "operationId": "publicBooksActivateV2",
+                "description": "Memvalidasi kode aktivasi untuk sebuah buku dan mengaitkannya ke pengguna pada endpoint versi 2 dengan transaksi database untuk mencegah race condition.",
+                "summary": "Activate book code v2",
+                "tags": [
+                    "Public Books"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "api_key": {
+                                        "type": "string",
+                                        "description": "API key aplikasi publik yang diharapkan server.",
+                                        "example": "public-app-key"
+                                    },
+                                    "code": {
+                                        "type": "string",
+                                        "description": "Kode aktivasi buku.",
+                                        "example": "AKTIVASI-001"
+                                    },
+                                    "uid": {
+                                        "type": "string",
+                                        "description": "Firebase UID atau identifier unik pengguna yang melakukan aktivasi.",
+                                        "example": "firebase-user-001"
+                                    },
+                                    "package_name": {
+                                        "type": "string",
+                                        "description": "UUID buku yang akan diaktivasi.",
+                                        "example": "book-uuid-001"
+                                    },
+                                    "tier": {
+                                        "type": "integer",
+                                        "description": "Tier buku yang diharapkan. Gunakan `1` untuk Regular dan `2` untuk Premium.",
+                                        "example": 1
+                                    }
+                                },
+                                "required": [
+                                    "api_key",
+                                    "code",
+                                    "uid",
+                                    "package_name",
+                                    "tier"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
         "/v1/book/level/{code}": {
             "get": {
                 "operationId": "publicBooksActivationLevel",

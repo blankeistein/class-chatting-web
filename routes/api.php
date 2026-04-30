@@ -1,9 +1,10 @@
 <?php
 
-use App\Http\Controllers\API\BookController;
 use App\Http\Controllers\API\FirebaseWebhookController;
 use App\Http\Controllers\API\RegionController;
 use App\Http\Controllers\API\SchoolController;
+use App\Http\Controllers\API\V1\BookController as V1BookController;
+use App\Http\Controllers\API\V2\BookController as V2BookController;
 use App\Http\Controllers\API\VideoController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -12,9 +13,15 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-Route::post('/v1/book/activate', [BookController::class, 'activate'])->middleware('throttle:60,1');
-Route::get('/v1/book/level/{code}', [BookController::class, 'activation_check_level']);
-Route::get('/v1/books', [BookController::class, 'index']);
+Route::prefix('v1')->group(function () {
+    Route::post('/book/activate', [V1BookController::class, 'activate'])->middleware('throttle:60,1');
+    Route::get('/book/level/{code}', [V1BookController::class, 'activationCheckLevel']);
+    Route::get('/books', [V1BookController::class, 'index']);
+});
+
+Route::prefix('v2')->group(function () {
+    Route::post('/book/activate', [V2BookController::class, 'activate'])->middleware('throttle:60,1');
+});
 
 Route::prefix('v1/regions')->group(function () {
     Route::get('/provinces', [RegionController::class, 'provinces']);

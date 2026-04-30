@@ -12,6 +12,7 @@ it('stores a machine readable openapi document for ai tooling', function () {
     expect($document['info']['title'])->toBe('Class Chatting API')
         ->and($document['paths'])->toHaveKeys([
             '/v1/book/activate',
+            '/v2/book/activate',
             '/v1/regions/provinces',
             '/firebase/webhook/user-created',
             '/video/update-hls-url',

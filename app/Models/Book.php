@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Book extends Model
@@ -33,8 +34,14 @@ class Book extends Model
     {
         return $this->cover_image ? asset('storage/'.$this->cover_image) : asset('assets/images/book-thumbnail.webp');
     }
+
     public function users()
     {
         return $this->belongsToMany(User::class, 'user_books')->withTimestamps();
+    }
+
+    public function integrations(): HasMany
+    {
+        return $this->hasMany(BookIntegration::class);
     }
 }

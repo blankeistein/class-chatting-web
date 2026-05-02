@@ -36,18 +36,18 @@ export default function Create() {
     tags: [] as string[],
     url: "",
     version: 1,
-    cover_image: null as File | null,
+    cover_url: null as File | null,
   });
 
   React.useEffect(() => {
-    if (data.cover_image) {
-      const url = URL.createObjectURL(data.cover_image);
+    if (data.cover_url) {
+      const url = URL.createObjectURL(data.cover_url);
       setThumbPreviewUrl(url);
       return () => URL.revokeObjectURL(url);
     } else {
       setThumbPreviewUrl(null);
     }
-  }, [data.cover_image]);
+  }, [data.cover_url]);
 
   const handleTagAdd = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && currentTag.trim()) {
@@ -248,11 +248,11 @@ export default function Create() {
                     ref={thumbInputRef}
                     hidden
                     accept="image/*"
-                    onChange={(e) => e.target.files && setData("cover_image", e.target.files[0])}
+                    onChange={(e) => e.target.files && setData("cover_url", e.target.files[0])}
                   />
-                  {errors.cover_image && (
+                  {errors.cover_url && (
                     <Typography type="small" color="error" className="mt-1 block">
-                      {errors.cover_image}
+                      {errors.cover_url}
                     </Typography>
                   )}
                 </CardBody>

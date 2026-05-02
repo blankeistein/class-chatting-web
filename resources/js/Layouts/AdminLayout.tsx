@@ -102,7 +102,7 @@ export const AppsLinks: AppLinkType[] = [
   {
     icon: "/assets/images/icons/anak-indonesia-menghafal.webp",
     title: "Anak Indonesia Menghafal",
-    routeName: "admin.dashboard",
+    routeName: "admin.apps.anak-indonesia-menghafal",
   },
   {
     icon: "/assets/images/icons/class-chatting-for-kids.webp",

@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('books', function (Blueprint $table) {
-            $table->json('tags')->nullable()->after('cover_image');
+            $table->json('tags')->nullable()->after('cover_url');
             $table->string('url', 255)->nullable()->after('tags');
             $table->integer('version')->default(1)->after('url');
         });

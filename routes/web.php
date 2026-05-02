@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Admin\ActivationCodeController;
+use App\Http\Controllers\Admin\Apps\AnakIndonesiaMenghafal\BookController as AnakIndonesiaMenghafalBookController;
+use App\Http\Controllers\Admin\Apps\AnakIndonesiaMenghafal\SettingController as AnakIndonesiaMenghafalSettingController;
 use App\Http\Controllers\Admin\Apps\ClassChatting\BookController as ClassChattingBookController;
 use App\Http\Controllers\Admin\Apps\ClassChatting\SettingController as ClassChattingSettingController;
 use App\Http\Controllers\Admin\BookController;
@@ -74,20 +76,40 @@ Route::middleware('auth')->group(function () {
             return redirect()->route('admin.apps.class-chatting');
         })->name('apps');
 
-        Route::get('apps/class-chatting', function () {
-            return redirect()->route('admin.apps.class-chatting.book');
-        })->name('apps.class-chatting');
+        Route::prefix('apps/class-chatting')->group(function () {
+            Route::get('/', function () {
+                return redirect()->route('admin.apps.class-chatting.book');
+            })->name('apps.class-chatting');
 
-        Route::get('apps/class-chatting/book', [ClassChattingBookController::class, 'index'])->name('apps.class-chatting.book');
-        Route::post('apps/class-chatting/book/items', [ClassChattingBookController::class, 'store'])->name('apps.class-chatting.book.items.store');
-        Route::put('apps/class-chatting/book/items/{documentId}', [ClassChattingBookController::class, 'update'])->name('apps.class-chatting.book.items.update');
-        Route::put('apps/class-chatting/book/items/lock/{documentId}', [ClassChattingBookController::class, 'updateLock'])->name('apps.class-chatting.book.items.lock.update');
-        Route::patch('apps/class-chatting/book/items/reorder', [ClassChattingBookController::class, 'reorder'])->name('apps.class-chatting.book.items.reorder');
-        Route::delete('apps/class-chatting/book/items/{documentId}', [ClassChattingBookController::class, 'destroy'])->name('apps.class-chatting.book.items.destroy');
-        Route::get('apps/class-chatting/book/category', [ClassChattingBookController::class, 'category'])->name('apps.class-chatting.book.category');
-        Route::get('apps/class-chatting/book-rtdb', [ClassChattingBookController::class, 'indexRTDB'])->name('apps.class-chatting.book-rtdb');
-        Route::get('apps/class-chatting/settings', [ClassChattingSettingController::class, 'index'])->name('apps.class-chatting.settings');
-        Route::post('apps/class-chatting/settings', [ClassChattingSettingController::class, 'update'])->name('apps.class-chatting.settings.store');
+            Route::get('book', [ClassChattingBookController::class, 'index'])->name('apps.class-chatting.book');
+            Route::post('book/items', [ClassChattingBookController::class, 'store'])->name('apps.class-chatting.book.items.store');
+            Route::put('book/items/{documentId}', [ClassChattingBookController::class, 'update'])->name('apps.class-chatting.book.items.update');
+            Route::put('book/items/lock/{documentId}', [ClassChattingBookController::class, 'updateLock'])->name('apps.class-chatting.book.items.lock.update');
+            Route::patch('book/items/reorder', [ClassChattingBookController::class, 'reorder'])->name('apps.class-chatting.book.items.reorder');
+            Route::delete('book/items/{documentId}', [ClassChattingBookController::class, 'destroy'])->name('apps.class-chatting.book.items.destroy');
+            Route::get('book/category', [ClassChattingBookController::class, 'category'])->name('apps.class-chatting.book.category');
+            Route::get('book-rtdb', [ClassChattingBookController::class, 'indexRTDB'])->name('apps.class-chatting.book-rtdb');
+            Route::get('settings', [ClassChattingSettingController::class, 'index'])->name('apps.class-chatting.settings');
+            Route::post('settings', [ClassChattingSettingController::class, 'update'])->name('apps.class-chatting.settings.store');
+        });
+
+        Route::prefix('apps/anak-indonesia-menghafal')->group(function () {
+            Route::get('/', function () {
+                return redirect()->route('admin.apps.anak-indonesia-menghafal.book');
+            })->name('apps.anak-indonesia-menghafal');
+
+            Route::get('book', [AnakIndonesiaMenghafalBookController::class, 'index'])->name('apps.anak-indonesia-menghafal.book');
+            Route::post('book/items', [AnakIndonesiaMenghafalBookController::class, 'store'])->name('apps.anak-indonesia-menghafal.book.items.store');
+            Route::put('book/items/{documentId}', [AnakIndonesiaMenghafalBookController::class, 'update'])->name('apps.anak-indonesia-menghafal.book.items.update');
+            Route::put('book/items/lock/{documentId}', [AnakIndonesiaMenghafalBookController::class, 'updateLock'])->name('apps.anak-indonesia-menghafal.book.items.lock.update');
+            Route::patch('book/items/reorder', [AnakIndonesiaMenghafalBookController::class, 'reorder'])->name('apps.anak-indonesia-menghafal.book.items.reorder');
+            Route::delete('book/items/{documentId}', [AnakIndonesiaMenghafalBookController::class, 'destroy'])->name('apps.anak-indonesia-menghafal.book.items.destroy');
+            Route::get('book/category', [AnakIndonesiaMenghafalBookController::class, 'category'])->name('apps.anak-indonesia-menghafal.book.category');
+            Route::get('book-rtdb', [AnakIndonesiaMenghafalBookController::class, 'indexRTDB'])->name('apps.anak-indonesia-menghafal.book-rtdb');
+            Route::get('settings', [AnakIndonesiaMenghafalSettingController::class, 'index'])->name('apps.anak-indonesia-menghafal.settings');
+            Route::post('settings', [AnakIndonesiaMenghafalSettingController::class, 'update'])->name('apps.anak-indonesia-menghafal.settings.store');
+        });
+
     });
 });
 

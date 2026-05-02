@@ -13,7 +13,7 @@ class Book extends Model
     protected $fillable = [
         'uuid',
         'title',
-        'cover_image',
+        'cover_url',
         'tags',
         'url',
         'version',
@@ -32,7 +32,7 @@ class Book extends Model
 
     public function getThumbnailAttribute()
     {
-        return $this->cover_image ? asset('storage/'.$this->cover_image) : asset('assets/images/book-thumbnail.webp');
+        return $this->cover_url ? asset('storage/'.$this->cover_url) : asset('assets/images/book-thumbnail.webp');
     }
 
     public function users()

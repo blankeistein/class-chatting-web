@@ -64,6 +64,25 @@ const ClassChattingLinks: LinkType[] = [
   }
 ];
 
+const AnakIndonesiaMenghafalLinks: LinkType[] = [
+  {
+    title: "Buku",
+    icon: BookIcon,
+    children: [
+      {
+        title: "Daftar",
+        icon: ListCollapse,
+        routeName: "admin.apps.anak-indonesia-menghafal.book"
+      },
+      {
+        title: "Kategori",
+        icon: LayoutGrid,
+        routeName: "admin.apps.anak-indonesia-menghafal.book.category"
+      }
+    ]
+  }
+];
+
 const isCurrentRoute = (routeName: string): boolean => {
   return route().current(routeName);
 };
@@ -481,8 +500,11 @@ export default function AdminAppLayout({ appName, children }: { appName: string,
   let links: LinkType[] = [];
 
   switch (appName) {
-    case "Class Chatting":
+    case "class-chatting":
       links = ClassChattingLinks;
+      break;
+    case "anak-indonesia-menghafal":
+      links = AnakIndonesiaMenghafalLinks;
       break;
     default:
       links = ClassChattingLinks;

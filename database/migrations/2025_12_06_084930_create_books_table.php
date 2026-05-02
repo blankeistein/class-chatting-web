@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('uuid')->unique();
             $table->string('title');
-            $table->string('cover_image', 255)->nullable();
+            $table->string('cover_url', 255)->nullable();
             $table->timestamps();
 
             $table->softDeletes();

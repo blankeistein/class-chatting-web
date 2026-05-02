@@ -56,7 +56,7 @@ class BookController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'uuid' => 'nullable|string|max:255|unique:books,uuid',
-            'cover_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
+            'cover_url' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
             'tags' => 'nullable|array',
             'url' => 'nullable|url',
             'version' => 'nullable|integer',
@@ -65,9 +65,9 @@ class BookController extends Controller
         $data = $request->only(['title', 'uuid', 'tags', 'url', 'version']);
         $data['uuid'] = filled($data['uuid'] ?? null) ? $data['uuid'] : (string) Str::uuid();
 
-        if ($request->hasFile('cover_image')) {
-            $path = $request->file('cover_image')->store('books', 'public');
-            $data['cover_image'] = $path;
+        if ($request->hasFile('cover_url')) {
+            $path = $request->file('cover_url')->store('books', 'public');
+            $data['cover_url'] = $path;
         }
 
         Book::create($data);
@@ -90,7 +90,7 @@ class BookController extends Controller
 
         $request->validate([
             'title' => 'required|string|max:255',
-            'cover_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
+            'cover_url' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
             'tags' => 'nullable|array',
             'url' => 'nullable|url',
             'version' => 'nullable|integer',
@@ -98,13 +98,13 @@ class BookController extends Controller
 
         $data = $request->only(['title', 'tags', 'url', 'version']);
 
-        if ($request->hasFile('cover_image')) {
+        if ($request->hasFile('cover_url')) {
             // Delete old image if exists
-            if ($book->cover_image) {
-                Storage::disk('public')->delete($book->cover_image);
+            if ($book->cover_url) {
+                Storage::disk('public')->delete($book->cover_url);
             }
-            $path = $request->file('cover_image')->store('books', 'public');
-            $data['cover_image'] = $path;
+            $path = $request->file('cover_url')->store('books', 'public');
+            $data['cover_url'] = $path;
         }
 
         $book->update($data);

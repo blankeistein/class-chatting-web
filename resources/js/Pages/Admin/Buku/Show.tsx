@@ -6,14 +6,15 @@ import {
   ArrowLeftIcon,
   BookIcon,
   CalendarIcon,
+  CopyIcon,
   EditIcon,
   ExternalLinkIcon,
   HashIcon,
-  IdCard,
   IdCardIcon,
   TagIcon,
   Trash2Icon,
 } from "lucide-react";
+import { toast, Toaster } from "react-hot-toast";
 
 interface Book {
   id: number;
@@ -37,8 +38,21 @@ const formatDateTime = (date: string) => {
   });
 };
 
+const truncateUuid = (uuid: string): string => {
+  if (uuid.length <= 18) {
+    return uuid;
+  }
+
+  return `${uuid.slice(0, 8)}...${uuid.slice(-8)}`;
+};
+
 export default function Show({ book }: { book: { data: Book } }) {
   const currentBook = book.data;
+
+  const handleCopyUuid = (): void => {
+    navigator.clipboard.writeText(currentBook.uuid);
+    toast.success("UUID berhasil disalin ke clipboard.");
+  };
 
   const handleDelete = () => {
     if (confirm(`Apakah Anda yakin ingin menghapus buku "${currentBook.title}"?`)) {
@@ -49,6 +63,7 @@ export default function Show({ book }: { book: { data: Book } }) {
   return (
     <>
       <Head title={`Informasi Buku - ${currentBook.title}`} />
+      <Toaster position="top-center" />
 
       <div className="mx-auto space-y-6 p-4">
         <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
@@ -81,7 +96,7 @@ export default function Show({ book }: { book: { data: Book } }) {
               disabled={!currentBook.url}
             >
               <ExternalLinkIcon className="h-4 w-4" />
-              {currentBook.url ? "Buka Link Buku" : "Link Tidak Tersedia"}
+              {currentBook.url ? "Buka Download Link" : "Download Link Tidak Tersedia"}
             </Button>
             <Button
               size="sm"
@@ -151,7 +166,7 @@ export default function Show({ book }: { book: { data: Book } }) {
 
                 <div>
                   <Typography variant="small" className="font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                    Link Buku
+                    Download Link
                   </Typography>
                   {currentBook.url ? (
                     <a
@@ -184,11 +199,24 @@ export default function Show({ book }: { book: { data: Book } }) {
                   <div className="rounded-lg bg-slate-200 p-2 dark:bg-slate-700">
                     <IdCardIcon className="h-4 w-4 text-slate-600 dark:text-slate-200" />
                   </div>
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <Typography className="text-xs text-slate-500 dark:text-slate-400">UUID</Typography>
-                    <Typography className="font-medium text-slate-700 dark:text-slate-200">
-                      {currentBook.uuid}
-                    </Typography>
+                    <div className="mt-1 flex items-center gap-2">
+                      <Typography
+                        className="font-medium text-slate-700 dark:text-slate-200 truncate"
+                        title={currentBook.uuid}
+                      >
+                        {currentBook.uuid}
+                      </Typography>
+                      <IconButton
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleCopyUuid}
+                        className="h-8 w-8 rounded-lg text-slate-500 transition hover:bg-slate-200/80 hover:text-slate-700 dark:text-slate-300 dark:hover:bg-slate-700"
+                      >
+                        <CopyIcon className="h-4 w-4" />
+                      </IconButton>
+                    </div>
                   </div>
                 </div>
 
@@ -198,7 +226,7 @@ export default function Show({ book }: { book: { data: Book } }) {
                   </div>
                   <div className="min-w-0">
                     <Typography className="text-xs text-slate-500 dark:text-slate-400">Judul</Typography>
-                    <Typography className="font-medium text-slate-700 dark:text-slate-200">
+                    <Typography className="font-medium text-slate-700 dark:text-slate-200 truncate" title={currentBook.title} >
                       {currentBook.title}
                     </Typography>
                   </div>

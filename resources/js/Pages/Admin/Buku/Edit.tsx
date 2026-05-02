@@ -33,17 +33,17 @@ export default function Edit({ book }: { book: { data: Book } }) {
     tags: book.data.tags || [] as string[],
     url: book.data.url || "",
     version: book.data.version || 1,
-    cover_image: null as File | null,
+    cover_url: null as File | null,
     _method: 'put'
   });
 
   React.useEffect(() => {
-    if (data.cover_image) {
-      const url = URL.createObjectURL(data.cover_image);
+    if (data.cover_url) {
+      const url = URL.createObjectURL(data.cover_url);
       setThumbPreviewUrl(url);
       return () => URL.revokeObjectURL(url);
     }
-  }, [data.cover_image]);
+  }, [data.cover_url]);
 
   const handleTagAdd = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && currentTag.trim()) {
@@ -210,14 +210,14 @@ export default function Edit({ book }: { book: { data: Book } }) {
                   ref={thumbInputRef}
                   hidden
                   accept="image/*"
-                  onChange={(e) => e.target.files && setData("cover_image", e.target.files[0])}
+                  onChange={(e) => e.target.files && setData("cover_url", e.target.files[0])}
                 />
                 <Typography variant="small" className="text-slate-400 italic">
                   Kosongkan jika tidak ingin mengubah cover.
                 </Typography>
-                {errors.cover_image && (
+                {errors.cover_url && (
                   <Typography type="small" color="error" className="mt-1 block">
-                    {errors.cover_image}
+                    {errors.cover_url}
                   </Typography>
                 )}
               </CardBody>

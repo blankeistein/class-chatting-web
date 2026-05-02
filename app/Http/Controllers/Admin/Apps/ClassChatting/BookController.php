@@ -9,6 +9,7 @@ use App\Http\Requests\ClassChattingBookUpdateRequest;
 use Google\Cloud\Firestore\FieldValue;
 use Google\Cloud\Firestore\FirestoreClient;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 use Throwable;
@@ -114,17 +115,46 @@ class BookController extends Controller
         }
     }
 
+    public function updateLock(Request $request, string $documentId): JsonResponse
+    {
+        try {
+            $lockStatus = $request->boolean('lock');
+            $document = $this->booksCollection()->document($documentId);
+
+            if (! $document->snapshot()->exists()) {
+                return response()->json([
+                    'message' => 'Data buku Firestore tidak ditemukan.',
+                ], 404);
+            }
+
+            $document->set([
+                'lock' => $lockStatus,
+                'updatedAt' => FieldValue::serverTimestamp(),
+            ], [
+                'merge' => true,
+            ]);
+
+            return response()->json([
+                'message' => 'Status kunci buku berhasil diperbarui.',
+            ]);
+        } catch (Throwable $exception) {
+            return response()->json([
+                'message' => 'Gagal memperbarui status kunci buku: '.$exception->getMessage(),
+            ], 500);
+        }
+    }
+
     public function reorder(ClassChattingBookReorderRequest $request): JsonResponse
     {
         try {
-            foreach ($request->validated()['books'] as $book) {
-                $this->booksCollection()->document($book['originalKey'])->set([
-                    'order' => $book['order'],
-                    'updatedAt' => FieldValue::serverTimestamp(),
-                ], [
-                    'merge' => true,
-                ]);
-            }
+            $this->batchUpdateBookOrders(
+                collect($request->validated()['books'])
+                    ->map(fn (array $book): array => [
+                        'id' => $book['originalKey'],
+                        'order' => $book['order'],
+                    ])
+                    ->all()
+            );
 
             return response()->json([
                 'message' => 'Urutan buku berhasil disimpan.',
@@ -136,8 +166,101 @@ class BookController extends Controller
         }
     }
 
+    public function destroy(string $documentId): JsonResponse
+    {
+        try {
+            $document = $this->booksCollection()->document($documentId);
+            $snapshot = $document->snapshot();
+
+            if (! $snapshot->exists()) {
+                return response()->json([
+                    'message' => 'Data buku Firestore tidak ditemukan.',
+                ], 404);
+            }
+
+            $deletedOrder = (int) ($snapshot['order'] ?? 0);
+            $document->delete();
+
+            $documents = $this->booksCollection()->documents();
+            $affectedBooks = [];
+
+            foreach ($documents as $snapshot) {
+                if (! $snapshot->exists()) {
+                    continue;
+                }
+
+                $currentOrder = (int) ($snapshot['order'] ?? 0);
+
+                if ($currentOrder <= $deletedOrder) {
+                    continue;
+                }
+
+                $affectedBooks[] = [
+                    'id' => $snapshot->id(),
+                    'name' => (string) ($snapshot['name'] ?? ''),
+                    'order' => $currentOrder,
+                ];
+            }
+
+            usort($affectedBooks, function (array $left, array $right): int {
+                if ($left['order'] !== $right['order']) {
+                    return $left['order'] <=> $right['order'];
+                }
+
+                return strcasecmp($left['name'], $right['name']);
+            });
+
+            $this->batchUpdateBookOrders(
+                array_map(
+                    fn (array $book, int $index): array => [
+                        'id' => $book['id'],
+                        'order' => $deletedOrder + $index,
+                    ],
+                    array_values($affectedBooks),
+                    array_keys(array_values($affectedBooks))
+                )
+            );
+
+            return response()->json([
+                'message' => 'Buku berhasil dihapus dari Firestore.',
+            ]);
+        } catch (Throwable $exception) {
+            return response()->json([
+                'message' => 'Gagal menghapus buku dari Firestore: '.$exception->getMessage(),
+            ], 500);
+        }
+    }
+
     private function booksCollection()
     {
         return $this->firestore->collection('books');
+    }
+
+    private function batchUpdateBookOrders(array $books): void
+    {
+        $uniqueBooks = [];
+
+        foreach ($books as $book) {
+            $uniqueBooks[$book['id']] = [
+                'id' => $book['id'],
+                'order' => $book['order'],
+            ];
+        }
+
+        foreach (array_chunk(array_values($uniqueBooks), 5) as $chunk) {
+            $writer = $this->firestore->bulkWriter();
+
+            foreach ($chunk as $book) {
+                $writer->update(
+                    $this->booksCollection()->document($book['id']),
+                    [
+                        ['path' => 'order', 'value' => $book['order']],
+                        ['path' => 'updatedAt', 'value' => FieldValue::serverTimestamp()],
+                    ]
+                );
+            }
+
+            $writer->commit();
+        }
     }
 }

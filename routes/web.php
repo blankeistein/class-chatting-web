@@ -81,7 +81,9 @@ Route::middleware('auth')->group(function () {
         Route::get('apps/class-chatting/book', [ClassChattingBookController::class, 'index'])->name('apps.class-chatting.book');
         Route::post('apps/class-chatting/book/items', [ClassChattingBookController::class, 'store'])->name('apps.class-chatting.book.items.store');
         Route::put('apps/class-chatting/book/items/{documentId}', [ClassChattingBookController::class, 'update'])->name('apps.class-chatting.book.items.update');
+        Route::put('apps/class-chatting/book/items/lock/{documentId}', [ClassChattingBookController::class, 'updateLock'])->name('apps.class-chatting.book.items.lock.update');
         Route::patch('apps/class-chatting/book/items/reorder', [ClassChattingBookController::class, 'reorder'])->name('apps.class-chatting.book.items.reorder');
+        Route::delete('apps/class-chatting/book/items/{documentId}', [ClassChattingBookController::class, 'destroy'])->name('apps.class-chatting.book.items.destroy');
         Route::get('apps/class-chatting/book/category', [ClassChattingBookController::class, 'category'])->name('apps.class-chatting.book.category');
         Route::get('apps/class-chatting/book-rtdb', [ClassChattingBookController::class, 'indexRTDB'])->name('apps.class-chatting.book-rtdb');
         Route::get('apps/class-chatting/settings', [ClassChattingSettingController::class, 'index'])->name('apps.class-chatting.settings');

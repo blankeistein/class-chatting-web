@@ -37,7 +37,7 @@ import {
   SearchIcon,
 } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
-import { collection, deleteDoc, doc, onSnapshot, updateDoc } from "firebase/firestore";
+import { collection, onSnapshot } from "firebase/firestore";
 import AdminAppLayout from "@/Layouts/AdminAppLayout";
 import { getFirebaseFirestore } from "@/lib/firebase";
 import BookEditDialog from "./Partials/EditBookDialog";
@@ -56,6 +56,7 @@ export type Book = {
   keyword: string;
   lock: boolean;
   name: string;
+  oldOrder: number;
   order: number;
   price: number;
   status: string;
@@ -104,6 +105,7 @@ const normalizeBook = (key: string, value: Partial<FirebaseBook>): Book => {
     keyword: value.keyword ?? "",
     lock: Boolean(value.lock),
     name: value.name ?? "-",
+    oldOrder: typeof value.order === "number" ? value.order : Number.MAX_SAFE_INTEGER,
     order: typeof value.order === "number" ? value.order : Number.MAX_SAFE_INTEGER,
     price: typeof value.price === "number" ? value.price : Number(value.price ?? 0),
     status: value.status ?? "draft",
@@ -147,6 +149,29 @@ const resequenceBooks = (items: Book[]) => {
     ...book,
     order: index + 1,
   }));
+};
+
+const commitBookOrders = (items: Book[]) => {
+  return items.map((book, index) => ({
+    ...book,
+    oldOrder: index + 1,
+    order: index + 1,
+  }));
+};
+
+const restoreBookOrders = (items: Book[]) => {
+  return [...items]
+    .sort((left, right) => {
+      if (left.oldOrder !== right.oldOrder) {
+        return left.oldOrder - right.oldOrder;
+      }
+
+      return left.name.localeCompare(right.name);
+    })
+    .map((book) => ({
+      ...book,
+      order: book.oldOrder,
+    }));
 };
 
 const normalizeBookCategory = (key: string, value: Partial<FirebaseBookCategory>): BookCategory => {
@@ -298,17 +323,34 @@ export default function Index() {
   }, []);
 
   const saveOrder = useCallback(async () => {
+    const changedBooks = books
+      .map((book, index) => ({
+        originalKey: book.originalKey,
+        oldOrder: book.oldOrder,
+        order: index + 1,
+      }))
+      .filter((book) => book.oldOrder !== book.order)
+      .map(({ originalKey, oldOrder, order }) => ({
+        originalKey,
+        oldOrder,
+        order,
+      }));
+
+    if (changedBooks.length === 0) {
+      setIsOrderMode(false);
+      toast("Tidak ada perubahan urutan buku.");
+
+      return;
+    }
+
     setIsSavingOrder(true);
 
     try {
       await axios.patch(route("admin.apps.class-chatting.book.items.reorder"), {
-        books: books.map((book, index) => ({
-          originalKey: book.originalKey,
-          order: index + 1,
-        })),
+        books: changedBooks,
       });
 
-      setBooks((currentBooks) => resequenceBooks(currentBooks));
+      setBooks((currentBooks) => commitBookOrders(currentBooks));
       setIsOrderMode(false);
       toast.success("Urutan buku berhasil disimpan.");
     } catch (error) {
@@ -347,12 +389,6 @@ export default function Index() {
   }, [books]);
 
   const handleDeleteBook = useCallback(async (book: Book) => {
-    if (!firestore) {
-      toast.error("Firebase Firestore belum siap.");
-
-      return;
-    }
-
     if (!window.confirm(`Hapus "${book.name}" dari Firestore?`)) {
       return;
     }
@@ -360,20 +396,7 @@ export default function Index() {
     setActiveDeleteKey(book.originalKey);
 
     try {
-      await deleteDoc(doc(firestore, BOOKS_COLLECTION, book.originalKey));
-
-      const remainingBooks = resequenceBooks(
-        books.filter((item) => item.originalKey !== book.originalKey),
-      );
-
-      const updatePromises = remainingBooks.map((item) =>
-        updateDoc(doc(firestore, BOOKS_COLLECTION, item.originalKey), { order: item.order })
-      );
-
-      if (updatePromises.length > 0) {
-        await Promise.all(updatePromises);
-      }
-
+      await axios.delete(route("admin.apps.class-chatting.book.items.destroy", { documentId: book.originalKey }));
       toast.success("Buku berhasil dihapus dari Firestore.");
     } catch (error) {
       console.error("Error deleting book:", error);
@@ -381,7 +404,7 @@ export default function Index() {
     } finally {
       setActiveDeleteKey(null);
     }
-  }, [firestore, books]);
+  }, []);
 
   const openEditDialog = useCallback((book: Book) => {
     setEditForm(createEditForm(book));
@@ -435,19 +458,17 @@ export default function Index() {
   }, []);
 
   const updateLockStatus = useCallback(async (book: Book, lock: boolean) => {
-    if (!firestore) {
-      return;
-    }
-
     try {
-      await updateDoc(doc(firestore, BOOKS_COLLECTION, book.originalKey), { lock });
+      await axios.put(route("admin.apps.class-chatting.book.items.lock.update", { documentId: book.originalKey }), {
+        lock: lock
+      });
       toast.success(`Buku berhasil ${lock ? "dikunci" : "dibuka kuncinya"}.`);
     }
     catch (error) {
       console.error("Error updating lock status:", error);
       toast.error(`Gagal ${lock ? "mengunci" : "membuka kunci"} buku.`);
     }
-  }, [firestore]);
+  }, []);
 
   const copyToClipboard = useCallback((text: string) => {
     if ("clipboard" in navigator) {
@@ -478,6 +499,11 @@ export default function Index() {
 
   const moveBookDown = useCallback((index: number) => {
     moveBook(index, "down");
+  }, []);
+
+  const cancelOrderMode = useCallback(() => {
+    setBooks((currentBooks) => restoreBookOrders(currentBooks));
+    setIsOrderMode(false);
   }, []);
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
@@ -528,7 +554,15 @@ export default function Index() {
               <div className="flex flex-wrap gap-2">
                 <IconButton
                   variant={isOrderMode ? "solid" : "outline"}
-                  onClick={() => setIsOrderMode((value) => !value)}
+                  onClick={() => {
+                    if (isOrderMode) {
+                      cancelOrderMode();
+
+                      return;
+                    }
+
+                    setIsOrderMode(true);
+                  }}
                   title="Mode order book"
                 >
                   <ArrowDownUp className="h-4 w-4" />
@@ -635,7 +669,7 @@ export default function Index() {
                     <Chip.Label>Drag & drop untuk ubah urutan</Chip.Label>
                   </Chip>
                 )}
-                <Button variant="outline" onClick={() => setIsOrderMode(false)}>
+                <Button variant="outline" onClick={cancelOrderMode}>
                   Batal
                 </Button>
                 <Button color="success" onClick={saveOrder} disabled={isSavingOrder}>

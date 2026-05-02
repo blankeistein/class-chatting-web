@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\ActivationCodeController;
 use App\Http\Controllers\Admin\Apps\ClassChatting\BookController as ClassChattingBookController;
+use App\Http\Controllers\Admin\Apps\ClassChatting\SettingController as ClassChattingSettingController;
 use App\Http\Controllers\Admin\BookController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\RegionController as AdminRegionController;
@@ -78,13 +79,13 @@ Route::middleware('auth')->group(function () {
         })->name('apps.class-chatting');
 
         Route::get('apps/class-chatting/book', [ClassChattingBookController::class, 'index'])->name('apps.class-chatting.book');
-        Route::post('apps/class-chatting/book/items', [ClassChattingBookController::class, 'storeFirestoreBook'])->name('apps.class-chatting.book.items.store');
-        Route::put('apps/class-chatting/book/items/{documentId}', [ClassChattingBookController::class, 'updateFirestoreBook'])->name('apps.class-chatting.book.items.update');
-        Route::patch('apps/class-chatting/book/items/reorder', [ClassChattingBookController::class, 'reorderFirestoreBooks'])->name('apps.class-chatting.book.items.reorder');
+        Route::post('apps/class-chatting/book/items', [ClassChattingBookController::class, 'store'])->name('apps.class-chatting.book.items.store');
+        Route::put('apps/class-chatting/book/items/{documentId}', [ClassChattingBookController::class, 'update'])->name('apps.class-chatting.book.items.update');
+        Route::patch('apps/class-chatting/book/items/reorder', [ClassChattingBookController::class, 'reorder'])->name('apps.class-chatting.book.items.reorder');
         Route::get('apps/class-chatting/book/category', [ClassChattingBookController::class, 'category'])->name('apps.class-chatting.book.category');
         Route::get('apps/class-chatting/book-rtdb', [ClassChattingBookController::class, 'indexRTDB'])->name('apps.class-chatting.book-rtdb');
-        Route::get('apps/class-chatting/settings', [ClassChattingBookController::class, 'settings'])->name('apps.class-chatting.settings');
-        Route::post('apps/class-chatting/settings', [ClassChattingBookController::class, 'saveSettings'])->name('apps.class-chatting.settings.store');
+        Route::get('apps/class-chatting/settings', [ClassChattingSettingController::class, 'index'])->name('apps.class-chatting.settings');
+        Route::post('apps/class-chatting/settings', [ClassChattingSettingController::class, 'update'])->name('apps.class-chatting.settings.store');
     });
 });
 

@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ClassChattingBookReorderRequest;
 use App\Http\Requests\ClassChattingBookStoreRequest;
 use App\Http\Requests\ClassChattingBookUpdateRequest;
-use App\Http\Requests\ClassChattingSettingsRequest;
 use Google\Cloud\Firestore\FieldValue;
 use Google\Cloud\Firestore\FirestoreClient;
 use Illuminate\Http\JsonResponse;
@@ -35,12 +34,7 @@ class BookController extends Controller
         return Inertia::render('Admin/Apps/ClassChatting/Book/Category');
     }
 
-    public function settings(): InertiaResponse
-    {
-        return Inertia::render('Admin/Apps/ClassChatting/Settings');
-    }
-
-    public function storeFirestoreBook(ClassChattingBookStoreRequest $request): JsonResponse
+    public function store(ClassChattingBookStoreRequest $request): JsonResponse
     {
         try {
             $validated = $request->validated();
@@ -80,7 +74,7 @@ class BookController extends Controller
         }
     }
 
-    public function updateFirestoreBook(ClassChattingBookUpdateRequest $request, string $documentId): JsonResponse
+    public function update(ClassChattingBookUpdateRequest $request, string $documentId): JsonResponse
     {
         try {
             $validated = $request->validated();
@@ -120,7 +114,7 @@ class BookController extends Controller
         }
     }
 
-    public function reorderFirestoreBooks(ClassChattingBookReorderRequest $request): JsonResponse
+    public function reorder(ClassChattingBookReorderRequest $request): JsonResponse
     {
         try {
             foreach ($request->validated()['books'] as $book) {
@@ -138,30 +132,6 @@ class BookController extends Controller
         } catch (Throwable $exception) {
             return response()->json([
                 'message' => 'Gagal menyimpan urutan buku: '.$exception->getMessage(),
-            ], 500);
-        }
-    }
-
-    public function saveSettings(ClassChattingSettingsRequest $request): JsonResponse
-    {
-        try {
-            $this->firestore
-                ->collection('settings')
-                ->document('general')
-                ->set([
-                    'announcement' => $request->string('announcement')->toString(),
-                    'noRekening' => $request->string('noRekening')->toString(),
-                    'updatedAt' => now(),
-                ], [
-                    'merge' => true,
-                ]);
-
-            return response()->json([
-                'message' => 'Pengaturan Class Chatting berhasil disimpan.',
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Gagal menyimpan pengaturan Class Chatting: '.$e->getMessage(),
             ], 500);
         }
     }

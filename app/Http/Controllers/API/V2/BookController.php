@@ -9,6 +9,8 @@ use Dedoc\Scramble\Attributes\BodyParameter;
 use Dedoc\Scramble\Attributes\Endpoint;
 use Dedoc\Scramble\Attributes\Group;
 use Dedoc\Scramble\Attributes\HeaderParameter;
+use Dedoc\Scramble\Attributes\PathParameter;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -178,5 +180,41 @@ class BookController extends Controller
                 'version' => 2,
             ]);
         });
+    }
+
+    #[Endpoint(
+        operationId: 'publicBooksActivationLevelV2',
+        title: 'Check activation code level v2',
+        description: 'Mengembalikan tier atau level dari sebuah kode aktivasi apabila kode tersebut valid pada endpoint versi 2.'
+    )]
+    #[PathParameter('code', 'Kode aktivasi yang akan dicek levelnya.', example: 'AKTIVASI-001')]
+    public function activationCheckLevel(string $code): JsonResponse
+    {
+        try {
+            $activationCode = ActivationCode::query()->where('code', trim($code))->first();
+
+            if (! $activationCode) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Kode aktivasi tidak valid.',
+                    'version' => 2,
+                ]);
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'level' => [
+                    'slug' => $activationCode->tier->value,
+                    'name' => $activationCode->tier->label(),
+                ],
+                'version' => 2,
+            ]);
+        } catch (Exception $except) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan pada server. '.$except->getMessage(),
+                'version' => 2,
+            ]);
+        }
     }
 }

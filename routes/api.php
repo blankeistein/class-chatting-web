@@ -21,6 +21,7 @@ Route::prefix('v1')->group(function () {
 
 Route::prefix('v2')->group(function () {
     Route::post('/book/activate', [V2BookController::class, 'activate'])->middleware(['throttle:60,1', 'firebase.id_token']);
+    Route::get('/book/level/{code}', [V2BookController::class, 'activationCheckLevel'])->middleware(['throttle:500,1', 'firebase.id_token']);
 });
 
 Route::prefix('v1/regions')->group(function () {

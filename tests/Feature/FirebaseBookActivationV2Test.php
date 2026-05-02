@@ -6,7 +6,7 @@ use App\Models\ActivationItem;
 use App\Models\Book;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Kreait\Firebase\Exception\Auth\FailedToVerifyToken;
-use Kreait\Firebase\JWT\Token;
+use Kreait\Firebase\JWT\Contract\Token as ContractToken;
 use Kreait\Laravel\Firebase\Facades\Firebase;
 
 uses(RefreshDatabase::class);
@@ -47,7 +47,7 @@ it('uses the firebase uid from the verified bearer token instead of the request 
         'model_id' => $book->id,
     ]);
 
-    $verifiedToken = Mockery::mock(Token::class);
+    $verifiedToken = Mockery::mock(ContractToken::class);
     $claims = Mockery::mock();
     $claims->shouldReceive('get')->once()->with('sub')->andReturn('firebase-user-from-token');
     $verifiedToken->shouldReceive('claims')->once()->andReturn($claims);

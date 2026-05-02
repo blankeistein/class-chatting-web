@@ -220,7 +220,7 @@ class BookController extends Controller
         description: 'Mengembalikan tier atau level dari sebuah kode aktivasi apabila kode tersebut valid pada endpoint versi 1.'
     )]
     #[PathParameter('code', 'Kode aktivasi yang akan dicek levelnya.', example: 'AKTIVASI-001')]
-    public function activationCheckLevel(Request $request, string $code): JsonResponse
+    public function activationCheckLevel(string $code): JsonResponse
     {
         try {
             $activationCode = ActivationCode::query()->where('code', trim($code))->first();

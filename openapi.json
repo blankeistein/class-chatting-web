@@ -1508,10 +1508,22 @@
         "/v2/book/activate": {
             "post": {
                 "operationId": "publicBooksActivateV2",
-                "description": "Memvalidasi kode aktivasi untuk sebuah buku dan mengaitkannya ke pengguna pada endpoint versi 2 dengan transaksi database untuk mencegah race condition.",
+                "description": "Memvalidasi kode aktivasi untuk sebuah buku dan mengaitkannya ke pengguna pada endpoint versi 2 dengan Firebase bearer token dan transaksi database untuk mencegah race condition.",
                 "summary": "Activate book code v2",
                 "tags": [
                     "Public Books"
+                ],
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true,
+                        "description": "Firebase ID token bearer. Format: `Bearer <firebase_id_token>`.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6Ij..."
+                    }
                 ],
                 "requestBody": {
                     "required": true,
@@ -1520,22 +1532,12 @@
                             "schema": {
                                 "type": "object",
                                 "properties": {
-                                    "api_key": {
-                                        "type": "string",
-                                        "description": "API key aplikasi publik yang diharapkan server.",
-                                        "example": "public-app-key"
-                                    },
                                     "code": {
                                         "type": "string",
                                         "description": "Kode aktivasi buku.",
                                         "example": "AKTIVASI-001"
                                     },
-                                    "uid": {
-                                        "type": "string",
-                                        "description": "Firebase UID atau identifier unik pengguna yang melakukan aktivasi.",
-                                        "example": "firebase-user-001"
-                                    },
-                                    "package_name": {
+                                    "id": {
                                         "type": "string",
                                         "description": "UUID buku yang akan diaktivasi.",
                                         "example": "book-uuid-001"
@@ -1547,10 +1549,8 @@
                                     }
                                 },
                                 "required": [
-                                    "api_key",
                                     "code",
-                                    "uid",
-                                    "package_name",
+                                    "id",
                                     "tier"
                                 ]
                             }
@@ -1570,6 +1570,95 @@
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v2/book/level/{code}": {
+            "get": {
+                "operationId": "publicBooksActivationLevelV2",
+                "description": "Mengembalikan tier atau level dari sebuah kode aktivasi apabila kode tersebut valid pada endpoint versi 2.",
+                "summary": "Check activation code level v2",
+                "tags": [
+                    "Public Books"
+                ],
+                "parameters": [
+                    {
+                        "name": "code",
+                        "in": "path",
+                        "required": true,
+                        "description": "Kode aktivasi yang akan dicek levelnya.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "AKTIVASI-001"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "const": "error"
+                                                },
+                                                "message": {
+                                                    "type": "string"
+                                                },
+                                                "version": {
+                                                    "type": "integer",
+                                                    "const": 2
+                                                }
+                                            },
+                                            "required": [
+                                                "status",
+                                                "message",
+                                                "version"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "const": "success"
+                                                },
+                                                "level": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "slug": {
+                                                            "type": "integer"
+                                                        },
+                                                        "name": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "slug",
+                                                        "name"
+                                                    ]
+                                                },
+                                                "version": {
+                                                    "type": "integer",
+                                                    "const": 2
+                                                }
+                                            },
+                                            "required": [
+                                                "status",
+                                                "level",
+                                                "version"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
                     }
                 }
             }

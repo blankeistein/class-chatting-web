@@ -16,8 +16,8 @@ class EnsureFirebaseIdToken
 
         if ($idToken === null || $idToken === '') {
             return response()->json([
-                'status' => 'error',
-                'error_code' => 401,
+                'status' => false,
+                'errorCode' => 401,
                 'message' => 'Unauthorized. Firebase token is required.',
                 'version' => 2,
             ], 401);
@@ -27,8 +27,8 @@ class EnsureFirebaseIdToken
             $verifiedToken = Firebase::auth()->verifyIdToken($idToken);
         } catch (FailedToVerifyToken) {
             return response()->json([
-                'status' => 'error',
-                'error_code' => 401,
+                'status' => false,
+                'errorCode' => 401,
                 'message' => 'Unauthorized. Firebase token is invalid.',
                 'version' => 2,
             ], 401);
@@ -38,8 +38,8 @@ class EnsureFirebaseIdToken
 
         if (! is_string($uid) || $uid === '') {
             return response()->json([
-                'status' => 'error',
-                'error_code' => 401,
+                'status' => false,
+                'errorCode' => 401,
                 'message' => 'Unauthorized. Firebase token does not contain a valid uid.',
                 'version' => 2,
             ], 401);

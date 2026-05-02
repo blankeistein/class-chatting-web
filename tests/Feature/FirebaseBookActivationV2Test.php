@@ -21,8 +21,8 @@ it('rejects v2 activation requests without a firebase bearer token', function ()
     $response
         ->assertUnauthorized()
         ->assertJson([
-            'status' => 'error',
-            'error_code' => 401,
+            'status' => false,
+            'errorCode' => 401,
             'version' => 2,
         ]);
 });
@@ -69,7 +69,7 @@ it('uses the firebase uid from the verified bearer token instead of the request 
     $response
         ->assertOk()
         ->assertJson([
-            'status' => 'success',
+            'status' => true,
             'version' => 2,
         ]);
 
@@ -97,8 +97,8 @@ it('rejects v2 activation requests with an invalid firebase bearer token', funct
     $response
         ->assertUnauthorized()
         ->assertJson([
-            'status' => 'error',
-            'error_code' => 401,
+            'status' => false,
+            'errorCode' => 401,
             'version' => 2,
         ]);
 });

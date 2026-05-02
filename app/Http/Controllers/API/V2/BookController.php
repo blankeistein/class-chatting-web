@@ -49,12 +49,7 @@ class BookController extends Controller
                 'tier' => 105,
             ];
 
-            return response()->json([
-                'status' => 'error',
-                'error_code' => $errorCodes[$field] ?? 101,
-                'message' => $validator->errors()->first(),
-                'version' => 2,
-            ]);
+            return $this->errorResponse(422, $errorCodes[$field] ?? 101, $validator->errors()->first());
         }
 
         $validateData = [
@@ -64,122 +59,84 @@ class BookController extends Controller
             'tier' => $validator->validated()['tier'],
         ];
 
-        return DB::transaction(function () use ($validateData) {
-            $code = ActivationCode::query()
-                ->with('items.model')
-                ->where('code', $validateData['code'])
-                ->lockForUpdate()
-                ->first();
+        try {
+            return DB::transaction(function () use ($validateData) {
+                $code = ActivationCode::query()
+                    ->with('items.model')
+                    ->where('code', $validateData['code'])
+                    ->lockForUpdate()
+                    ->first();
 
-            if (! $code) {
-                return response()->json([
-                    'status' => 'error',
-                    'error_code' => 106,
-                    'message' => 'Kode yang anda masukkan tidak valid. [106]',
-                    'version' => 2,
-                ]);
-            }
-
-            if (! $code->is_active) {
-                return response()->json([
-                    'status' => 'error',
-                    'error_code' => 108,
-                    'message' => 'Mohon maaf, Kode ini tidak aktif atau sudah dinonaktifkan. [108]',
-                    'version' => 2,
-                ]);
-            }
-
-            if ($code->max_activated !== null && $code->times_activated >= $code->max_activated) {
-                return response()->json([
-                    'status' => 'error',
-                    'error_code' => 113,
-                    'message' => 'Mohon maaf, Kode sudah mencapai batas pengaktifan. [113]',
-                    'version' => 2,
-                ]);
-            }
-
-            $book = Book::query()->where('uuid', $validateData['id'])->first();
-
-            if (! $book) {
-                return response()->json([
-                    'status' => 'error',
-                    'error_code' => 107,
-                    'message' => 'Buku belum terdaftar, Mohon laporkan ini ke Customer Service kami. Terima Kasih :) [107]',
-                    'version' => 2,
-                ]);
-            }
-
-            $supportedBooksKey = $code->items->pluck('model.uuid')->filter()->toArray();
-
-            if (empty($supportedBooksKey) || ! in_array($validateData['id'], $supportedBooksKey, true)) {
-                return response()->json([
-                    'status' => 'error',
-                    'error_code' => 108,
-                    'message' => "Kode yang anda masukkan tidak cocok untuk buku {$book->title}. Silahkan cek kode yang anda gunakan! [108A]",
-                    'version' => 2,
-                ]);
-            }
-
-            if (! empty($validateData['tier']) && (int) $validateData['tier'] !== $code->tier->value) {
-                return response()->json([
-                    'status' => 'error',
-                    'error_code' => 114,
-                    'message' => 'Kode tidak cocok diaktifkan disini. [114]',
-                    'version' => 2,
-                ]);
-            }
-
-            if ($code->type !== 'public') {
-                if (! empty($code->user_id) && $code->user_id !== $validateData['uid']) {
-                    return response()->json([
-                        'status' => 'error',
-                        'error_code' => 109,
-                        'message' => 'Maaf kode yang anda masukkan sudah diaktifkan di akun lain [109]',
-                        'version' => 2,
-                    ]);
+                if (! $code) {
+                    return $this->errorResponse(404, 106, 'Kode yang anda masukkan tidak valid. [106]');
                 }
 
-                if ($code->activate_in !== null && $code->activate_in !== $book->id) {
-                    $activatedBook = Book::query()->find($code->activate_in);
-                    $activatedBookTitle = $activatedBook?->title ?? 'buku lain';
-
-                    return response()->json([
-                        'status' => 'error',
-                        'error_code' => 110,
-                        'message' => "Maaf kode yang anda masukkan sudah aktif di buku {$activatedBookTitle} [110]",
-                        'version' => 2,
-                    ]);
+                if (! $code->is_active) {
+                    return $this->errorResponse(403, 108, 'Mohon maaf, Kode ini tidak aktif atau sudah dinonaktifkan. [108]');
                 }
-            }
 
-            $nextTimesActivated = $code->times_activated + 1;
+                if ($code->max_activated !== null && $code->times_activated >= $code->max_activated) {
+                    return $this->errorResponse(409, 113, 'Mohon maaf, Kode sudah mencapai batas pengaktifan. [113]');
+                }
 
-            $code->update([
-                'user_id' => $validateData['uid'],
-                'activate_in' => $book->id,
-                'activated_at' => now(),
-                'times_activated' => $nextTimesActivated,
-            ]);
+                $book = Book::query()->where('uuid', $validateData['id'])->first();
 
-            $message = 'Kode berhasil diaktifkan. Semoga harimu menyenangkan :)';
+                if (! $book) {
+                    return $this->errorResponse(404, 107, 'Buku belum terdaftar, Mohon laporkan ini ke Customer Service kami. Terima Kasih :) [107]');
+                }
 
-            if ($code->max_activated) {
-                $limit = $code->max_activated - $nextTimesActivated;
-                $message = "Kode berhasil diaktifkan. \nKode bisa diaktifkan {$limit} kali lagi";
-            }
+                $supportedBooksKey = $code->items->pluck('model.uuid')->filter()->toArray();
 
-            Log::channel('activation-code')->info('Activation code activated', [
-                'user_id' => $validateData['uid'],
-                'code' => $validateData['code'],
-                'version' => 2,
-            ]);
+                if (empty($supportedBooksKey) || ! in_array($validateData['id'], $supportedBooksKey, true)) {
+                    return $this->errorResponse(422, 108, "Kode yang anda masukkan tidak cocok untuk buku {$book->title}. Silahkan cek kode yang anda gunakan! [108A]");
+                }
 
-            return response()->json([
-                'status' => 'success',
-                'message' => $message,
-                'version' => 2,
-            ]);
-        });
+                if (! empty($validateData['tier']) && (int) $validateData['tier'] !== $code->tier->value) {
+                    return $this->errorResponse(422, 114, 'Kode tidak cocok diaktifkan disini. [114]');
+                }
+
+                if ($code->type !== 'public') {
+                    if (! empty($code->user_id) && $code->user_id !== $validateData['uid']) {
+                        return $this->errorResponse(409, 109, 'Maaf kode yang anda masukkan sudah diaktifkan di akun lain [109]');
+                    }
+
+                    if ($code->activate_in !== null && $code->activate_in !== $book->id) {
+                        $activatedBook = Book::query()->find($code->activate_in);
+                        $activatedBookTitle = $activatedBook?->title ?? 'buku lain';
+
+                        return $this->errorResponse(409, 110, "Maaf kode yang anda masukkan sudah aktif di buku {$activatedBookTitle} [110]");
+                    }
+                }
+
+                $nextTimesActivated = $code->times_activated + 1;
+
+                $code->update([
+                    'user_id' => $validateData['uid'],
+                    'activate_in' => $book->id,
+                    'activated_at' => now(),
+                    'times_activated' => $nextTimesActivated,
+                ]);
+
+                $message = 'Kode berhasil diaktifkan. Semoga harimu menyenangkan :)';
+
+                if ($code->max_activated) {
+                    $limit = $code->max_activated - $nextTimesActivated;
+                    $message = "Kode berhasil diaktifkan. \nKode bisa diaktifkan {$limit} kali lagi";
+                }
+
+                Log::channel('activation-code')->info('Activation code activated', [
+                    'user_id' => $validateData['uid'],
+                    'code' => $validateData['code'],
+                    'version' => 2,
+                ]);
+
+                return $this->successResponse([
+                    'message' => $message,
+                ]);
+            });
+        } catch (Exception $except) {
+            return $this->errorResponse(500, 500, 'Terjadi kesalahan pada server. '.$except->getMessage());
+        }
     }
 
     #[Endpoint(
@@ -194,27 +151,36 @@ class BookController extends Controller
             $activationCode = ActivationCode::query()->where('code', trim($code))->first();
 
             if (! $activationCode) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Kode aktivasi tidak valid.',
-                    'version' => 2,
-                ]);
+                return $this->errorResponse(404, 106, 'Kode aktivasi tidak valid.');
             }
 
-            return response()->json([
-                'status' => 'success',
+            return $this->successResponse([
                 'level' => [
                     'slug' => $activationCode->tier->value,
                     'name' => $activationCode->tier->label(),
                 ],
-                'version' => 2,
             ]);
         } catch (Exception $except) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Terjadi kesalahan pada server. '.$except->getMessage(),
-                'version' => 2,
-            ]);
+            return $this->errorResponse(500, 500, 'Terjadi kesalahan pada server. '.$except->getMessage());
         }
+    }
+
+    private function successResponse(array $data, int $statusCode = 200): JsonResponse
+    {
+        return response()->json([
+            'status' => true,
+            ...$data,
+            'version' => 2,
+        ], $statusCode);
+    }
+
+    private function errorResponse(int $statusCode, int $errorCode, string $message): JsonResponse
+    {
+        return response()->json([
+            'status' => false,
+            'errorCode' => $errorCode,
+            'message' => $message,
+            'version' => 2,
+        ], $statusCode);
     }
 }

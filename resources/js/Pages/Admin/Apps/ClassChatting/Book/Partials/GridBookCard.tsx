@@ -102,7 +102,7 @@ export const GridBookCard = memo(function GridBookCard({
                 <span>#{book.order}</span>
               </button>
             ) : (
-              <IconButton size="sm" onClick={() => onToggleLock(book, !book.lock)} title={book.lock ? "Buka kunci buku" : "Kunci buku"}>
+              <IconButton size="sm" onClick={() => onToggleLock(book, !book.lock)} title={book.lock ? "Buka kunci buku" : "Kunci buku"} color={book.lock ? "error" : "success"}>
                 {book.lock ? <LockIcon className="h-4 w-4" /> : <UnlockIcon className="h-4 w-4" />}
               </IconButton>
             )}

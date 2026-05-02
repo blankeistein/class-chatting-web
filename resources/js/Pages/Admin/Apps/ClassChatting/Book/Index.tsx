@@ -1,5 +1,6 @@
 import React, { useCallback } from "react";
 import { Head } from "@inertiajs/react";
+import axios from "axios";
 import {
   closestCenter,
   DndContext,
@@ -36,7 +37,7 @@ import {
   SearchIcon,
 } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
-import { collection, deleteDoc, doc, onSnapshot, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
+import { collection, deleteDoc, doc, onSnapshot, updateDoc } from "firebase/firestore";
 import AdminAppLayout from "@/Layouts/AdminAppLayout";
 import { getFirebaseFirestore } from "@/lib/firebase";
 import BookEditDialog from "./Partials/EditBookDialog";
@@ -49,31 +50,31 @@ import SortableBookTableRow from "./Partials/SortableBookTableRow";
 export type Book = {
   originalKey: string;
   cover: string;
-  idBook: string;
-  idBookPath: string;
-  idPlaystore: string;
+  id: string;
+  bookPath: string;
+  playstoreId: string;
   keyword: string;
   lock: boolean;
   name: string;
   order: number;
   price: number;
   status: string;
-  url: string;
+  downloadLink: string;
   version: number;
 };
 
 export type FirebaseBook = {
   cover: string;
-  idBook: string;
-  idBookPath: string;
-  idPlaystore: string;
+  id: string;
+  bookPath: string;
+  playstoreId: string;
   keyword: string;
   lock: boolean;
   name: string;
   order: number;
   price: number;
   status: string;
-  urlBook: string;
+  downloadLink: string;
   version: number;
 };
 
@@ -97,16 +98,16 @@ const normalizeBook = (key: string, value: Partial<FirebaseBook>): Book => {
   return {
     originalKey: key,
     cover: value.cover ?? "",
-    idBook: value.idBook ?? key,
-    idBookPath: value.idBookPath ?? key,
-    idPlaystore: value.idPlaystore ?? value.idBook ?? key,
+    id: value.id ?? key,
+    bookPath: value.bookPath ?? key,
+    playstoreId: value.playstoreId ?? value.id ?? key,
     keyword: value.keyword ?? "",
     lock: Boolean(value.lock),
     name: value.name ?? "-",
     order: typeof value.order === "number" ? value.order : Number.MAX_SAFE_INTEGER,
     price: typeof value.price === "number" ? value.price : Number(value.price ?? 0),
     status: value.status ?? "draft",
-    url: value.urlBook ?? "",
+    downloadLink: value.downloadLink ?? "",
     version: typeof value.version === "number" ? value.version : Number(value.version ?? 1),
   };
 };
@@ -117,16 +118,16 @@ const createPayloadBook = (book: NewBook, orderBook: number): FirebaseBook => {
 
   return {
     cover: book.coverUrl,
-    idBook: baseId,
-    idBookPath: baseId,
-    idPlaystore: baseId,
+    id: baseId,
+    bookPath: baseId,
+    playstoreId: baseId,
     keyword,
     lock: false,
     name: book.title,
     order: orderBook,
     price: 0,
     status: "publish",
-    urlBook: book.url ?? "",
+    downloadLink: book.downloadLink ?? "",
     version: book.version ?? 1,
   };
 };
@@ -261,7 +262,7 @@ export default function Index() {
     return books.filter((book) => {
       const matchesSearch = !query || [
         book.name,
-        book.idBook,
+        book.id,
         book.keyword,
         book.status,
       ].some((value) => value.toLowerCase().includes(query));
@@ -293,20 +294,16 @@ export default function Index() {
   }, []);
 
   const saveOrder = useCallback(async () => {
-    if (!firestore) {
-      toast.error("Firebase Firestore belum siap.");
-
-      return;
-    }
-
     setIsSavingOrder(true);
 
     try {
-      const batch = books.map((book, index) =>
-        updateDoc(doc(firestore, BOOKS_COLLECTION, book.originalKey), { order: index + 1 })
-      );
+      await axios.patch(route("admin.apps.class-chatting.book.items.reorder"), {
+        books: books.map((book, index) => ({
+          originalKey: book.originalKey,
+          order: index + 1,
+        })),
+      });
 
-      await Promise.all(batch);
       setBooks((currentBooks) => resequenceBooks(currentBooks));
       setIsOrderMode(false);
       toast.success("Urutan buku berhasil disimpan.");
@@ -316,17 +313,11 @@ export default function Index() {
     } finally {
       setIsSavingOrder(false);
     }
-  }, [firestore, books]);
+  }, [books]);
 
   const handleAddBook = useCallback(async (book: NewBook) => {
-    if (!firestore) {
-      toast.error("Firebase Firestore belum siap.");
-
-      return;
-    }
-
     const payload = createPayloadBook(book, books.length + 1);
-    const duplicateBook = books.find((item) => item.idBook === payload.idBook || item.originalKey === payload.idBookPath);
+    const duplicateBook = books.find((item) => item.id === payload.id || item.originalKey === payload.bookPath);
 
     if (duplicateBook) {
       toast.error("Buku ini sudah ada di Firestore.");
@@ -335,17 +326,21 @@ export default function Index() {
     }
 
     try {
-      await setDoc(doc(firestore, BOOKS_COLLECTION, payload.idBookPath), {
-        ...payload,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+      await axios.post(route("admin.apps.class-chatting.book.items.store"), {
+        uuid: book.uuid,
+        title: book.title,
+        cover: book.coverUrl,
+        tags: book.tags ?? [],
+        downloadLink: book.downloadLink,
+        version: book.version ?? 1,
+        order: books.length + 1,
       });
       toast.success("Buku berhasil ditambahkan ke Firestore.");
     } catch (error) {
       console.error("Error adding book:", error);
       toast.error("Gagal menambahkan buku ke Firestore.");
     }
-  }, [firestore, books]);
+  }, [books]);
 
   const handleDeleteBook = useCallback(async (book: Book) => {
     if (!firestore) {
@@ -395,7 +390,7 @@ export default function Index() {
   }, []);
 
   const handleSaveEdit = useCallback(async (newForm: Book) => {
-    if (!firestore || !newForm) {
+    if (!newForm) {
       toast.error("Form edit belum siap.");
 
       return;
@@ -410,19 +405,19 @@ export default function Index() {
     setActiveEditKey(newForm.originalKey);
 
     try {
-      await updateDoc(doc(firestore, BOOKS_COLLECTION, newForm.originalKey), {
+      await axios.put(route("admin.apps.class-chatting.book.items.update", { documentId: newForm.originalKey }), {
         cover: newForm.cover,
-        idBookPath: newForm.idBookPath,
-        idPlaystore: newForm.idPlaystore,
+        id: newForm.id,
+        bookPath: newForm.bookPath,
+        playstoreId: newForm.playstoreId,
         keyword: newForm.keyword,
         lock: newForm.lock,
         name: newForm.name,
         order: newForm.order,
         price: newForm.price,
         status: newForm.status,
-        urlBook: newForm.url,
         version: newForm.version,
-        updatedAt: serverTimestamp(),
+        downloadLink: newForm.downloadLink,
       });
       toast.success("Data buku berhasil diperbarui.");
       setIsEditDialogOpen(false);
@@ -433,7 +428,7 @@ export default function Index() {
     } finally {
       setActiveEditKey(null);
     }
-  }, [firestore]);
+  }, []);
 
   const updateLockStatus = useCallback(async (book: Book, lock: boolean) => {
     if (!firestore) {
@@ -501,7 +496,7 @@ export default function Index() {
   }, []);
 
   const existingIds = React.useMemo(() => {
-    return books.map((book) => book.idBook);
+    return books.map((book) => book.id);
   }, [books]);
 
   const canDragSort = isOrderMode && !hasActiveFilter;

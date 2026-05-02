@@ -78,6 +78,9 @@ Route::middleware('auth')->group(function () {
         })->name('apps.class-chatting');
 
         Route::get('apps/class-chatting/book', [ClassChattingBookController::class, 'index'])->name('apps.class-chatting.book');
+        Route::post('apps/class-chatting/book/items', [ClassChattingBookController::class, 'storeFirestoreBook'])->name('apps.class-chatting.book.items.store');
+        Route::put('apps/class-chatting/book/items/{documentId}', [ClassChattingBookController::class, 'updateFirestoreBook'])->name('apps.class-chatting.book.items.update');
+        Route::patch('apps/class-chatting/book/items/reorder', [ClassChattingBookController::class, 'reorderFirestoreBooks'])->name('apps.class-chatting.book.items.reorder');
         Route::get('apps/class-chatting/book/category', [ClassChattingBookController::class, 'category'])->name('apps.class-chatting.book.category');
         Route::get('apps/class-chatting/book-rtdb', [ClassChattingBookController::class, 'indexRTDB'])->name('apps.class-chatting.book-rtdb');
         Route::get('apps/class-chatting/settings', [ClassChattingBookController::class, 'settings'])->name('apps.class-chatting.settings');

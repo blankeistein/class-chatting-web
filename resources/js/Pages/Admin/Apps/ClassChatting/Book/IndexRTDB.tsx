@@ -70,16 +70,16 @@ const normalizeBook = (key: string, value: Partial<FirebaseRTDBBookForm>): Book 
   return {
     originalKey: key,
     cover: value.coverBook ?? "",
-    idBook: value.idBook ?? key,
-    idBookPath: value.idBookPath ?? key,
-    idPlaystore: value.idPlaystore ?? value.idBook ?? key,
+    id: value.idBook ?? key,
+    bookPath: value.idBookPath ?? key,
+    playstoreId: value.idPlaystore ?? value.idBook ?? key,
     keyword: value.keyword ?? "",
     lock: Boolean(value.lock),
     name: value.nameBook ?? "-",
     order: typeof value.orderBook === "number" ? value.orderBook : Number.MAX_SAFE_INTEGER,
     price: typeof value.price === "number" ? value.price : Number(value.price ?? 0),
     status: value.status ?? "draft",
-    url: value.urlBook ?? "",
+    downloadLink: value.urlBook ?? "",
     version: typeof value.version === "number" ? value.version : Number(value.version ?? 1),
   };
 };
@@ -99,7 +99,7 @@ const createRealtimePayloadFromMysql = (book: NewBook, orderBook: number): Fireb
     orderBook: orderBook,
     price: 0,
     status: "publish",
-    urlBook: book.url ?? "",
+    urlBook: book.downloadLink ?? "",
     version: book.version ?? 1,
   };
 };
@@ -193,7 +193,7 @@ export default function IndexRTDB() {
     return books.filter((book) => {
       return [
         book.name,
-        book.idBook,
+        book.id,
         book.keyword,
         book.status,
       ].some((value) => value.toLowerCase().includes(query));
@@ -253,7 +253,7 @@ export default function IndexRTDB() {
     }
 
     const payload = createRealtimePayloadFromMysql(book, books.length + 1);
-    const duplicateBook = books.find((item) => item.idBook === payload.idBook || item.originalKey === payload.idBookPath);
+    const duplicateBook = books.find((item) => item.id === payload.idBook || item.originalKey === payload.idBookPath);
 
     if (duplicateBook) {
       toast.error("Buku ini sudah ada di Realtime Database.");
@@ -335,15 +335,15 @@ export default function IndexRTDB() {
     try {
       await update(ref(database, `${ALL_BOOKS_PATH}/${newForm.originalKey}`), {
         coverBook: newForm.cover,
-        idBookPath: newForm.idBookPath,
-        idPlaystore: newForm.idPlaystore,
+        idBookPath: newForm.bookPath,
+        idPlaystore: newForm.playstoreId,
         keyword: newForm.keyword,
         lock: newForm.lock,
         nameBook: newForm.name,
         orderBook: newForm.order,
         price: newForm.price,
         status: newForm.status,
-        urlBook: newForm.url,
+        urlBook: newForm.downloadLink,
         version: newForm.version,
       });
       toast.success("Data buku berhasil diperbarui.");
@@ -421,7 +421,7 @@ export default function IndexRTDB() {
   }, []);
 
   const existingRealtimeIds = React.useMemo(() => {
-    return books.map((book) => book.idBook);
+    return books.map((book) => book.id);
   }, [books]);
 
   const canDragSort = isOrderMode && !hasActiveSearch;

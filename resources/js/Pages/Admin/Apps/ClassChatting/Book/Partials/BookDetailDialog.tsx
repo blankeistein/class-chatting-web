@@ -20,9 +20,9 @@ type BookDetailDialogProps = {
 
 const detailItems = (book: Book) => [
   { label: "Firebase Key", value: book.originalKey },
-  { label: "ID Buku", value: book.idBook },
-  { label: "ID Path", value: book.idBookPath },
-  { label: "ID Playstore", value: book.idPlaystore },
+  { label: "ID Buku", value: book.id },
+  { label: "ID Path", value: book.bookPath },
+  { label: "ID Playstore", value: book.playstoreId },
   { label: "Versi", value: `v${book.version}` },
   { label: "Harga", value: String(book.price) },
 ];
@@ -139,8 +139,8 @@ export default function BookDetailDialog({
             <Button
               variant="outline"
               className="flex items-center gap-2"
-              onClick={() => book?.url && onCopyLink(book.url)}
-              disabled={!book?.url}
+              onClick={() => book?.downloadLink && onCopyLink(book.downloadLink)}
+              disabled={!book?.downloadLink}
             >
               <CopyIcon className="h-4 w-4" />
               Salin Link
@@ -149,11 +149,11 @@ export default function BookDetailDialog({
               color="primary"
               className="flex items-center gap-2"
               onClick={() => {
-                if (book?.url) {
-                  window.open(book.url, "_blank", "noopener,noreferrer");
+                if (book?.downloadLink) {
+                  window.open(book.downloadLink, "_blank", "noopener,noreferrer");
                 }
               }}
-              disabled={!book?.url}
+              disabled={!book?.downloadLink}
             >
               <ExternalLinkIcon className="h-4 w-4" />
               Buka Link

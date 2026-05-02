@@ -18,7 +18,7 @@ export type Book = {
   title: string;
   coverUrl: string;
   tags: string[] | null;
-  url: string | null;
+  downloadLink: string | null;
   version: number;
 };
 
@@ -116,8 +116,7 @@ export default function AddBookDialog({
                 ))
               ) : books.length > 0 ? (
                 books.map((book) => {
-                  const id = book.uuid.replace(/-/g, "").toUpperCase();
-                  const existsIn = existingIds.includes(id);
+                  const existsIn = existingIds.includes(book.uuid);
                   const isAdding = activeBookId === book.id;
 
                   return (

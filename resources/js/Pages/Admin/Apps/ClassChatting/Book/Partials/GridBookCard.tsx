@@ -3,10 +3,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { Card, Chip, IconButton, Menu, Typography } from "@material-tailwind/react";
 import { ArrowDownIcon, ArrowUpIcon, Copy, EyeIcon, GripVerticalIcon, LoaderCircleIcon, LockIcon, MoreVertical, PencilIcon, Trash2Icon, UnlockIcon } from "lucide-react";
 import { memo, useMemo } from "react";
-import { FirebaseBookForm } from "./EditBookDialog";
 import { Book } from "../Index";
-
-type FirebaseBook = FirebaseBookForm;
 
 type GridBookCardProps = {
   book: Book;
@@ -123,7 +120,7 @@ export const GridBookCard = memo(function GridBookCard({
                 <PencilIcon className="h-4 w-4 mr-2" />
                 Edit
               </Menu.Item>
-              <Menu.Item onClick={() => onCopyLink(book.url)}>
+              <Menu.Item onClick={() => onCopyLink(book.downloadLink)}>
                 <Copy className="h-4 w-4 mr-2" />
                 Salin Link
               </Menu.Item>

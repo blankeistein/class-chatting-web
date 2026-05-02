@@ -114,7 +114,7 @@ export default function SortableBookTableRow({
               <PencilIcon className="h-4 w-4 mr-2" />
               Edit
             </Menu.Item>
-            <Menu.Item onClick={() => onCopyLink(book.url)}>
+            <Menu.Item onClick={() => onCopyLink(book.downloadLink)}>
               <Copy className="h-4 w-4 mr-2" />
               Salin Link
             </Menu.Item>

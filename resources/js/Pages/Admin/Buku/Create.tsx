@@ -153,7 +153,7 @@ export default function Create() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-1">
                       <Typography as="label" htmlFor="url" type="small" className="font-semibold dark:text-white">
-                        URL Buku (Optional)
+                        Download Link (Optional)
                       </Typography>
                       <Input
                         id="url"

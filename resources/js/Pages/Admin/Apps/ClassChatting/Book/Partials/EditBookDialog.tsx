@@ -11,22 +11,6 @@ import {
 import { LoaderCircleIcon, SaveIcon, XIcon } from "lucide-react";
 import { Book } from "../Index";
 
-export type FirebaseBookForm = {
-  originalKey: string;
-  coverBook: string;
-  idBook: string;
-  idBookPath: string;
-  idPlaystore: string;
-  keyword: string;
-  lock: boolean;
-  nameBook: string;
-  orderBook: number;
-  price: number;
-  status: string;
-  urlBook: string;
-  version: number;
-};
-
 type BookEditDialogProps = {
   open: boolean;
   form: Book | null;
@@ -111,7 +95,7 @@ export default function BookEditDialog({
                     <Typography as="label" htmlFor="id-playstore" type="small" color="default" className="font-semibold">
                       ID Playstore
                     </Typography>
-                    <Input id="id-playstore" value={editForm.idPlaystore} onChange={(event) => handleEditFormChange("idPlaystore", event.target.value)} />
+                    <Input id="id-playstore" value={editForm.playstoreId} onChange={(event) => handleEditFormChange("playstoreId", event.target.value)} />
                   </div>
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
@@ -123,9 +107,9 @@ export default function BookEditDialog({
                   </div>
                   <div className="w-full">
                     <Typography as="label" htmlFor="url-book" type="small" color="default" className="font-semibold">
-                      URL Buku
+                      Download Link
                     </Typography>
-                    <Input id="url-book" value={editForm.url} onChange={(event) => handleEditFormChange("url", event.target.value)} />
+                    <Input id="url-book" value={editForm.downloadLink} onChange={(event) => handleEditFormChange("downloadLink", event.target.value)} />
                   </div>
                 </div>
                 <div className="grid gap-4 md:grid-cols-3">

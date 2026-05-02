@@ -16,13 +16,13 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import {
   Button,
   Card,
   Chip,
   IconButton,
   Input,
+  Select,
   Typography,
 } from "@material-tailwind/react";
 import {
@@ -76,6 +76,7 @@ const normalizeBook = (key: string, value: Partial<FirebaseRTDBBookForm>): Book 
     keyword: value.keyword ?? "",
     lock: Boolean(value.lock),
     name: value.nameBook ?? "-",
+    oldOrder: typeof value.orderBook === "number" ? value.orderBook : Number.MAX_SAFE_INTEGER,
     order: typeof value.orderBook === "number" ? value.orderBook : Number.MAX_SAFE_INTEGER,
     price: typeof value.price === "number" ? value.price : Number(value.price ?? 0),
     status: value.status ?? "draft",
@@ -117,8 +118,31 @@ const sortBooks = (items: Book[]) => {
 const resequenceBooks = (items: Book[]) => {
   return items.map((book, index) => ({
     ...book,
-    orderBook: index + 1,
+    order: index + 1,
   }));
+};
+
+const commitBookOrders = (items: Book[]) => {
+  return items.map((book, index) => ({
+    ...book,
+    oldOrder: index + 1,
+    order: index + 1,
+  }));
+};
+
+const restoreBookOrders = (items: Book[]) => {
+  return [...items]
+    .sort((left, right) => {
+      if (left.oldOrder !== right.oldOrder) {
+        return left.oldOrder - right.oldOrder;
+      }
+
+      return left.name.localeCompare(right.name);
+    })
+    .map((book) => ({
+      ...book,
+      order: book.oldOrder,
+    }));
 };
 
 const createEditForm = (book: Book): Book => ({
@@ -145,6 +169,7 @@ export default function IndexRTDB() {
   const database = React.useMemo(() => getFirebaseDatabase(), []);
   const [books, setBooks] = React.useState<Book[]>([]);
   const [search, setSearch] = React.useState("");
+  const [selectedStatus, setSelectedStatus] = React.useState("all");
   const [viewMode, setViewMode] = React.useState<"grid" | "table">("grid");
   const [isLoading, setIsLoading] = React.useState(true);
   const [isSavingOrder, setIsSavingOrder] = React.useState(false);
@@ -185,22 +210,25 @@ export default function IndexRTDB() {
 
   const filteredBooks = React.useMemo(() => {
     const query = search.trim().toLowerCase();
-
-    if (!query) {
-      return books;
-    }
+    const hasStatusFilter = selectedStatus !== "all";
 
     return books.filter((book) => {
-      return [
+      const matchesSearch = !query || [
         book.name,
         book.id,
         book.keyword,
         book.status,
       ].some((value) => value.toLowerCase().includes(query));
+
+      const matchesStatus = !hasStatusFilter || book.status === selectedStatus;
+
+      return matchesSearch && matchesStatus;
     });
-  }, [books, search]);
+  }, [books, search, selectedStatus]);
 
   const hasActiveSearch = search.trim().length > 0;
+  const hasActiveStatusFilter = selectedStatus !== "all";
+  const hasActiveFilter = hasActiveSearch || hasActiveStatusFilter;
 
   const moveBook = useCallback((index: number, direction: "up" | "down") => {
     setBooks((currentBooks) => {
@@ -225,17 +253,32 @@ export default function IndexRTDB() {
       return;
     }
 
+    const changedBooks = books
+      .map((book, index) => ({
+        originalKey: book.originalKey,
+        oldOrder: book.oldOrder,
+        order: index + 1,
+      }))
+      .filter((book) => book.oldOrder !== book.order);
+
+    if (changedBooks.length === 0) {
+      setIsOrderMode(false);
+      toast("Tidak ada perubahan urutan buku.");
+
+      return;
+    }
+
     setIsSavingOrder(true);
 
     try {
-      const updates = books.reduce<Record<string, number>>((accumulator, book, index) => {
-        accumulator[`AllBooks/${book.originalKey}/orderBook`] = index + 1;
+      const updates = changedBooks.reduce<Record<string, number>>((accumulator, book) => {
+        accumulator[`AllBooks/${book.originalKey}/orderBook`] = book.order;
 
         return accumulator;
       }, {});
 
       await update(ref(database), updates);
-      setBooks((currentBooks) => resequenceBooks(currentBooks));
+      setBooks((currentBooks) => commitBookOrders(currentBooks));
       setIsOrderMode(false);
       toast.success("Urutan buku berhasil disimpan.");
     } catch (error) {
@@ -285,12 +328,19 @@ export default function IndexRTDB() {
     try {
       await remove(ref(database, `${ALL_BOOKS_PATH}/${book.originalKey}`));
 
-      const remainingBooks = resequenceBooks(
-        books.filter((item) => item.originalKey !== book.originalKey),
-      );
+      const remainingBooks = books
+        .filter((item) => item.originalKey !== book.originalKey)
+        .filter((item) => item.order > book.order)
+        .sort((left, right) => {
+          if (left.order !== right.order) {
+            return left.order - right.order;
+          }
+
+          return left.name.localeCompare(right.name);
+        });
 
       const updates = remainingBooks.reduce<Record<string, number>>((accumulator, item) => {
-        accumulator[`AllBooks/${item.originalKey}/orderBook`] = item.orderBook;
+        accumulator[`AllBooks/${item.originalKey}/orderBook`] = item.order - 1;
 
         return accumulator;
       }, {});
@@ -401,6 +451,11 @@ export default function IndexRTDB() {
     moveBook(index, "down");
   }, []);
 
+  const cancelOrderMode = useCallback(() => {
+    setBooks((currentBooks) => restoreBookOrders(currentBooks));
+    setIsOrderMode(false);
+  }, []);
+
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
 
@@ -424,7 +479,7 @@ export default function IndexRTDB() {
     return books.map((book) => book.id);
   }, [books]);
 
-  const canDragSort = isOrderMode && !hasActiveSearch;
+  const canDragSort = isOrderMode && !hasActiveFilter;
   const sortableIds = React.useMemo(() => filteredBooks.map((book) => book.originalKey), [filteredBooks]);
 
   return (
@@ -449,7 +504,15 @@ export default function IndexRTDB() {
               <div className="flex flex-wrap gap-2">
                 <IconButton
                   variant={isOrderMode ? "solid" : "outline"}
-                  onClick={() => setIsOrderMode((value) => !value)}
+                  onClick={() => {
+                    if (isOrderMode) {
+                      cancelOrderMode();
+
+                      return;
+                    }
+
+                    setIsOrderMode(true);
+                  }}
                   title="Mode order book"
                 >
                   <ArrowDownUp className="h-4 w-4" />
@@ -475,26 +538,49 @@ export default function IndexRTDB() {
           }
         />
 
-        <Card className="w-full border border-white/70 bg-white/85 p-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
-          <div className="flex flex-col gap-3">
-            <Typography variant="small" className="font-semibold text-slate-700 dark:text-slate-200">
-              Pencarian dan aksi cepat
-            </Typography>
-            <Input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Cari judul, ID buku, keyword, atau status..."
-              className="dark:text-white"
-            >
-              <Input.Icon>
-                <SearchIcon className="h-4 w-4" />
-              </Input.Icon>
-            </Input>
-          </div>
+        <Card className="border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <Card.Body className="space-y-4 p-4">
+            <div className="flex flex-col lg:flex-row gap-2">
+              <div className="flex-1 flex flex-col gap-3">
+                <Typography variant="small" className="font-semibold text-slate-700 dark:text-slate-200">
+                  Pencarian dan aksi cepat
+                </Typography>
+                <Input
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Cari judul, ID buku, keyword, atau status..."
+                  className="dark:text-white"
+                >
+                  <Input.Icon>
+                    <SearchIcon className="h-4 w-4" />
+                  </Input.Icon>
+                </Input>
+              </div>
+              <div className="flex flex-col gap-3">
+                <Typography variant="small" className="font-semibold text-slate-700 dark:text-slate-200">
+                  Filter Status
+                </Typography>
+                <Select placement="bottom-end" value={selectedStatus} onValueChange={(value) => setSelectedStatus(value ?? "all")}>
+                  <Select.Trigger placeholder="Semua status" value={selectedStatus} />
+                  <Select.List>
+                    <Select.Option value="all">
+                      Semua status
+                    </Select.Option>
+                    <Select.Option value="publish">
+                      Publish
+                    </Select.Option>
+                    <Select.Option value="draft">
+                      Draft
+                    </Select.Option>
+                  </Select.List>
+                </Select>
+              </div>
+            </div>
+          </Card.Body>
         </Card>
 
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex items-center gap-2 flex-wrap">
             <Chip size="sm" variant="ghost" className="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
               <Chip.Label>{books.length} buku</Chip.Label>
             </Chip>
@@ -503,12 +589,12 @@ export default function IndexRTDB() {
                 <Chip size="sm" variant="ghost" className="bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
                   <Chip.Label>Order mode aktif</Chip.Label>
                 </Chip>
-                {!hasActiveSearch && (
+                {!hasActiveFilter && (
                   <Chip size="sm" variant="ghost" className="bg-sky-100 text-sky-700 dark:bg-sky-500/10 dark:text-sky-300">
                     <Chip.Label>Drag & drop untuk ubah urutan</Chip.Label>
                   </Chip>
                 )}
-                <Button variant="outline" onClick={() => setIsOrderMode(false)}>
+                <Button variant="outline" onClick={cancelOrderMode}>
                   Batal
                 </Button>
                 <Button color="success" onClick={saveOrder} disabled={isSavingOrder}>
@@ -558,7 +644,7 @@ export default function IndexRTDB() {
                             book={book}
                             books={books}
                             isOrderMode={isOrderMode}
-                            hasActiveSearch={hasActiveSearch}
+                            hasActiveSearch={hasActiveFilter}
                             isDeleting={activeDeleteKey === book.originalKey}
                             activeDeleteKey={activeDeleteKey}
                             onView={openDetailDialog}
@@ -582,7 +668,7 @@ export default function IndexRTDB() {
                         key={book.originalKey}
                         book={book}
                         isOrderMode={isOrderMode}
-                        hasActiveSearch={hasActiveSearch}
+                        hasActiveSearch={hasActiveFilter}
                         originalIndex={originalIndex}
                         canMoveUp={originalIndex > 0}
                         canMoveDown={originalIndex < books.length - 1}

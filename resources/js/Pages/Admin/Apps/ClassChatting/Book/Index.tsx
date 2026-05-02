@@ -201,6 +201,7 @@ export default function Index() {
   const [categories, setCategories] = React.useState<BookCategory[]>([]);
   const [search, setSearch] = React.useState("");
   const [selectedKeyword, setSelectedKeyword] = React.useState("all");
+  const [selectedStatus, setSelectedStatus] = React.useState("all");
   const [viewMode, setViewMode] = React.useState<"grid" | "table">("grid");
   const [isLoading, setIsLoading] = React.useState(true);
   const [isSavingOrder, setIsSavingOrder] = React.useState(false);
@@ -258,6 +259,7 @@ export default function Index() {
   const filteredBooks = React.useMemo(() => {
     const query = search.trim().toLowerCase();
     const hasKeywordFilter = selectedKeyword !== "all";
+    const hasStatusFilter = selectedStatus !== "all";
 
     return books.filter((book) => {
       const matchesSearch = !query || [
@@ -268,14 +270,16 @@ export default function Index() {
       ].some((value) => value.toLowerCase().includes(query));
 
       const matchesKeyword = !hasKeywordFilter || extractBookKeywords(book.keyword).includes(selectedKeyword);
+      const matchesStatus = !hasStatusFilter || book.status === selectedStatus;
 
-      return matchesSearch && matchesKeyword;
+      return matchesSearch && matchesKeyword && matchesStatus;
     });
-  }, [books, search, selectedKeyword]);
+  }, [books, search, selectedKeyword, selectedStatus]);
 
   const hasActiveSearch = search.trim().length > 0;
   const hasActiveKeywordFilter = selectedKeyword !== "all";
-  const hasActiveFilter = hasActiveSearch || hasActiveKeywordFilter;
+  const hasActiveStatusFilter = selectedStatus !== "all";
+  const hasActiveFilter = hasActiveSearch || hasActiveKeywordFilter || hasActiveStatusFilter;
 
   const moveBook = useCallback((index: number, direction: "up" | "down") => {
     setBooks((currentBooks) => {
@@ -589,6 +593,25 @@ export default function Index() {
                         {category.name}
                       </Select.Option>
                     ))}
+                  </Select.List>
+                </Select>
+              </div>
+              <div className="flex flex-col gap-3">
+                <Typography variant="small" className="font-semibold text-slate-700 dark:text-slate-200">
+                  Filter Status
+                </Typography>
+                <Select placement="bottom-end" value={selectedStatus} onValueChange={(value) => setSelectedStatus(value ?? "all")}>
+                  <Select.Trigger placeholder="Semua status" value={selectedStatus} />
+                  <Select.List>
+                    <Select.Option value="all">
+                      Semua status
+                    </Select.Option>
+                    <Select.Option value="publish">
+                      Publish
+                    </Select.Option>
+                    <Select.Option value="draft">
+                      Draft
+                    </Select.Option>
                   </Select.List>
                 </Select>
               </div>

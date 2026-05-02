@@ -20,6 +20,7 @@ interface Book {
   id: number;
   uuid: string;
   title: string;
+  type: string;
   coverUrl: string;
   tags: string[] | null;
   url: string | null;
@@ -140,6 +141,17 @@ export default function Show({ book }: { book: { data: Book } }) {
               </div>
 
               <div className="space-y-5">
+                <div>
+                  <Typography variant="small" className="font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                    Tipe Buku
+                  </Typography>
+                  <div className="mt-3">
+                    <Chip size="sm" variant="ghost" className="w-max bg-blue-50 capitalize text-blue-600 dark:bg-blue-900/20 dark:text-blue-300">
+                      <Chip.Label>{currentBook.type === "penilaian" ? "Penilaian" : "Materi"}</Chip.Label>
+                    </Chip>
+                  </div>
+                </div>
+
                 <div>
                   <Typography variant="small" className="font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                     Tags

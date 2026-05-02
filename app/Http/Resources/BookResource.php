@@ -18,6 +18,7 @@ class BookResource extends JsonResource
             'id' => $this->id,
             'uuid' => $this->uuid,
             'title' => $this->title,
+            'type' => $this->type,
             'coverUrl' => $this->thumbnail,
             'tags' => $this->tags,
             'url' => $this->url,

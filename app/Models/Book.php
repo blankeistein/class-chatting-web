@@ -13,6 +13,7 @@ class Book extends Model
     protected $fillable = [
         'uuid',
         'title',
+        'type',
         'cover_url',
         'tags',
         'url',
@@ -20,6 +21,10 @@ class Book extends Model
     ];
 
     protected $appends = ['thumbnail'];
+
+    public const TYPE_MATERI = 'materi';
+
+    public const TYPE_PENILAIAN = 'penilaian';
 
     protected $casts = [
         'tags' => 'array',

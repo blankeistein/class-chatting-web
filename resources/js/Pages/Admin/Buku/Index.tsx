@@ -29,6 +29,7 @@ interface Book {
   id: number;
   uuid: string;
   title: string;
+  type: string;
   coverUrl: string;
   tags: string[] | null;
   url: string | null;
@@ -61,9 +62,14 @@ const BookRow = ({ book }: { book: Book }) => {
             <Typography variant="small" className="font-bold text-slate-800 dark:text-white line-clamp-1 max-w-[200px]" title={book.title}>
               {book.title}
             </Typography>
-            <Typography variant="small" className="text-[10px] text-slate-400">
-              ID: {book.uuid}
-            </Typography>
+            <div className="flex flex-wrap items-center gap-2">
+              <Typography variant="small" className="text-[10px] text-slate-400">
+                ID: {book.uuid}
+              </Typography>
+              <Chip size="sm" variant="ghost" className="h-auto bg-blue-50 py-0.5 text-[9px] capitalize text-blue-600 dark:bg-blue-900/20 dark:text-blue-300">
+                <Chip.Label>{book.type === "penilaian" ? "Penilaian" : "Materi"}</Chip.Label>
+              </Chip>
+            </div>
           </div>
         </div>
       </td>
@@ -172,6 +178,9 @@ const BookCard = ({ book }: { book: Book }) => {
               <Typography variant="small" className="text-[10px] text-slate-400 line-clamp-1">
                 ID: {book.uuid}
               </Typography>
+              <Chip size="sm" variant="ghost" className="mt-2 h-auto w-max bg-blue-50 py-0.5 text-[9px] capitalize text-blue-600 dark:bg-blue-900/20 dark:text-blue-300">
+                <Chip.Label>{book.type === "penilaian" ? "Penilaian" : "Materi"}</Chip.Label>
+              </Chip>
             </div>
             <div className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
               v{book.version}

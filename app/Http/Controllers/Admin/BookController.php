@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\BookStoreRequest;
+use App\Http\Requests\BookUpdateRequest;
 use App\Http\Resources\BookResource;
 use App\Models\Book;
 use Illuminate\Http\Request;
@@ -51,18 +53,9 @@ class BookController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(BookStoreRequest $request)
     {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'uuid' => 'nullable|string|max:255|unique:books,uuid',
-            'cover_url' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
-            'tags' => 'nullable|array',
-            'url' => 'nullable|url',
-            'version' => 'nullable|integer',
-        ]);
-
-        $data = $request->only(['title', 'uuid', 'tags', 'url', 'version']);
+        $data = $request->safe()->only(['title', 'uuid', 'type', 'tags', 'url', 'version']);
         $data['uuid'] = filled($data['uuid'] ?? null) ? $data['uuid'] : (string) Str::uuid();
 
         if ($request->hasFile('cover_url')) {
@@ -84,19 +77,11 @@ class BookController extends Controller
         ]);
     }
 
-    public function update(Request $request, $id)
+    public function update(BookUpdateRequest $request, $id)
     {
         $book = Book::findOrFail($id);
 
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'cover_url' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
-            'tags' => 'nullable|array',
-            'url' => 'nullable|url',
-            'version' => 'nullable|integer',
-        ]);
-
-        $data = $request->only(['title', 'tags', 'url', 'version']);
+        $data = $request->safe()->only(['title', 'type', 'tags', 'url', 'version']);
 
         if ($request->hasFile('cover_url')) {
             // Delete old image if exists

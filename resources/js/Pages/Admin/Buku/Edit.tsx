@@ -7,6 +7,7 @@ import {
   Input,
   IconButton,
   Chip,
+  Select,
 } from "@material-tailwind/react";
 import AdminLayout from "@/Layouts/AdminLayout";
 import { Head, router, useForm } from "@inertiajs/react";
@@ -17,6 +18,7 @@ interface Book {
   id: number;
   uuid: string;
   title: string;
+  type: string;
   coverUrl: string;
   tags: string[] | null;
   url: string | null;
@@ -30,6 +32,7 @@ export default function Edit({ book }: { book: { data: Book } }) {
 
   const { data, setData, post, processing, errors } = useForm({
     title: book.data.title,
+    type: book.data.type || "materi",
     tags: book.data.tags || [] as string[],
     url: book.data.url || "",
     version: book.data.version || 1,
@@ -108,6 +111,29 @@ export default function Edit({ book }: { book: { data: Book } }) {
                   {errors.title && (
                     <Typography type="small" color="error" className="mt-1 block">
                       {errors.title}
+                    </Typography>
+                  )}
+                </div>
+
+                <div className="space-y-1">
+                  <Typography as="label" htmlFor="type" type="small" className="font-semibold dark:text-white">
+                    Tipe Buku
+                  </Typography>
+                  <Select
+                    value={data.type}
+                    onValueChange={(value) => setData("type", value ?? "materi")}
+                  >
+                    <Select.Trigger id="type" placeholder="Pilih tipe buku">
+                      {() => data.type === "penilaian" ? "Penilaian" : "Materi"}
+                    </Select.Trigger>
+                    <Select.List>
+                      <Select.Option value="materi">Materi</Select.Option>
+                      <Select.Option value="penilaian">Penilaian</Select.Option>
+                    </Select.List>
+                  </Select>
+                  {errors.type && (
+                    <Typography type="small" color="error" className="mt-1 block">
+                      {errors.type}
                     </Typography>
                   )}
                 </div>

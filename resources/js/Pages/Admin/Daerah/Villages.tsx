@@ -17,7 +17,7 @@ type Village = {
   };
 };
 
-export default function Villages({ villages, filters }: { villages: { data: Village[] }; filters?: any }) {
+export default function Villages({ villages, filters, filterOptions }: { villages: { data: Village[] }; filters?: any; filterOptions?: any }) {
   return (
     <RegionTablePage
       title="Daftar Desa"
@@ -25,6 +25,8 @@ export default function Villages({ villages, filters }: { villages: { data: Vill
       paginated={villages}
       items={villages.data ?? []}
       filters={filters}
+      routeName="admin.regions.villages.index"
+      filterOptions={filterOptions}
       headings={["No", "ID", "Nama Daerah", "Kecamatan", "Kabupaten", "Provinsi"]}
       renderCells={(village, index) => (
         <>

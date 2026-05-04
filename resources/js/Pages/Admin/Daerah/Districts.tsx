@@ -14,7 +14,7 @@ type District = {
   };
 };
 
-export default function Districts({ districts, filters }: { districts: { data: District[] }; filters?: any }) {
+export default function Districts({ districts, filters, filterOptions }: { districts: { data: District[] }; filters?: any; filterOptions?: any }) {
   return (
     <RegionTablePage
       title="Daftar Kecamatan"
@@ -22,6 +22,8 @@ export default function Districts({ districts, filters }: { districts: { data: D
       paginated={districts}
       items={districts.data ?? []}
       filters={filters}
+      filterOptions={filterOptions}
+      routeName="admin.regions.districts.index"
       headings={["No", "ID", "Nama Daerah", "Kabupaten", "Provinsi"]}
       renderCells={(district, index) => (
         <>

@@ -11,7 +11,7 @@ type Regency = {
   };
 };
 
-export default function Regencies({ regencies, filters }: { regencies: { data: Regency[] }; filters?: any }) {
+export default function Regencies({ regencies, filters, filterOptions }: { regencies: { data: Regency[] }; filters?: any; filterOptions?: any }) {
   return (
     <RegionTablePage
       title="Daftar Kabupaten"
@@ -19,6 +19,8 @@ export default function Regencies({ regencies, filters }: { regencies: { data: R
       paginated={regencies}
       items={regencies.data ?? []}
       filters={filters}
+      routeName="admin.regions.regencies.index"
+      filterOptions={filterOptions}
       headings={["No", "ID", "Nama Daerah", "Provinsi"]}
       renderCells={(regency, index) => (
         <>

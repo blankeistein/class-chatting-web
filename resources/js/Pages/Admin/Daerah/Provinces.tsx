@@ -16,6 +16,7 @@ export default function Provinces({ provinces, filters }: { provinces: { data: P
       paginated={provinces}
       items={provinces.data ?? []}
       filters={filters}
+      routeName="admin.regions.provinces.index"
       headings={["No", "ID", "Nama Daerah"]}
       renderCells={(province, index) => (
         <>

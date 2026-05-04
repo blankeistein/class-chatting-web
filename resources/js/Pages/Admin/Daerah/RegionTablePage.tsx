@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Button, Card, IconButton, Input, Select, Typography } from "@material-tailwind/react";
 import { Head, router } from "@inertiajs/react";
 import { PageHeader } from "@/Components/PageHeader";
@@ -10,43 +10,86 @@ type Filters = {
   per_page?: number;
   sort_by?: string;
   sort_direction?: string;
+  province_id?: number;
+  regency_id?: number;
+  district_id?: number;
+};
+
+type ProvinceOption = {
+  id: number;
+  name: string;
+};
+
+type RegencyOption = {
+  id: number;
+  name: string;
+  province_id: number;
+};
+
+type DistrictOption = {
+  id: number;
+  name: string;
+  regency_id: number;
+};
+
+type FilterOptions = {
+  provinces?: ProvinceOption[];
+  regencies?: RegencyOption[];
+  districts?: DistrictOption[];
 };
 
 export default function RegionTablePage({
   title,
   description,
+  routeName,
   paginated,
   items,
   filters,
+  filterOptions,
   headings,
   renderCells,
 }: {
   title: string;
+  routeName: string;
   description: string;
   paginated: any;
-  items: unknown[];
+  items: any[];
   filters?: Filters;
+  filterOptions?: FilterOptions;
   headings: string[];
   renderCells: (item: any, index: number) => React.ReactNode;
 }) {
   const [search, setSearch] = React.useState(filters?.search || "");
   const [sort, setSort] = React.useState(`${filters?.sort_by || "name"}|${filters?.sort_direction || "asc"}`);
   const [perPage, setPerPage] = React.useState(String(filters?.per_page || 25));
+  const [provinceId, setProvinceId] = React.useState(filters?.province_id ? String(filters.province_id) : "");
+  const [regencyId, setRegencyId] = React.useState(filters?.regency_id ? String(filters.regency_id) : "");
+  const [districtId, setDistrictId] = React.useState(filters?.district_id ? String(filters.district_id) : "");
+
+  const filteredRegencies = (filterOptions?.regencies || []).filter((regency) => !provinceId || regency.province_id === Number(provinceId));
+  const filteredDistricts = (filterOptions?.districts || []).filter((district) => !regencyId || district.regency_id === Number(regencyId));
 
   const applyFilters = () => {
     const [sortBy, sortDirection] = sort.split("|");
 
-    router.get(route().current() as string, {
+    router.get(route(routeName), {
       search,
       sort_by: sortBy,
       sort_direction: sortDirection,
       per_page: perPage,
+      province_id: provinceId,
+      regency_id: regencyId,
+      district_id: districtId,
     }, {
       preserveState: true,
       replace: true,
       only: ["filters", "provinces", "regencies", "districts", "villages"],
     });
   };
+
+  useEffect(() => {
+    applyFilters();
+  }, [sort, perPage, provinceId, regencyId, districtId]);
 
   return (
     <>
@@ -106,11 +149,89 @@ export default function RegionTablePage({
                   </Select.List>
                 </Select>
               </div>
-
-              <Button className="md:self-end" onClick={applyFilters}>
-                Terapkan
-              </Button>
             </div>
+
+            {(filterOptions?.provinces || filterOptions?.regencies || filterOptions?.districts) && (
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                {filterOptions?.provinces && (
+                  <div>
+                    <Typography as="label" htmlFor="province-filter" type="small" color="default" className="font-semibold">
+                      Filter Provinsi
+                    </Typography>
+                    <Select
+                      value={provinceId}
+                      onValueChange={(value) => {
+                        setProvinceId(value || "");
+                        setRegencyId("");
+                        setDistrictId("");
+                      }}
+                    >
+                      <Select.Trigger id="province-filter" placeholder="Semua provinsi" />
+                      <Select.List>
+                        <Select.Option value="">Semua provinsi</Select.Option>
+                        {filterOptions.provinces.map((province) => (
+                          <Select.Option key={province.id} value={String(province.id)}>
+                            {province.name}
+                          </Select.Option>
+                        ))}
+                      </Select.List>
+                    </Select>
+                  </div>
+                )}
+
+                {filterOptions?.regencies && (
+                  <div>
+                    <Typography as="label" htmlFor="regency-filter" type="small" color="default" className="font-semibold">
+                      Filter Kabupaten
+                    </Typography>
+                    <Select
+                      value={regencyId}
+                      onValueChange={(value) => {
+                        setRegencyId(value || "");
+                        setDistrictId("");
+                      }}
+                      disabled={!!filterOptions.provinces && !provinceId}
+                    >
+                      <Select.Trigger id="regency-filter" placeholder="Semua kabupaten" />
+                      <Select.List>
+                        <Select.Option value="">Semua kabupaten</Select.Option>
+                        {filteredRegencies.map((regency) => (
+                          <Select.Option key={regency.id} value={String(regency.id)}>
+                            {regency.name}
+                          </Select.Option>
+                        ))}
+                      </Select.List>
+                    </Select>
+                  </div>
+                )}
+
+                {filterOptions?.districts && (
+                  <div>
+                    <Typography as="label" htmlFor="district-filter" type="small" color="default" className="font-semibold">
+                      Filter Kecamatan
+                    </Typography>
+                    <Select
+                      value={districtId}
+                      onValueChange={(value) => setDistrictId(value || "")}
+                      disabled={!regencyId}
+                    >
+                      <Select.Trigger id="district-filter" placeholder="Semua kecamatan" />
+                      <Select.List>
+                        <Select.Option value="">Semua kecamatan</Select.Option>
+                        {filteredDistricts.map((district) => (
+                          <Select.Option key={district.id} value={String(district.id)}>
+                            {district.name}
+                          </Select.Option>
+                        ))}
+                      </Select.List>
+                    </Select>
+                  </div>
+                )}
+              </div>
+            )}
+            <Button className="md:self-end" onClick={applyFilters}>
+              Terapkan
+            </Button>
           </Card.Body>
         </Card>
 

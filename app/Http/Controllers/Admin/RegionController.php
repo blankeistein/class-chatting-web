@@ -52,10 +52,11 @@ class RegionController extends Controller
 
     public function regencies(Request $request): Response
     {
-        [$search, $perPage, $sortDirection] = $this->indexFilters($request);
+        [$search, $perPage, $sortDirection, $provinceId] = $this->indexFilters($request);
 
         $regencies = Regency::query()
             ->with('province')
+            ->when($provinceId > 0, fn ($query) => $query->where('province_id', $provinceId))
             ->when($search !== '', function ($query) use ($search) {
                 $query->where('name', 'like', "%{$search}%");
             })
@@ -68,18 +69,29 @@ class RegionController extends Controller
             'filters' => [
                 'search' => $search,
                 'per_page' => $perPage,
+                'province_id' => $provinceId,
                 'sort_by' => 'name',
                 'sort_direction' => $sortDirection,
+            ],
+            'filterOptions' => [
+                'provinces' => Province::query()
+                    ->orderBy('name')
+                    ->get(['id', 'name'])
+                    ->toArray(),
             ],
         ]);
     }
 
     public function districts(Request $request): Response
     {
-        [$search, $perPage, $sortDirection] = $this->indexFilters($request);
+        [$search, $perPage, $sortDirection, $provinceId, $regencyId] = $this->indexFilters($request);
 
         $districts = District::query()
             ->with(['regency.province'])
+            ->when($provinceId > 0, function ($query) use ($provinceId) {
+                $query->whereHas('regency', fn ($regencyQuery) => $regencyQuery->where('province_id', $provinceId));
+            })
+            ->when($regencyId > 0, fn ($query) => $query->where('regency_id', $regencyId))
             ->when($search !== '', function ($query) use ($search) {
                 $query->where('name', 'like', "%{$search}%");
             })
@@ -92,18 +104,37 @@ class RegionController extends Controller
             'filters' => [
                 'search' => $search,
                 'per_page' => $perPage,
+                'province_id' => $provinceId,
+                'regency_id' => $regencyId,
                 'sort_by' => 'name',
                 'sort_direction' => $sortDirection,
+            ],
+            'filterOptions' => [
+                'provinces' => Province::query()
+                    ->orderBy('name')
+                    ->get(['id', 'name'])
+                    ->toArray(),
+                'regencies' => Regency::query()
+                    ->orderBy('name')
+                    ->get(['id', 'name', 'province_id'])
+                    ->toArray(),
             ],
         ]);
     }
 
     public function villages(Request $request): Response
     {
-        [$search, $perPage, $sortDirection] = $this->indexFilters($request);
+        [$search, $perPage, $sortDirection, $provinceId, $regencyId, $districtId] = $this->indexFilters($request);
 
         $villages = Village::query()
             ->with(['district.regency.province'])
+            ->when($provinceId > 0, function ($query) use ($provinceId) {
+                $query->whereHas('district.regency', fn ($regencyQuery) => $regencyQuery->where('province_id', $provinceId));
+            })
+            ->when($regencyId > 0, function ($query) use ($regencyId) {
+                $query->whereHas('district', fn ($districtQuery) => $districtQuery->where('regency_id', $regencyId));
+            })
+            ->when($districtId > 0, fn ($query) => $query->where('district_id', $districtId))
             ->when($search !== '', function ($query) use ($search) {
                 $query->where('name', 'like', "%{$search}%");
             })
@@ -116,8 +147,25 @@ class RegionController extends Controller
             'filters' => [
                 'search' => $search,
                 'per_page' => $perPage,
+                'province_id' => $provinceId,
+                'regency_id' => $regencyId,
+                'district_id' => $districtId,
                 'sort_by' => 'name',
                 'sort_direction' => $sortDirection,
+            ],
+            'filterOptions' => [
+                'provinces' => Province::query()
+                    ->orderBy('name')
+                    ->get(['id', 'name'])
+                    ->toArray(),
+                'regencies' => Regency::query()
+                    ->orderBy('name')
+                    ->get(['id', 'name', 'province_id'])
+                    ->toArray(),
+                'districts' => District::query()
+                    ->orderBy('name')
+                    ->get(['id', 'name', 'regency_id'])
+                    ->toArray(),
             ],
         ]);
     }
@@ -226,7 +274,7 @@ class RegionController extends Controller
     }
 
     /**
-     * @return array{0:string,1:int,2:string}
+     * @return array{0:string,1:int,2:string,3:int,4:int,5:int}
      */
     private function indexFilters(Request $request): array
     {
@@ -234,6 +282,9 @@ class RegionController extends Controller
         $perPage = (int) $request->input('per_page', 25);
         $sortBy = trim((string) $request->input('sort_by', 'name'));
         $sortDirection = trim((string) $request->input('sort_direction', 'asc'));
+        $provinceId = (int) $request->input('province_id', 0);
+        $regencyId = (int) $request->input('regency_id', 0);
+        $districtId = (int) $request->input('district_id', 0);
 
         if (! in_array($perPage, [25, 50, 100], true)) {
             $perPage = 25;
@@ -247,6 +298,6 @@ class RegionController extends Controller
             $sortDirection = 'asc';
         }
 
-        return [$search, $perPage, $sortDirection];
+        return [$search, $perPage, $sortDirection, $provinceId, $regencyId, $districtId];
     }
 }

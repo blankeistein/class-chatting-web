@@ -141,7 +141,15 @@ export default function Edit({ book }: { book: { data: Book } }) {
                   <Typography as="label" htmlFor="tags" type="small" className="font-semibold dark:text-white">
                     Tags
                   </Typography>
-                  <div className="flex flex-wrap gap-2 mb-2">
+                  <Input
+                    placeholder="Tambah tag dan tekan Enter"
+                    value={currentTag}
+                    onChange={(e) => setCurrentTag(e.target.value)}
+                    onKeyDown={handleTagAdd}
+                  >
+                    <Input.Icon><TagIcon className="w-4 h-4" /></Input.Icon>
+                  </Input>
+                  <div className="flex flex-wrap gap-2 mt-2">
                     {data.tags.map((tag, index) => (
                       <Chip
                         key={index}
@@ -154,14 +162,6 @@ export default function Edit({ book }: { book: { data: Book } }) {
                       </Chip>
                     ))}
                   </div>
-                  <Input
-                    placeholder="Tambah tag dan tekan Enter"
-                    value={currentTag}
-                    onChange={(e) => setCurrentTag(e.target.value)}
-                    onKeyDown={handleTagAdd}
-                  >
-                    <Input.Icon><TagIcon className="w-4 h-4" /></Input.Icon>
-                  </Input>
                 </div>
               </CardBody>
             </Card>

@@ -17,94 +17,108 @@ use App\Models\Regency;
 use App\Models\Village;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class RegionController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(): RedirectResponse
     {
-        $requestedProvinceCode = trim((string) $request->input('province', ''));
-        $requestedRegencyCode = trim((string) $request->input('regency', ''));
-        $requestedDistrictCode = trim((string) $request->input('district', ''));
+        return redirect()->route('admin.regions.provinces.index');
+    }
+
+    public function provinces(Request $request): Response
+    {
+        [$search, $perPage, $sortDirection] = $this->indexFilters($request);
 
         $provinces = Province::query()
-            ->withCount(['regencies', 'districts'])
-            ->orderBy('code')
-            ->get();
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where('name', 'like', "%{$search}%");
+            })
+            ->orderBy('name', $sortDirection)
+            ->paginate($perPage)
+            ->withQueryString();
 
-        $selectedProvince = $requestedProvinceCode !== ''
-            ? $provinces->firstWhere('code', $requestedProvinceCode)
-            : $provinces->first();
-
-        $regencies = collect();
-        $selectedRegency = null;
-        $districts = collect();
-        $selectedDistrict = null;
-        $villages = collect();
-
-        if ($selectedProvince !== null) {
-            $regencies = Regency::query()
-                ->whereBelongsTo($selectedProvince)
-                ->with('province')
-                ->withCount(['districts', 'villages'])
-                ->orderBy('code')
-                ->get();
-
-            $selectedRegency = $requestedRegencyCode !== ''
-                ? $regencies->firstWhere('code', $requestedRegencyCode)
-                : $regencies->first();
-
-            if ($selectedRegency !== null) {
-                $districts = District::query()
-                    ->whereBelongsTo($selectedRegency)
-                    ->with(['regency.province'])
-                    ->withCount('villages')
-                    ->orderBy('code')
-                    ->get();
-
-                $selectedDistrict = $requestedDistrictCode !== ''
-                    ? $districts->firstWhere('code', $requestedDistrictCode)
-                    : $districts->first();
-
-                if ($selectedDistrict !== null) {
-                    $villages = Village::query()
-                        ->whereBelongsTo($selectedDistrict)
-                        ->with(['district.regency.province'])
-                        ->orderBy('code')
-                        ->get();
-                }
-            }
-        }
-
-        return Inertia::render('Admin/Daerah/Index', [
-            'stats' => [
-                'provinces' => $provinces->count(),
-                'regencies' => $provinces->sum('regencies_count'),
-                'districts' => $provinces->sum('districts_count'),
-                'villages' => Village::query()->count(),
-            ],
+        return Inertia::render('Admin/Daerah/Provinces', [
             'provinces' => ProvinceResource::collection($provinces),
+            'filters' => [
+                'search' => $search,
+                'per_page' => $perPage,
+                'sort_by' => 'name',
+                'sort_direction' => $sortDirection,
+            ],
+        ]);
+    }
+
+    public function regencies(Request $request): Response
+    {
+        [$search, $perPage, $sortDirection] = $this->indexFilters($request);
+
+        $regencies = Regency::query()
+            ->with('province')
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where('name', 'like', "%{$search}%");
+            })
+            ->orderBy('name', $sortDirection)
+            ->paginate($perPage)
+            ->withQueryString();
+
+        return Inertia::render('Admin/Daerah/Regencies', [
             'regencies' => RegencyResource::collection($regencies),
+            'filters' => [
+                'search' => $search,
+                'per_page' => $perPage,
+                'sort_by' => 'name',
+                'sort_direction' => $sortDirection,
+            ],
+        ]);
+    }
+
+    public function districts(Request $request): Response
+    {
+        [$search, $perPage, $sortDirection] = $this->indexFilters($request);
+
+        $districts = District::query()
+            ->with(['regency.province'])
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where('name', 'like', "%{$search}%");
+            })
+            ->orderBy('name', $sortDirection)
+            ->paginate($perPage)
+            ->withQueryString();
+
+        return Inertia::render('Admin/Daerah/Districts', [
             'districts' => DistrictResource::collection($districts),
+            'filters' => [
+                'search' => $search,
+                'per_page' => $perPage,
+                'sort_by' => 'name',
+                'sort_direction' => $sortDirection,
+            ],
+        ]);
+    }
+
+    public function villages(Request $request): Response
+    {
+        [$search, $perPage, $sortDirection] = $this->indexFilters($request);
+
+        $villages = Village::query()
+            ->with(['district.regency.province'])
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where('name', 'like', "%{$search}%");
+            })
+            ->orderBy('name', $sortDirection)
+            ->paginate($perPage)
+            ->withQueryString();
+
+        return Inertia::render('Admin/Daerah/Villages', [
             'villages' => VillageResource::collection($villages),
-            'selectedProvince' => $selectedProvince ? [
-                'id' => $selectedProvince->id,
-                'code' => $selectedProvince->code,
-                'name' => $selectedProvince->name,
-            ] : null,
-            'selectedRegency' => $selectedRegency ? [
-                'id' => $selectedRegency->id,
-                'code' => $selectedRegency->code,
-                'name' => $selectedRegency->name,
-                'type' => $selectedRegency->type,
-            ] : null,
-            'selectedDistrict' => $selectedDistrict ? [
-                'id' => $selectedDistrict->id,
-                'code' => $selectedDistrict->code,
-                'name' => $selectedDistrict->name,
-            ] : null,
+            'filters' => [
+                'search' => $search,
+                'per_page' => $perPage,
+                'sort_by' => 'name',
+                'sort_direction' => $sortDirection,
+            ],
         ]);
     }
 
@@ -112,64 +126,50 @@ class RegionController extends Controller
     {
         $province = Province::query()->create($request->validated());
 
-        return $this->redirectToIndex($province->code, null, 'Provinsi berhasil ditambahkan.');
+        return $this->redirectToPage('admin.regions.provinces.index', 'Provinsi berhasil ditambahkan.');
     }
 
     public function updateProvince(ProvinceDataRequest $request, Province $province): RedirectResponse
     {
         $province->update($request->validated());
 
-        return $this->redirectToIndex($province->code, null, 'Provinsi berhasil diperbarui.');
+        return $this->redirectToPage('admin.regions.provinces.index', 'Provinsi berhasil diperbarui.');
     }
 
     public function destroyProvince(Province $province): RedirectResponse
     {
         $province->delete();
 
-        $nextProvince = Province::query()->orderBy('code')->first();
-
-        return $this->redirectToIndex($nextProvince?->code, null, 'Provinsi berhasil dihapus.');
+        return $this->redirectToPage('admin.regions.provinces.index', 'Provinsi berhasil dihapus.');
     }
 
     public function storeRegency(RegencyDataRequest $request): RedirectResponse
     {
-        $regency = Regency::query()->create($request->validated());
-        $regency->load('province');
+        Regency::query()->create($request->validated());
 
-        return $this->redirectToIndex($regency->province?->code, $regency->code, 'Kabupaten atau kota berhasil ditambahkan.');
+        return $this->redirectToPage('admin.regions.regencies.index', 'Kabupaten atau kota berhasil ditambahkan.');
     }
 
     public function updateRegency(RegencyDataRequest $request, Regency $regency): RedirectResponse
     {
         $regency->update($request->validated());
-        $regency->load('province');
 
-        return $this->redirectToIndex($regency->province?->code, $regency->code, 'Kabupaten atau kota berhasil diperbarui.');
+        return $this->redirectToPage('admin.regions.regencies.index', 'Kabupaten atau kota berhasil diperbarui.');
     }
 
     public function destroyRegency(Regency $regency): RedirectResponse
     {
-        $provinceCode = $regency->province?->code;
-        $provinceId = $regency->province_id;
-
         $regency->delete();
 
-        $nextRegency = Regency::query()
-            ->where('province_id', $provinceId)
-            ->orderBy('code')
-            ->first();
-
-        return $this->redirectToIndex($provinceCode, $nextRegency?->code, 'Kabupaten atau kota berhasil dihapus.');
+        return $this->redirectToPage('admin.regions.regencies.index', 'Kabupaten atau kota berhasil dihapus.');
     }
 
     public function storeDistrict(DistrictDataRequest $request): RedirectResponse
     {
-        $district = District::query()->create($request->validated());
-        $district->load('regency.province');
+        District::query()->create($request->validated());
 
-        return $this->redirectToIndex(
-            $district->regency?->province?->code,
-            $district->regency?->code,
+        return $this->redirectToPage(
+            'admin.regions.districts.index',
             'Kecamatan berhasil ditambahkan.',
         );
     }
@@ -177,78 +177,76 @@ class RegionController extends Controller
     public function updateDistrict(DistrictDataRequest $request, District $district): RedirectResponse
     {
         $district->update($request->validated());
-        $district->load('regency.province');
 
-        return $this->redirectToIndex(
-            $district->regency?->province?->code,
-            $district->regency?->code,
+        return $this->redirectToPage(
+            'admin.regions.districts.index',
             'Kecamatan berhasil diperbarui.',
         );
     }
 
     public function destroyDistrict(District $district): RedirectResponse
     {
-        $district->load('regency.province');
-
-        $provinceCode = $district->regency?->province?->code;
-        $regencyCode = $district->regency?->code;
-
         $district->delete();
 
-        return $this->redirectToIndex($provinceCode, $regencyCode, 'Kecamatan berhasil dihapus.');
+        return $this->redirectToPage('admin.regions.districts.index', 'Kecamatan berhasil dihapus.');
     }
 
     public function storeVillage(VillageDataRequest $request): RedirectResponse
     {
-        $village = Village::query()->create($request->validated());
-        $village->load('district.regency.province');
+        Village::query()->create($request->validated());
 
-        return $this->redirectToIndex(
-            $village->district?->regency?->province?->code,
-            $village->district?->regency?->code,
+        return $this->redirectToPage(
+            'admin.regions.villages.index',
             'Desa berhasil ditambahkan.',
-            $village->district?->code,
         );
     }
 
     public function updateVillage(VillageDataRequest $request, Village $village): RedirectResponse
     {
         $village->update($request->validated());
-        $village->load('district.regency.province');
 
-        return $this->redirectToIndex(
-            $village->district?->regency?->province?->code,
-            $village->district?->regency?->code,
+        return $this->redirectToPage(
+            'admin.regions.villages.index',
             'Desa berhasil diperbarui.',
-            $village->district?->code,
         );
     }
 
     public function destroyVillage(Village $village): RedirectResponse
     {
-        $village->load('district.regency.province');
-
-        $provinceCode = $village->district?->regency?->province?->code;
-        $regencyCode = $village->district?->regency?->code;
-        $districtCode = $village->district?->code;
-
         $village->delete();
 
-        return $this->redirectToIndex($provinceCode, $regencyCode, 'Desa berhasil dihapus.', $districtCode);
+        return $this->redirectToPage('admin.regions.villages.index', 'Desa berhasil dihapus.');
     }
 
-    private function redirectToIndex(?string $provinceCode, ?string $regencyCode, string $message, ?string $districtCode = null): RedirectResponse
+    private function redirectToPage(string $routeName, string $message): RedirectResponse
     {
-        $parameters = Collection::make([
-            'province' => $provinceCode,
-            'regency' => $regencyCode,
-            'district' => $districtCode,
-        ])
-            ->filter(fn (?string $value): bool => $value !== null && $value !== '')
-            ->all();
-
         return redirect()
-            ->route('admin.regions.index', $parameters)
+            ->route($routeName)
             ->with('success', $message);
+    }
+
+    /**
+     * @return array{0:string,1:int,2:string}
+     */
+    private function indexFilters(Request $request): array
+    {
+        $search = trim((string) $request->input('search', ''));
+        $perPage = (int) $request->input('per_page', 25);
+        $sortBy = trim((string) $request->input('sort_by', 'name'));
+        $sortDirection = trim((string) $request->input('sort_direction', 'asc'));
+
+        if (! in_array($perPage, [25, 50, 100], true)) {
+            $perPage = 25;
+        }
+
+        if ($sortBy !== 'name') {
+            $sortBy = 'name';
+        }
+
+        if (! in_array($sortDirection, ['asc', 'desc'], true)) {
+            $sortDirection = 'asc';
+        }
+
+        return [$search, $perPage, $sortDirection];
     }
 }

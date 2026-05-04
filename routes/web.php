@@ -57,15 +57,19 @@ Route::middleware('auth')->group(function () {
         Route::resource('schools', AdminSchoolController::class);
 
         Route::get('regions', [AdminRegionController::class, 'index'])->name('regions.index');
+        Route::get('regions/provinces', [AdminRegionController::class, 'provinces'])->name('regions.provinces.index');
         Route::post('regions/provinces', [AdminRegionController::class, 'storeProvince'])->name('regions.provinces.store');
         Route::put('regions/provinces/{province}', [AdminRegionController::class, 'updateProvince'])->name('regions.provinces.update');
         Route::delete('regions/provinces/{province}', [AdminRegionController::class, 'destroyProvince'])->name('regions.provinces.destroy');
+        Route::get('regions/regencies', [AdminRegionController::class, 'regencies'])->name('regions.regencies.index');
         Route::post('regions/regencies', [AdminRegionController::class, 'storeRegency'])->name('regions.regencies.store');
         Route::put('regions/regencies/{regency}', [AdminRegionController::class, 'updateRegency'])->name('regions.regencies.update');
         Route::delete('regions/regencies/{regency}', [AdminRegionController::class, 'destroyRegency'])->name('regions.regencies.destroy');
+        Route::get('regions/districts', [AdminRegionController::class, 'districts'])->name('regions.districts.index');
         Route::post('regions/districts', [AdminRegionController::class, 'storeDistrict'])->name('regions.districts.store');
         Route::put('regions/districts/{district}', [AdminRegionController::class, 'updateDistrict'])->name('regions.districts.update');
         Route::delete('regions/districts/{district}', [AdminRegionController::class, 'destroyDistrict'])->name('regions.districts.destroy');
+        Route::get('regions/villages', [AdminRegionController::class, 'villages'])->name('regions.villages.index');
         Route::post('regions/villages', [AdminRegionController::class, 'storeVillage'])->name('regions.villages.store');
         Route::put('regions/villages/{village}', [AdminRegionController::class, 'updateVillage'])->name('regions.villages.update');
         Route::delete('regions/villages/{village}', [AdminRegionController::class, 'destroyVillage'])->name('regions.villages.destroy');

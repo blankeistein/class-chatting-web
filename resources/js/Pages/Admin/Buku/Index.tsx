@@ -73,12 +73,14 @@ const BookRow = ({ book, onDelete }: { book: Book; onDelete: (book: Book) => voi
               <Typography variant="small" className="text-[10px] text-slate-400">
                 ID: {book.uuid}
               </Typography>
-              <Chip size="sm" variant="ghost" className="h-auto bg-blue-50 py-0.5 text-[9px] capitalize text-blue-600 dark:bg-blue-900/20 dark:text-blue-300">
-                <Chip.Label>{book.type === "penilaian" ? "Penilaian" : "Materi"}</Chip.Label>
-              </Chip>
             </div>
           </div>
         </div>
+      </td>
+      <td className={classes}>
+        <Chip className="capitalize">
+          <Chip.Label>{book.type}</Chip.Label>
+        </Chip>
       </td>
       <td className={classes}>
         <div className="flex flex-col gap-1">
@@ -111,7 +113,7 @@ const BookRow = ({ book, onDelete }: { book: Book; onDelete: (book: Book) => voi
             <Menu.Item onClick={() => router.get(route("admin.books.show", book.id))}>
               <EyeIcon className="w-4 h-4 mr-2" /> Lihat
             </Menu.Item>
-            <Menu.Item onClick={() => router.get(book.url || "")} disabled={!book.url}>
+            <Menu.Item as="a" href={book.url || ""} target="_blank" rel="noopener noreferrer" disabled={!book.url}>
               <DownloadCloudIcon className="w-4 h-4 mr-2" /> Download
             </Menu.Item>
             <Menu.Item onClick={() => router.get(route("admin.books.edit", book.id))}>
@@ -130,9 +132,9 @@ const BookRow = ({ book, onDelete }: { book: Book; onDelete: (book: Book) => voi
   );
 };
 
-const BookCard = ({ book }: { book: Book }) => {
+const BookCard = ({ book, onDelete }: { book: Book; onDelete: (book: Book) => void }) => {
   return (
-    <div>
+    <div className="group">
       <Card className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:shadow-lg transition-all duration-300 group h-full">
         <div className="relative aspect-[3/4] overflow-hidden rounded-t-xl bg-slate-100 dark:bg-slate-800">
           <img
@@ -140,27 +142,32 @@ const BookCard = ({ book }: { book: Book }) => {
             alt={book.title}
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
-            <div className="flex gap-2 justify-center pb-2 px-4">
-              <Button
-                size="sm"
-                variant="ghost"
-                className="flex items-center gap-2 bg-white/90 text-slate-900"
-                isFullWidth={true}
-                onClick={() => router.get(route("admin.books.show", book.id))}
-              >
-                <EyeIcon className="w-3 h-3" /> Info
-              </Button>
-              <Button
-                size="sm"
-                className="flex items-center gap-2"
-                color="secondary"
-                isFullWidth={true}
-                onClick={() => router.get(route("admin.books.edit", book.id))}
-              >
-                <EditIcon className="w-3 h-3" /> Edit
-              </Button>
-            </div>
+          <div className="w-full absolute top-1 left-1 flex items-center justify-between pr-2">
+            <Chip size="sm" color="info">
+              <Chip.Label>{book.type === "penilaian" ? "Penilaian" : "Materi"}</Chip.Label>
+            </Chip>
+            <Menu placement="bottom-end">
+              <Menu.Trigger as={IconButton} color="secondary" size="sm" className="opacity-0 group-hover:opacity-100 transition-all">
+                <MoreVerticalIcon className="w-4 h-4" />
+              </Menu.Trigger>
+              <Menu.Content>
+                <Menu.Item onClick={() => router.get(route("admin.books.show", book.id))}>
+                  <EyeIcon className="w-4 h-4 mr-2" /> Lihat
+                </Menu.Item>
+                <Menu.Item as="a" href={book.url || ""} target="_blank" rel="noopener noreferrer" disabled={!book.url}>
+                  <DownloadCloudIcon className="w-4 h-4 mr-2" /> Download
+                </Menu.Item>
+                <Menu.Item onClick={() => router.get(route("admin.books.edit", book.id))}>
+                  <EditIcon className="w-4 h-4 mr-2" /> Edit
+                </Menu.Item>
+                <Menu.Item onClick={() => router.get(route("admin.books.upload", book.id))}>
+                  <UploadCloudIcon className="w-4 h-4 mr-2" /> Upload
+                </Menu.Item>
+                <Menu.Item onClick={() => onDelete(book)} className="text-red-500">
+                  <Trash2Icon className="w-4 h-4 mr-2" /> Hapus
+                </Menu.Item>
+              </Menu.Content>
+            </Menu>
           </div>
         </div>
         <CardBody className="p-4">
@@ -169,15 +176,6 @@ const BookCard = ({ book }: { book: Book }) => {
               <Typography variant="h6" className="mb-1 font-bold line-clamp-2 dark:text-white text-blue-gray-900" title={book.title}>
                 {book.title}
               </Typography>
-              <Typography variant="small" className="text-[10px] text-slate-400 line-clamp-1">
-                ID: {book.uuid}
-              </Typography>
-              <Chip size="sm" variant="ghost" className="mt-2 h-auto w-max bg-blue-50 py-0.5 text-[9px] capitalize text-blue-600 dark:bg-blue-900/20 dark:text-blue-300">
-                <Chip.Label>{book.type === "penilaian" ? "Penilaian" : "Materi"}</Chip.Label>
-              </Chip>
-            </div>
-            <div className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-              v{book.version}
             </div>
           </div>
 
@@ -205,25 +203,6 @@ const BookCard = ({ book }: { book: Book }) => {
             </Typography>
           )}
 
-          <div className="space-y-1 border-t border-slate-100 pt-3 dark:border-slate-800">
-            <Typography variant="small" className="text-xs text-slate-500 dark:text-slate-400">
-              Dibuat: {formatBookDate(book.createdAt)}
-            </Typography>
-            <Typography variant="small" className="text-xs text-slate-500 dark:text-slate-400">
-              Diupdate: {formatBookDate(book.updatedAt)}
-            </Typography>
-            {book.url && (
-              <a
-                href={book.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 pt-1 text-xs font-medium text-primary hover:underline"
-              >
-                <BookIcon className="h-3.5 w-3.5" />
-                Buka tautan buku
-              </a>
-            )}
-          </div>
         </CardBody>
       </Card>
     </div>
@@ -415,6 +394,8 @@ export default function Index({ books: paginatedBooks, filters }: { books: any, 
           </CardBody>
         </Card>
 
+        <Pagination paginated={paginatedBooks} />
+
         {/* Content Area */}
         {books.length > 0 ? (
           viewMode === "list" ? (
@@ -423,7 +404,7 @@ export default function Index({ books: paginatedBooks, filters }: { books: any, 
                 <table className="w-full min-w-max table-auto text-left">
                   <thead>
                     <tr>
-                      {["Buku", "Tags", "Versi", "Aksi"].map((head) => (
+                      {["Buku", "Tipe", "Tags", "Versi", "Aksi"].map((head) => (
                         <th key={head} className="border-y border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 p-4">
                           <Typography variant="small" className="font-bold leading-none opacity-70 text-slate-500 dark:text-slate-300 text-center first:text-left">
                             {head}
@@ -443,7 +424,7 @@ export default function Index({ books: paginatedBooks, filters }: { books: any, 
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
               {books.map((book) => (
-                <BookCard key={book.id} book={book} />
+                <BookCard key={book.id} book={book} onDelete={openDeleteDialog} />
               ))}
             </div>
           )
@@ -456,7 +437,6 @@ export default function Index({ books: paginatedBooks, filters }: { books: any, 
           </div>
         )}
 
-        {/* Pagination Controls */}
         <Pagination paginated={paginatedBooks} />
       </div>
 

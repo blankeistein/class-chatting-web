@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { toast, Toaster } from "react-hot-toast";
 import { PageHeader } from "@/Components/PageHeader";
+import Pagination from "@/Components/Pagination";
 
 interface Video {
   id: number;
@@ -438,6 +439,8 @@ export default function Index({
           </Card.Body>
         </Card>
 
+        <Pagination paginated={paginatedVideos} />
+
         {videos.length > 0 ? (
           viewMode === "list" ? (
             <Card className="overflow-hidden border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -561,20 +564,7 @@ export default function Index({
           </div>
         )}
 
-        <div className="mt-8 flex justify-center gap-2">
-          {(paginatedVideos.meta?.links || paginatedVideos.links).map((link: any, key: number) => (
-            <Button
-              key={key}
-              variant={link.active ? "solid" : "ghost"}
-              size="sm"
-              color={link.active ? "primary" : "secondary"}
-              className={`flex items-center gap-2 ${!link.url ? "cursor-not-allowed opacity-50" : ""}`}
-              onClick={() => link.url && router.get(link.url, {}, { preserveState: true })}
-              dangerouslySetInnerHTML={{ __html: link.label }}
-              disabled={!link.url}
-            />
-          ))}
-        </div>
+        <Pagination paginated={paginatedVideos} />
       </div>
 
       <Dialog open={isDeleteOpen} onOpenChange={() => setIsDeleteOpen(false)} size="sm">

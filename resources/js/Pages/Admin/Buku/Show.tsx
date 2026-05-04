@@ -1,5 +1,5 @@
 import React from "react";
-import { Head, router } from "@inertiajs/react";
+import { Head, Link, router } from "@inertiajs/react";
 import { Button, Card, Chip, IconButton, Typography } from "@material-tailwind/react";
 import AdminLayout from "@/Layouts/AdminLayout";
 import {
@@ -13,6 +13,7 @@ import {
   IdCardIcon,
   TagIcon,
   Trash2Icon,
+  UploadCloudIcon,
 } from "lucide-react";
 import { toast, Toaster } from "react-hot-toast";
 
@@ -100,13 +101,24 @@ export default function Show({ book }: { book: { data: Book } }) {
               {currentBook.url ? "Buka Download Link" : "Download Link Tidak Tersedia"}
             </Button>
             <Button
+              as={Link}
               size="sm"
               color="secondary"
               className="flex items-center gap-2"
-              onClick={() => router.get(route("admin.books.edit", currentBook.id))}
+              href={route("admin.books.edit", currentBook.id)}
             >
               <EditIcon className="h-4 w-4" />
               Edit Buku
+            </Button>
+            <Button
+              as={Link}
+              size="sm"
+              color="secondary"
+              className="flex items-center gap-2"
+              href={route("admin.books.upload", currentBook.id)}
+            >
+              <UploadCloudIcon className="h-4 w-4" />
+              Upload Buku
             </Button>
             <Button
               size="sm"

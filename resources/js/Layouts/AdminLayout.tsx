@@ -72,7 +72,28 @@ const Links: LinkType[] = [
   {
     icon: MapPinnedIcon,
     title: "Daerah",
-    routeName: "admin.regions.index",
+    children: [
+      {
+        title: "Provinsi",
+        icon: PinIcon,
+        routeName: "admin.regions.provinces.index",
+      },
+      {
+        title: "Kota/Kabupaten",
+        icon: MapPinnedIcon,
+        routeName: "admin.regions.regencies.index",
+      },
+      {
+        title: "Kecamatan",
+        icon: MapPinnedIcon,
+        routeName: "admin.regions.districts.index",
+      },
+      {
+        title: "Desa/Kelurahan",
+        icon: MapPinnedIcon,
+        routeName: "admin.regions.villages.index",
+      },
+    ]
   },
 
   {

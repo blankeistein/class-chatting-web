@@ -99,7 +99,7 @@ MARKDOWN,
      * ```
      */
     'servers' => [
-        'Current application' => '/',
+        'Aplikasi' => '/api',
     ],
 
     /**

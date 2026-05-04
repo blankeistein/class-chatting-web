@@ -7,8 +7,8 @@
     },
     "servers": [
         {
-            "url": "http://localhost:8000",
-            "description": "Current application"
+            "url": "http://localhost:8000/api",
+            "description": "Aplikasi"
         }
     ],
     "tags": [

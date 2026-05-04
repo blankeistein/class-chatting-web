@@ -68,19 +68,8 @@ const AnakIndonesiaMenghafalLinks: LinkType[] = [
   {
     title: "Buku",
     icon: BookIcon,
-    children: [
-      {
-        title: "Daftar",
-        icon: ListCollapse,
-        routeName: "admin.apps.anak-indonesia-menghafal.book"
-      },
-      {
-        title: "Kategori",
-        icon: LayoutGrid,
-        routeName: "admin.apps.anak-indonesia-menghafal.book.category"
-      }
-    ]
-  }
+    routeName: "admin.apps.anak-indonesia-menghafal.book"
+  },
 ];
 
 const isCurrentRoute = (routeName: string): boolean => {
@@ -254,7 +243,7 @@ const NavList = ({ links, isCollapsed = false }: { links: LinkType[], isCollapse
   )
 }
 
-function Sidebar({ links, isCollapsed }: { links: LinkType[], isCollapsed: boolean }) {
+function Sidebar({ title, links, isCollapsed }: { title: string, links: LinkType[], isCollapsed: boolean }) {
 
   return (
     <div className={`p-2 transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-[280px]'} hidden lg:block overflow-hidden`}>
@@ -265,9 +254,9 @@ function Sidebar({ links, isCollapsed }: { links: LinkType[], isCollapsed: boole
           {!isCollapsed && (
             <Typography
               type="h1"
-              className="block py-1 font-bold !text-lg text-surface-foreground whitespace-nowrap overflow-hidden"
+              className="block py-1 font-bold !text-lg text-surface-foreground whitespace-nowrap overflow-hidden truncate"
             >
-              Class Chatting Web
+              {title}
             </Typography>
           )}
         </Card.Header>
@@ -357,7 +346,7 @@ function ProfileMenu({ user }: { user: User | null }) {
   );
 }
 
-function TopNavbar({ appName, onToggleSidebar }: { appName: string, onToggleSidebar: () => void }) {
+function TopNavbar({ title, links, onToggleSidebar }: { title: string, links: LinkType[], onToggleSidebar: () => void }) {
   const auth = useMemo(() => getFirebaseAuth(), []);
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<User | null>(auth?.currentUser || null);
@@ -390,17 +379,6 @@ function TopNavbar({ appName, onToggleSidebar }: { appName: string, onToggleSide
   }, [auth])
 
   const { theme, toggleTheme } = useTheme();
-
-  let links: LinkType[] = [];
-
-  switch (appName) {
-    case "class-chatting":
-      links = ClassChattingLinks;
-      break;
-    default:
-      links = [];
-      break;
-  }
 
   return (
     <>
@@ -472,9 +450,9 @@ function TopNavbar({ appName, onToggleSidebar }: { appName: string, onToggleSide
                 <img src="/assets/images/icons/lestari-ilmu.webp" alt="logo" className="h-8 w-8" />
                 <Typography
                   type="h1"
-                  className="block py-1 font-bold !text-lg text-surface-foreground whitespace-nowrap overflow-hidden"
+                  className="block py-1 font-bold !text-lg text-surface-foreground whitespace-nowrap overflow-hidden truncate"
                 >
-                  Class Chatting Web
+                  {title}
                 </Typography>
               </div>
               <NavList links={links} />
@@ -504,24 +482,28 @@ export default function AdminAppLayout({ appName, children }: { appName: string,
   }, []);
 
   let links: LinkType[] = [];
+  let title: string = "";
 
   switch (appName) {
     case "class-chatting":
+      title = "Class Chatting";
       links = ClassChattingLinks;
       break;
     case "anak-indonesia-menghafal":
+      title = "Anak Indonesia Menghafal";
       links = AnakIndonesiaMenghafalLinks;
       break;
     default:
+      title = "Class Chatting Web";
       links = ClassChattingLinks;
       break;
   }
 
   return (
     <div className="h-screen bg-background flex overflow-hidden">
-      <Sidebar links={links} isCollapsed={isCollapsed} />
+      <Sidebar title={title} links={links} isCollapsed={isCollapsed} />
       <div ref={contentRef} className="flex-1 overflow-auto">
-        <TopNavbar appName={appName} onToggleSidebar={() => setIsCollapsed(!isCollapsed)} />
+        <TopNavbar title={title} links={links} onToggleSidebar={() => setIsCollapsed(!isCollapsed)} />
         {children}
         <footer className="p-2 flex items-center justify-between border-t border-surface mt-auto">
           <Typography className="text-sm text-surface-foreground/60">

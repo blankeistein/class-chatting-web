@@ -50,7 +50,9 @@ class BookController extends Controller
 
     public function show(string $id)
     {
-        $book = Book::findOrFail($id);
+        $book = Book::query()
+            ->with('integrations')
+            ->findOrFail($id);
 
         return Inertia::render('Admin/Buku/Show', [
             'book' => new BookResource($book),

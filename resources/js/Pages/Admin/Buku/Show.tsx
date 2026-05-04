@@ -26,6 +26,10 @@ interface Book {
   tags: string[] | null;
   url: string | null;
   version: number;
+  applications: {
+    key: string;
+    label: string;
+  }[];
   createdAt: string;
   updatedAt: string;
 }
@@ -300,13 +304,59 @@ export default function Show({ book }: { book: { data: Book } }) {
           </Tabs.Panel>
           <Tabs.Panel value="aplikasi">
             <Card className="border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-              <Card.Body className="p-6">
+              <Card.Body className="space-y-4 p-6">
                 <Typography variant="h6" className="font-semibold text-slate-800 dark:text-white">
                   Aplikasi
                 </Typography>
-                <Typography className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                  Belum ada data aplikasi untuk buku ini.
-                </Typography>
+
+                {currentBook.applications.length > 0 ? (
+                  <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800">
+                    <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
+                      <thead className="bg-slate-50 dark:bg-slate-800/60">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                            Nama Aplikasi
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                            App Key
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                            Status
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200 bg-white dark:divide-slate-800 dark:bg-slate-900">
+                        {currentBook.applications.map((application) => (
+                          <tr key={application.key}>
+                            <td className="px-4 py-3">
+                              <Typography className="font-medium text-slate-800 dark:text-white">
+                                {application.label}
+                              </Typography>
+                            </td>
+                            <td className="px-4 py-3">
+                              <Typography className="text-sm text-slate-500 dark:text-slate-400">
+                                {application.key}
+                              </Typography>
+                            </td>
+                            <td className="px-4 py-3">
+                              <Chip
+                                size="sm"
+                                variant="ghost"
+                                className="w-max bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-300"
+                              >
+                                <Chip.Label>Terhubung</Chip.Label>
+                              </Chip>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <Typography className="text-sm text-slate-500 dark:text-slate-400">
+                    Buku ini belum terintegrasi ke aplikasi mana pun.
+                  </Typography>
+                )}
               </Card.Body>
             </Card>
           </Tabs.Panel>

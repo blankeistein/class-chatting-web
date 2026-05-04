@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Kreait\Laravel\Firebase\Facades\Firebase;
 
@@ -62,9 +63,9 @@ class BookController extends Controller
         $data['uuid'] = filled($data['uuid'] ?? null) ? $data['uuid'] : (string) Str::uuid();
 
         if ($request->hasFile('cover_url')) {
-            $coverPath = $this->makeBookThumbnailPath($request->file('cover_url'), $data['uuid']);
+            $coverPath = $this->makeBookThumbnailPath($data['uuid']);
 
-            $this->uploadFileToFirebase($request->file('cover_url'), $coverPath);
+            $this->uploadCoverToFirebaseAsWebp($request->file('cover_url'), $coverPath);
             $data['cover_url'] = $this->buildFirebaseUrl($coverPath);
         }
 
@@ -97,9 +98,9 @@ class BookController extends Controller
         $data = $request->safe()->only(['title', 'type', 'tags']);
 
         if ($request->hasFile('cover_url')) {
-            $coverPath = $this->makeBookThumbnailPath($request->file('cover_url'), $book->uuid);
+            $coverPath = $this->makeBookThumbnailPath($book->uuid);
 
-            $this->uploadFileToFirebase($request->file('cover_url'), $coverPath);
+            $this->uploadCoverToFirebaseAsWebp($request->file('cover_url'), $coverPath);
             $this->deleteFirebaseObject($this->extractFirebasePath($book->cover_url));
             $data['cover_url'] = $this->buildFirebaseUrl($coverPath);
         }
@@ -169,11 +170,9 @@ class BookController extends Controller
         return "books/{$uuid}/{$filename}";
     }
 
-    private function makeBookThumbnailPath(UploadedFile $file, string $uuid): string
+    private function makeBookThumbnailPath(string $uuid): string
     {
-        $extension = strtolower($file->getClientOriginalExtension());
-
-        return "books/{$uuid}/thumbnail.{$extension}";
+        return "books/{$uuid}/thumbnail.webp";
     }
 
     private function uploadFileToFirebase(UploadedFile $file, string $path): void
@@ -182,6 +181,74 @@ class BookController extends Controller
             fopen($file->getPathname(), 'r'),
             ['name' => $path]
         );
+    }
+
+    private function uploadCoverToFirebaseAsWebp(UploadedFile $file, string $path): void
+    {
+        if (! function_exists('imagewebp')) {
+            throw ValidationException::withMessages([
+                'cover_url' => 'Server belum mendukung kompresi gambar ke WebP.',
+            ]);
+        }
+
+        $image = $this->createImageResourceFromUploadedCover($file);
+        $temporaryWebpPath = tempnam(sys_get_temp_dir(), 'book-cover-');
+
+        if ($temporaryWebpPath === false) {
+            imagedestroy($image);
+
+            throw ValidationException::withMessages([
+                'cover_url' => 'Gagal menyiapkan file cover sementara.',
+            ]);
+        }
+
+        try {
+            if (function_exists('imagepalettetotruecolor')) {
+                imagepalettetotruecolor($image);
+            }
+
+            imagealphablending($image, true);
+            imagesavealpha($image, true);
+
+            if (! imagewebp($image, $temporaryWebpPath, 80)) {
+                throw ValidationException::withMessages([
+                    'cover_url' => 'Gagal mengompres cover buku ke format WebP.',
+                ]);
+            }
+
+            Firebase::storage()->getBucket()->upload(
+                fopen($temporaryWebpPath, 'r'),
+                ['name' => $path]
+            );
+        } finally {
+            imagedestroy($image);
+
+            if (is_file($temporaryWebpPath)) {
+                unlink($temporaryWebpPath);
+            }
+        }
+    }
+
+    private function createImageResourceFromUploadedCover(UploadedFile $file): \GdImage
+    {
+        $mimeType = $file->getMimeType();
+        $pathname = $file->getPathname();
+
+        $image = match ($mimeType) {
+            'image/jpeg', 'image/jpg' => imagecreatefromjpeg($pathname),
+            'image/png' => imagecreatefrompng($pathname),
+            'image/gif' => imagecreatefromgif($pathname),
+            'image/webp' => function_exists('imagecreatefromwebp') ? imagecreatefromwebp($pathname) : false,
+            default => false,
+        };
+
+        if (! $image instanceof \GdImage) {
+            throw ValidationException::withMessages([
+                'cover_url' => 'Format cover buku tidak dapat diproses ke WebP.',
+            ]);
+        }
+
+        return $image;
     }
 
     private function buildFirebaseUrl(string $path): string

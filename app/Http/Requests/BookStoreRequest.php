@@ -18,7 +18,7 @@ class BookStoreRequest extends FormRequest
             'title' => ['required', 'string', 'max:255'],
             'uuid' => ['nullable', 'string', 'max:255', 'unique:books,uuid'],
             'type' => ['required', 'string', Rule::in(['materi', 'penilaian'])],
-            'cover_url' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,svg,webp', 'max:2048'],
+            'cover_url' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:2048'],
             'book_file' => ['nullable', 'file', 'mimes:zip', 'max:51200'],
             'tags' => ['nullable', 'array'],
             'url' => ['nullable', 'url'],

@@ -17,7 +17,7 @@ class BookUpdateRequest extends FormRequest
         return [
             'title' => ['required', 'string', 'max:255'],
             'type' => ['required', 'string', Rule::in(['materi', 'penilaian'])],
-            'cover_url' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,svg,webp', 'max:2048'],
+            'cover_url' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:2048'],
             'tags' => ['nullable', 'array'],
             'url' => ['nullable', 'url'],
             'version' => ['nullable', 'integer'],

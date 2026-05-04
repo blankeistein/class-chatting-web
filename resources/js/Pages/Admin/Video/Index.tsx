@@ -345,24 +345,24 @@ export default function Index({
         <Card className="border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <Card.Body className="flex flex-col items-center justify-between gap-4 p-4 md:flex-row">
             <div className="order-2 md:order-1 flex w-full flex-1 flex-col items-stretch gap-3 sm:flex-row md:w-auto">
-              <div className="w-full sm:w-72">
+              <div className="w-full sm:w-72 space-y-1">
                 <Typography as="label" htmlFor="cari" type="small" color="default" className="font-semibold">
                   Cari
                 </Typography>
-                <Input
-                  id="cari"
-                  placeholder="Cari nama atau tags..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  onKeyDown={handleSearchKeyPress}
-                  className="pr-10 dark:text-white"
-                >
-                  <Input.Icon>
-                    <SearchIcon className="h-4 w-4 cursor-pointer" onClick={handleFilter} />
-                  </Input.Icon>
-                </Input>
+                <div className="flex gap-1 items-center">
+                  <Input
+                    id="cari"
+                    placeholder="Cari nama atau tags..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    onKeyDown={handleSearchKeyPress}
+                  />
+                  <IconButton color="secondary" variant="outline" onClick={handleFilter}>
+                    <SearchIcon className="h-4 w-4" />
+                  </IconButton>
+                </div>
               </div>
-              <div className="w-full sm:w-48">
+              <div className="w-full sm:w-48 space-y-1">
                 <Typography as="label" htmlFor="cari-berdasarkan" type="small" color="default" className="font-semibold">
                   Urutkan Berdasarkan
                 </Typography>
@@ -392,7 +392,7 @@ export default function Index({
                   </Select.List>
                 </Select>
               </div>
-              <div className="w-full sm:w-48">
+              <div className="w-full sm:w-48 space-y-1">
                 <Typography as="label" htmlFor="jumlah-item" type="small" color="default" className="font-semibold">
                   Jumlah Item
                 </Typography>

@@ -317,7 +317,7 @@ export default function Index({ books: paginatedBooks, filters }: { books: any, 
           <CardBody className="p-4">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
               <div className="order-2 md:order-1 flex flex-col md:flex-row gap-4 w-full md:w-auto flex-1">
-                <div className="w-full md:w-72">
+                <div className="w-full md:w-72 space-y-1">
                   <Typography as="label" htmlFor="cari" type="small" color="default" className="font-semibold">
                     Cari
                   </Typography>
@@ -333,7 +333,7 @@ export default function Index({ books: paginatedBooks, filters }: { books: any, 
                     </Input.Icon>
                   </Input>
                 </div>
-                <div className="w-full md:w-48">
+                <div className="w-full md:w-48 space-y-1">
                   <Typography as="label" htmlFor="urutkan-berdasarkan" type="small" color="default" className="font-semibold">
                     Urutkan Berdasarkan
                   </Typography>
@@ -352,7 +352,7 @@ export default function Index({ books: paginatedBooks, filters }: { books: any, 
                     </Select.List>
                   </Select>
                 </div>
-                <div className="w-full md:w-32">
+                <div className="w-full md:w-32 space-y-1">
                   <Typography as="label" htmlFor="jumlah-item" type="small" color="default" className="font-semibold">
                     Jumlah Item
                   </Typography>

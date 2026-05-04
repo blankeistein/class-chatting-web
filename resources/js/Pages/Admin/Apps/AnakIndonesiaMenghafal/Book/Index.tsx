@@ -591,12 +591,13 @@ export default function Index() {
         <Card className="border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <Card.Body className="space-y-4 p-4">
             <div className="flex flex-col lg:flex-row gap-2">
-              <div className="flex-1 flex flex-col gap-3">
-                <Typography variant="small" className="font-semibold text-slate-700 dark:text-slate-200">
+              <div className="w-full space-y-1">
+                <Typography as="label" htmlFor="cari-buku" type="small" color="default" className="font-semibold">
                   Pencarian dan aksi cepat
                 </Typography>
                 <Input
                   value={search}
+                  id="cari-buku"
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="Cari judul, ID buku, keyword, atau status..."
                   className="dark:text-white"
@@ -606,12 +607,12 @@ export default function Index() {
                   </Input.Icon>
                 </Input>
               </div>
-              <div className="flex flex-col gap-3">
-                <Typography variant="small" className="font-semibold text-slate-700 dark:text-slate-200">
+              <div className="w-full max-w-[200px] space-y-1">
+                <Typography as="label" htmlFor="filter-kategori" type="small" color="default" className="font-semibold">
                   Filter Kategori
                 </Typography>
                 <Select placement="bottom-end" value={selectedKeyword} onValueChange={(value) => setSelectedKeyword(value ?? "all")}>
-                  <Select.Trigger placeholder="Semua kategori">
+                  <Select.Trigger id="filter-kategori" placeholder="Semua kategori">
                     {() => {
                       const selectedCategory = categories.find((category) => category.keyword === selectedKeyword);
 
@@ -630,12 +631,12 @@ export default function Index() {
                   </Select.List>
                 </Select>
               </div>
-              <div className="flex flex-col gap-3">
-                <Typography variant="small" className="font-semibold text-slate-700 dark:text-slate-200">
+              <div className="w-full max-w-[200px] space-y-1">
+                <Typography as="label" htmlFor="filter-status" type="small" color="default" className="font-semibold">
                   Filter Status
                 </Typography>
                 <Select placement="bottom-end" value={selectedStatus} onValueChange={(value) => setSelectedStatus(value ?? "all")}>
-                  <Select.Trigger placeholder="Semua status" value={selectedStatus} />
+                  <Select.Trigger id="filter-status" placeholder="Semua status" value={selectedStatus} />
                   <Select.List>
                     <Select.Option value="all">
                       Semua status

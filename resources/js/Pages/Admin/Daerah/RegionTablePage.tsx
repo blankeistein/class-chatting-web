@@ -103,7 +103,7 @@ export default function RegionTablePage({
         <Card className="border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <Card.Body className="space-y-4 p-4">
             <div className="flex flex-col gap-4 md:flex-row md:items-end">
-              <div className="w-full md:flex-1">
+              <div className="w-full md:flex-1 space-y-1">
                 <Typography as="label" htmlFor="search-region" type="small" color="default" className="font-semibold">
                   Cari Nama
                 </Typography>
@@ -125,7 +125,7 @@ export default function RegionTablePage({
                 </div>
               </div>
 
-              <div className="w-full md:w-56">
+              <div className="w-full md:w-56 space-y-1">
                 <Typography as="label" htmlFor="sort-region" type="small" color="default" className="font-semibold">
                   Urutkan
                 </Typography>
@@ -138,7 +138,7 @@ export default function RegionTablePage({
                 </Select>
               </div>
 
-              <div className="w-full md:w-40">
+              <div className="w-full md:w-40 space-y-1">
                 <Typography as="label" htmlFor="per-page-region" type="small" color="default" className="font-semibold">
                   Jumlah Item
                 </Typography>
@@ -156,7 +156,7 @@ export default function RegionTablePage({
             {(filterOptions?.provinces || filterOptions?.regencies || filterOptions?.districts) && (
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 {filterOptions?.provinces && (
-                  <div>
+                  <div className="space-y-1">
                     <Typography as="label" htmlFor="province-filter" type="small" color="default" className="font-semibold">
                       Filter Provinsi
                     </Typography>
@@ -182,7 +182,7 @@ export default function RegionTablePage({
                 )}
 
                 {filterOptions?.regencies && (
-                  <div>
+                  <div className="space-y-1">
                     <Typography as="label" htmlFor="regency-filter" type="small" color="default" className="font-semibold">
                       Filter Kabupaten
                     </Typography>
@@ -208,7 +208,7 @@ export default function RegionTablePage({
                 )}
 
                 {filterOptions?.districts && (
-                  <div>
+                  <div className="space-y-1">
                     <Typography as="label" htmlFor="district-filter" type="small" color="default" className="font-semibold">
                       Filter Kecamatan
                     </Typography>

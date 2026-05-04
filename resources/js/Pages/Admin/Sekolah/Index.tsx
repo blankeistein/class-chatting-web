@@ -325,7 +325,7 @@ export default function Index({ schools: paginatedSchools, filters, filterOption
         <Card className="shadow-sm border border-slate-200 dark:border-slate-800 dark:bg-slate-900">
           <Card.Body className="p-4 space-y-4">
             <div className="flex flex-col gap-2 md:flex-row md:items-center">
-              <div className="order-2 w-full md:w-96">
+              <div className="order-2 w-full md:w-96 space-y-1">
                 <Typography as="label" htmlFor="urutkan-berdasarkan" type="small" color="default" className="font-semibold">
                   Urutkan Berdasarkan
                 </Typography>
@@ -355,7 +355,7 @@ export default function Index({ schools: paginatedSchools, filters, filterOption
                 </Select>
               </div>
 
-              <div className="order-3 w-full md:w-52">
+              <div className="order-3 w-full md:w-52 space-y-1">
                 <Typography as="label" htmlFor="jumlah-item" type="small" color="default" className="font-semibold">
                   Jumlah Item
                 </Typography>
@@ -391,7 +391,7 @@ export default function Index({ schools: paginatedSchools, filters, filterOption
             </div>
 
             <div className="w-full">
-              <div className="w-full">
+              <div className="w-full space-y-1">
                 <Typography as="label" htmlFor="cari" type="small" color="default" className="font-semibold">
                   Cari
                 </Typography>

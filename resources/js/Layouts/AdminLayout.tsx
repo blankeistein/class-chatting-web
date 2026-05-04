@@ -100,11 +100,6 @@ const Links: LinkType[] = [
     title: "User",
     routeName: "admin.users.index",
   },
-  {
-    icon: Settings2Icon,
-    title: "Pengaturan",
-    routeName: "admin.users.index",
-  },
 ];
 
 type AppLinkType = {

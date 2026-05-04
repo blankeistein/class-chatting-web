@@ -231,7 +231,7 @@ export default function Index({ users: paginatedUsers, filters }: { users: any, 
                   </Select.List>
                 </Select>
               </div>
-              <div className="w-full md:w-48">
+              <div className="w-full md:w-48 space-y-1">
                 <Typography as="label" htmlFor="urutkan-berdasarkan" type="small" color="default" className="font-semibold">
                   Urutkan Berdasarkan
                 </Typography>
@@ -257,7 +257,7 @@ export default function Index({ users: paginatedUsers, filters }: { users: any, 
                   </Select.List>
                 </Select>
               </div>
-              <div className="w-full md:w-48">
+              <div className="w-full md:w-48 space-y-1">
                 <Typography as="label" htmlFor="jumlah-item" type="small" color="default" className="font-semibold">
                   Jumlah Item
                 </Typography>
@@ -282,7 +282,7 @@ export default function Index({ users: paginatedUsers, filters }: { users: any, 
               </div>
             </div>
             <div className="flex flex-col lg:flex-row items-stretch gap-3 w-full md:w-auto flex-1">
-              <div className="w-full">
+              <div className="w-full space-y-1">
                 <Typography as="label" htmlFor="cari" type="small" color="default" className="font-semibold">
                   Cari
                 </Typography>

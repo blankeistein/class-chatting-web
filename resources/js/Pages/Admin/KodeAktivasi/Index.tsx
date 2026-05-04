@@ -359,7 +359,7 @@ export default function Index({
         <Card className="border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <CardBody className="space-y-4 p-4">
             <div className="flex flex-wrap items-center gap-4">
-              <div className="relative w-full md:w-72">
+              <div className="relative w-full md:w-72 space-y-1">
                 <Typography as="label" htmlFor="cari-nama" type="small" color="default" className="font-semibold">
                   Cari
                 </Typography>
@@ -377,7 +377,7 @@ export default function Index({
                 </Input>
               </div>
 
-              <div className="w-full md:w-64">
+              <div className="w-full md:w-64 space-y-1">
                 <Typography as="label" htmlFor="filter-buku" type="small" color="default" className="font-semibold" onClick={() => setIsPopoverOpen(!isPopoverOpen)}>
                   Filter Buku
                 </Typography>
@@ -428,7 +428,7 @@ export default function Index({
                 </Popover>
               </div>
 
-              <div className="w-full md:w-32">
+              <div className="w-full md:w-32 space-y-1">
                 <Typography as="label" htmlFor="jumlah-item" type="small" color="default" className="font-semibold">
                   Jumlah item
                 </Typography>
@@ -450,7 +450,7 @@ export default function Index({
                 </Select>
               </div>
 
-              <div className="w-full md:w-48">
+              <div className="w-full md:w-48 space-y-1">
                 <Typography as="label" htmlFor="urutkan-berdasarkan" type="small" color="default" className="font-semibold">
                   Urutkan Berdasarkan
                 </Typography>
@@ -467,7 +467,7 @@ export default function Index({
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-              <div>
+              <div className="space-y-1">
                 <Typography as="label" htmlFor="tier" type="small" color="default" className="font-semibold">
                   Tier
                 </Typography>
@@ -491,7 +491,7 @@ export default function Index({
                 </Select>
               </div>
 
-              <div>
+              <div className="space-y-1">
                 <Typography as="label" htmlFor="status-kode" type="small" color="default" className="font-semibold">
                   Status Kode
                 </Typography>
@@ -514,7 +514,7 @@ export default function Index({
                 </Select>
               </div>
 
-              <div>
+              <div className="space-y-1">
                 <Typography as="label" htmlFor="jenis-kode" type="small" color="default" className="font-semibold">
                   Jenis Kode
                 </Typography>
@@ -535,7 +535,7 @@ export default function Index({
                 </Select>
               </div>
 
-              <div>
+              <div className="space-y-1">
                 <Typography as="label" htmlFor="sudah-aktif" type="small" color="default" className="font-semibold">
                   Sudah Aktif
                 </Typography>

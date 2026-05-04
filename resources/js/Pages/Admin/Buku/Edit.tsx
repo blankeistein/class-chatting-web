@@ -249,27 +249,27 @@ export default function Edit({ book }: { book: { data: Book } }) {
               </CardBody>
             </Card>
 
-            <div className="flex flex-col gap-2">
-              <Button
-                type="submit"
-                color="primary"
-                disabled={processing}
-                size="lg"
-                className="flex items-center justify-center gap-2"
-                onClick={handleSubmit}
-              >
-                <SaveIcon className="w-5 h-5" />
-                {processing ? "Menyimpan..." : "Simpan Perubahan"}
-              </Button>
-              <Button
-                variant="ghost"
-                color="secondary"
-                type="button"
-                onClick={() => router.get(route("admin.books.index"))}
-              >
-                Batal
-              </Button>
-            </div>
+          </div>
+          <div className="lg:col-span-3 flex flex-col justify-center w-full gap-2 lg:max-w-[80%] mx-auto">
+            <Button
+              type="submit"
+              color="primary"
+              disabled={processing}
+              size="lg"
+              className="flex items-center justify-center gap-2"
+              onClick={handleSubmit}
+            >
+              <SaveIcon className="w-5 h-5" />
+              {processing ? "Menyimpan..." : "Simpan Perubahan"}
+            </Button>
+            <Button
+              variant="ghost"
+              color="secondary"
+              type="button"
+              onClick={() => router.get(route("admin.books.index"))}
+            >
+              Batal
+            </Button>
           </div>
         </form>
       </div>

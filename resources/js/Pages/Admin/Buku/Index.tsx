@@ -8,6 +8,8 @@ import {
   Input,
   Select,
   Chip,
+  Menu,
+  Dialog,
 } from "@material-tailwind/react";
 import AdminLayout from "@/Layouts/AdminLayout";
 import { Head, router } from "@inertiajs/react";
@@ -20,9 +22,13 @@ import {
   Trash2Icon,
   BookIcon,
   EyeIcon,
+  MoreVerticalIcon,
+  XIcon,
+  DownloadCloudIcon,
 } from "lucide-react";
 import { toast, Toaster } from "react-hot-toast";
 import { PageHeader } from "@/Components/PageHeader";
+import Pagination from "@/Components/Pagination";
 
 // --- Types ---
 interface Book {
@@ -46,7 +52,7 @@ const formatBookDate = (date: string) => {
   });
 };
 
-const BookRow = ({ book }: { book: Book }) => {
+const BookRow = ({ book, onDelete }: { book: Book; onDelete: (book: Book) => void }) => {
   const classes = "p-4 border-b border-slate-100 dark:border-slate-800";
 
   return (
@@ -78,7 +84,7 @@ const BookRow = ({ book }: { book: Book }) => {
           {book.tags && book.tags.length > 0 ? (
             <div className="flex flex-wrap gap-1">
               {book.tags.map((tag, i) => (
-                <Chip key={i} size="sm" variant="ghost" className="text-[9px] py-0.5 h-auto bg-slate-100 dark:bg-slate-800 dark:text-slate-400 capitalize">
+                <Chip key={i} size="sm" variant="ghost" className="text-[9px] py-0.5 h-auto bg-slate-100 dark:bg-slate-800 dark:text-slate-400">
                   <Chip.Label>{tag}</Chip.Label>
                 </Chip>
               ))}
@@ -88,11 +94,6 @@ const BookRow = ({ book }: { book: Book }) => {
               Belum ada tag
             </Typography>
           )}
-          {book.url && (
-            <a href={book.url} target="_blank" rel="noopener noreferrer" className="text-primary text-[10px] hover:underline flex items-center gap-1">
-              <BookIcon className="w-2 h-2" /> Lihat Link
-            </a>
-          )}
         </div>
       </td>
       <td className={classes}>
@@ -101,36 +102,25 @@ const BookRow = ({ book }: { book: Book }) => {
         </Typography>
       </td>
       <td className={classes}>
-        <div className="flex gap-2">
-          <IconButton
-            variant="ghost"
-            size="sm"
-            title="Informasi Buku"
-            onClick={() => router.get(route("admin.books.show", book.id))}
-          >
-            <EyeIcon className="w-4 h-4 text-slate-500" />
-          </IconButton>
-          <IconButton
-            variant="ghost"
-            size="sm"
-            title="Edit Buku"
-            onClick={() => router.get(route("admin.books.edit", book.id))}
-          >
-            <EditIcon className="w-4 h-4 text-blue-500" />
-          </IconButton>
-          <IconButton
-            variant="ghost"
-            size="sm"
-            title="Hapus Buku"
-            onClick={() => {
-              if (confirm('Apakah Anda yakin ingin menghapus buku ini?')) {
-                router.delete(route("admin.books.destroy", book.id));
-              }
-            }}
-          >
-            <Trash2Icon className="w-4 h-4 text-red-500" />
-          </IconButton>
-        </div>
+        <Menu placement="bottom-end">
+          <Menu.Trigger>
+            <MoreVerticalIcon className="w-4 h-4" />
+          </Menu.Trigger>
+          <Menu.Content>
+            <Menu.Item onClick={() => router.get(route("admin.books.show", book.id))}>
+              <EyeIcon className="w-4 h-4 mr-2" /> Lihat
+            </Menu.Item>
+            <Menu.Item onClick={() => router.get(book.url || "")} disabled={!book.url}>
+              <DownloadCloudIcon className="w-4 h-4 mr-2" /> Download
+            </Menu.Item>
+            <Menu.Item onClick={() => router.get(route("admin.books.edit", book.id))}>
+              <EditIcon className="w-4 h-4 mr-2" /> Edit
+            </Menu.Item>
+            <Menu.Item onClick={() => onDelete(book)} className="text-red-500">
+              <Trash2Icon className="w-4 h-4 mr-2" /> Hapus
+            </Menu.Item>
+          </Menu.Content>
+        </Menu>
       </td>
     </tr>
   );
@@ -246,6 +236,9 @@ export default function Index({ books: paginatedBooks, filters }: { books: any, 
   const [perPage, setPerPage] = useState(filters.per_page || "25");
   const [sortBy, setSortBy] = useState(filters.sort_by || "created_at");
   const [sortDirection, setSortDirection] = useState(filters.sort_direction || "desc");
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [currentBook, setCurrentBook] = useState<Book | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   React.useEffect(() => {
     setBooks(paginatedBooks.data);
@@ -284,6 +277,34 @@ export default function Index({ books: paginatedBooks, filters }: { books: any, 
       { search: searchTerm, per_page: perPage, sort_by: field, sort_direction: direction },
       { preserveState: true, replace: true }
     );
+  };
+
+  const openDeleteDialog = (book: Book) => {
+    setCurrentBook(book);
+    setIsDeleteOpen(true);
+  };
+
+  const handleDeleteBook = () => {
+    if (!currentBook) {
+      return;
+    }
+
+    setIsDeleting(true);
+
+    router.delete(route("admin.books.destroy", currentBook.id), {
+      preserveScroll: true,
+      onSuccess: () => {
+        toast.success("Buku berhasil dihapus.");
+        setIsDeleteOpen(false);
+        setCurrentBook(null);
+      },
+      onError: () => {
+        toast.error("Gagal menghapus buku.");
+      },
+      onFinish: () => {
+        setIsDeleting(false);
+      },
+    });
   };
 
   return (
@@ -398,7 +419,7 @@ export default function Index({ books: paginatedBooks, filters }: { books: any, 
                 <table className="w-full min-w-max table-auto text-left">
                   <thead>
                     <tr>
-                      {["Buku", "Tags / URL", "Versi", "Aksi"].map((head) => (
+                      {["Buku", "Tags", "Versi", "Aksi"].map((head) => (
                         <th key={head} className="border-y border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 p-4">
                           <Typography variant="small" className="font-bold leading-none opacity-70 text-slate-500 dark:text-slate-300 text-center first:text-left">
                             {head}
@@ -409,7 +430,7 @@ export default function Index({ books: paginatedBooks, filters }: { books: any, 
                   </thead>
                   <tbody>
                     {books.map((book) => (
-                      <BookRow key={book.id} book={book} />
+                      <BookRow key={book.id} book={book} onDelete={openDeleteDialog} />
                     ))}
                   </tbody>
                 </table>
@@ -432,22 +453,35 @@ export default function Index({ books: paginatedBooks, filters }: { books: any, 
         )}
 
         {/* Pagination Controls */}
-        <div className="mt-8 flex justify-center gap-2">
-          {(paginatedBooks.meta?.links || paginatedBooks.links).map((link: any, key: number) => (
-            <Button
-              key={key}
-              variant={link.active ? "solid" : "ghost"}
-              size="sm"
-              color={link.active ? "primary" : "secondary"}
-              className={`flex items-center gap-2 ${!link.url ? "opacity-50 cursor-not-allowed" : ""}`}
-              onClick={() => link.url && router.get(link.url, { search: searchTerm, per_page: perPage, sort_by: sortBy, sort_direction: sortDirection }, { preserveState: true })}
-              dangerouslySetInnerHTML={{ __html: link.label }}
-              disabled={!link.url}
-            >
-            </Button>
-          ))}
-        </div>
+        <Pagination paginated={paginatedBooks} />
       </div>
+
+      <Dialog open={isDeleteOpen} onOpenChange={() => setIsDeleteOpen(false)} size="sm">
+        <Dialog.Overlay>
+          <Dialog.Content className="dark:border-slate-800">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <Typography type="h6">Hapus Buku</Typography>
+                <Typography className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  Apakah Anda yakin ingin menghapus buku <strong>{currentBook?.title}</strong>?
+                </Typography>
+              </div>
+              <IconButton variant="ghost" color="secondary" onClick={() => setIsDeleteOpen(false)}>
+                <XIcon className="h-4 w-4" />
+              </IconButton>
+            </div>
+
+            <div className="mt-6 flex items-center justify-end gap-2">
+              <Button variant="ghost" color="secondary" onClick={() => setIsDeleteOpen(false)} disabled={isDeleting}>
+                Batal
+              </Button>
+              <Button color="error" onClick={handleDeleteBook} disabled={isDeleting}>
+                {isDeleting ? "Menghapus..." : "Ya, Hapus"}
+              </Button>
+            </div>
+          </Dialog.Content>
+        </Dialog.Overlay>
+      </Dialog>
     </>
   );
 }

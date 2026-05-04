@@ -413,7 +413,7 @@ export default function Index({
                 Tambah Daerah
                 <ChevronDownIcon className="h-4 w-4" />
               </Menu.Trigger>
-              <Menu.Content className="z-20 min-w-[220px] border-none shadow-xl dark:bg-slate-900">
+              <Menu.Content className="z-20 min-w-[220px] ">
                 <Menu.Item className="flex items-center gap-2 dark:hover:bg-slate-800" onClick={() => openProvinceDialog("create")}>
                   <LandmarkIcon className="h-4 w-4" />
                   Tambah Provinsi

@@ -37,7 +37,15 @@ class Book extends Model
 
     public function getThumbnailAttribute()
     {
-        return $this->cover_url ? asset('storage/'.$this->cover_url) : asset('assets/images/book-thumbnail.webp');
+        if (! $this->cover_url) {
+            return asset('assets/images/book-thumbnail.webp');
+        }
+
+        if (str_starts_with($this->cover_url, 'http://') || str_starts_with($this->cover_url, 'https://')) {
+            return $this->cover_url;
+        }
+
+        return asset('storage/'.$this->cover_url);
     }
 
     public function users()

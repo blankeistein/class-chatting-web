@@ -419,12 +419,10 @@ export default function Index({ users: paginatedUsers, filters }: { users: any, 
                               as={IconButton}
                               variant="ghost"
                               size="sm"
-                              color="secondary"
-                              className="rounded-full"
                             >
-                              <MoreVerticalIcon className="w-5 h-5" />
+                              <MoreVerticalIcon className="w-4 h-4" />
                             </Menu.Trigger>
-                            <Menu.Content className="z-20 min-w-[160px] dark:bg-slate-900 border-none shadow-xl">
+                            <Menu.Content className="z-20 min-w-[160px]">
                               <Menu.Item
                                 className="flex items-center gap-2 dark:hover:bg-slate-800"
                                 onClick={() => router.get(route("admin.users.show", user.id))}

@@ -37,6 +37,7 @@ return [
 
     'firebase' => [
         'webhook_secret' => env('FIREBASE_WEBHOOK_SECRET'),
+        'storage_bucket' => env('FIREBASE_STORAGE_BUCKET'),
     ],
 
     'private_api' => [

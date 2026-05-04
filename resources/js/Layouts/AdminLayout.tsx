@@ -13,7 +13,7 @@ import {
   Tooltip,
   Typography,
 } from "@material-tailwind/react";
-import { ArchiveIcon, BellIcon, BookIcon, Building2Icon, ChevronDownIcon, GithubIcon, Grid3X3, Grip, LayoutDashboardIcon, LayoutGrid, LogOutIcon, MailIcon, MapPinnedIcon, MenuIcon, MoonIcon, PiIcon, PinIcon, SunIcon, TicketIcon, Trash2Icon, UserCircle2Icon, VideoIcon, XIcon } from "lucide-react";
+import { ArchiveIcon, BellIcon, BookIcon, Building2Icon, ChevronDownIcon, GithubIcon, Grid3X3, Grip, LayoutDashboardIcon, LayoutGrid, LogOutIcon, MailIcon, MapPinnedIcon, MenuIcon, MoonIcon, PiIcon, PinIcon, ScrollTextIcon, SunIcon, TicketIcon, Trash2Icon, UserCircle2Icon, VideoIcon, XIcon } from "lucide-react";
 import { useTheme } from "../Contexts/ThemeContext";
 import { Link, router, usePage } from "@inertiajs/react";
 import { route } from "ziggy-js";
@@ -332,7 +332,10 @@ function ProfileMenu() {
       />
       <Menu.Content className="z-20">
         <Menu.Item>
-          <UserCircle2Icon className="mr-2 h-[18px] w-[18px]" /> My Profile
+          <UserCircle2Icon className="mr-2 h-[18px] w-[18px]" /> Profil
+        </Menu.Item>
+        <Menu.Item as="a" href="/docs/api" target="_blank" rel="noopener">
+          <ScrollTextIcon className="mr-2 h-[18px] w-[18px]" /> Dokumentasi API
         </Menu.Item>
         <hr className="!my-1 -mx-1 border-surface" />
         <Menu.Item className="text-error hover:bg-error/10 hover:text-error focus:bg-error/10 focus:text-error" onClick={() => void handleLogout()}>

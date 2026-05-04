@@ -8,9 +8,11 @@ use App\Http\Requests\BookUpdateRequest;
 use App\Http\Resources\BookResource;
 use App\Models\Book;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
+use Kreait\Laravel\Firebase\Facades\Firebase;
 
 class BookController extends Controller
 {
@@ -44,7 +46,7 @@ class BookController extends Controller
         return Inertia::render('Admin/Buku/Create');
     }
 
-    public function show($id)
+    public function show(string $id)
     {
         $book = Book::findOrFail($id);
 
@@ -59,8 +61,18 @@ class BookController extends Controller
         $data['uuid'] = filled($data['uuid'] ?? null) ? $data['uuid'] : (string) Str::uuid();
 
         if ($request->hasFile('cover_url')) {
-            $path = $request->file('cover_url')->store('books', 'public');
-            $data['cover_url'] = $path;
+            $coverPath = $this->makeBookThumbnailPath($request->file('cover_url'), $data['uuid']);
+
+            $this->uploadFileToFirebase($request->file('cover_url'), $coverPath);
+            $data['cover_url'] = $this->buildFirebaseUrl($coverPath);
+        }
+
+        if ($request->hasFile('book_file')) {
+            $bookFile = $request->file('book_file');
+            $storagePath = $this->makeBookFilePath($bookFile, $data['uuid']);
+
+            $this->uploadFileToFirebase($bookFile, $storagePath);
+            $data['url'] = $this->buildFirebaseUrl($storagePath);
         }
 
         Book::create($data);
@@ -68,7 +80,7 @@ class BookController extends Controller
         return redirect()->route('admin.books.index')->with('success', 'Buku berhasil ditambahkan.');
     }
 
-    public function edit($id)
+    public function edit(string $id)
     {
         $book = Book::findOrFail($id);
 
@@ -77,19 +89,18 @@ class BookController extends Controller
         ]);
     }
 
-    public function update(BookUpdateRequest $request, $id)
+    public function update(BookUpdateRequest $request, string $id)
     {
         $book = Book::findOrFail($id);
 
         $data = $request->safe()->only(['title', 'type', 'tags', 'url', 'version']);
 
         if ($request->hasFile('cover_url')) {
-            // Delete old image if exists
-            if ($book->cover_url) {
-                Storage::disk('public')->delete($book->cover_url);
-            }
-            $path = $request->file('cover_url')->store('books', 'public');
-            $data['cover_url'] = $path;
+            $coverPath = $this->makeBookThumbnailPath($request->file('cover_url'), $book->uuid);
+
+            $this->uploadFileToFirebase($request->file('cover_url'), $coverPath);
+            $this->deleteFirebaseObject($this->extractFirebasePath($book->cover_url));
+            $data['cover_url'] = $this->buildFirebaseUrl($coverPath);
         }
 
         $book->update($data);
@@ -112,11 +123,75 @@ class BookController extends Controller
         return response()->json($books);
     }
 
-    public function destroy($id)
+    public function destroy(string $id)
     {
         $book = Book::findOrFail($id);
         $book->delete();
 
         return redirect()->back()->with('success', 'Buku berhasil dihapus.');
+    }
+
+    private function makeBookFilePath(UploadedFile $file, string $uuid): string
+    {
+        $extension = strtolower($file->getClientOriginalExtension());
+        $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+        $filename = Str::slug($originalName).'-'.uniqid().'.'.$extension;
+
+        return "books/{$uuid}/{$filename}";
+    }
+
+    private function makeBookThumbnailPath(UploadedFile $file, string $uuid): string
+    {
+        $extension = strtolower($file->getClientOriginalExtension());
+
+        return "books/{$uuid}/thumbnail.{$extension}";
+    }
+
+    private function uploadFileToFirebase(UploadedFile $file, string $path): void
+    {
+        Firebase::storage()->getBucket()->upload(
+            fopen($file->getPathname(), 'r'),
+            ['name' => $path]
+        );
+    }
+
+    private function buildFirebaseUrl(string $path): string
+    {
+        $bucketName = config('services.firebase.storage_bucket');
+
+        return "https://firebasestorage.googleapis.com/v0/b/{$bucketName}/o/".urlencode($path).'?alt=media';
+    }
+
+    private function extractFirebasePath(?string $url): ?string
+    {
+        if (! $url) {
+            return null;
+        }
+
+        $bucketName = config('services.firebase.storage_bucket');
+        $prefix = "https://firebasestorage.googleapis.com/v0/b/{$bucketName}/o/";
+
+        if (! str_contains($url, $prefix)) {
+            return null;
+        }
+
+        return urldecode(explode('?', str_replace($prefix, '', $url))[0]);
+    }
+
+    private function deleteFirebaseObject(?string $path): void
+    {
+        if (! $path) {
+            return;
+        }
+
+        try {
+            $object = Firebase::storage()->getBucket()->object($path);
+
+            if ($object->exists()) {
+                $object->delete();
+            }
+        } catch (\Exception $exception) {
+            Log::error('Firebase object deletion failed: '.$exception->getMessage());
+        }
     }
 }

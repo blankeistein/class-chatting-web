@@ -715,7 +715,7 @@ export default function Index({
                         <div className="flex items-center gap-2">
                           <Menu placement="bottom-end">
                             <Menu.Trigger as={IconButton} variant="ghost" size="sm">
-                              <MoreVerticalIcon />
+                              <MoreVerticalIcon className="w-4 h-4" />
                             </Menu.Trigger>
                             <Menu.Content>
                               <Menu.Item onClick={() => router.get(route("admin.activation-code.show", item.id))}>

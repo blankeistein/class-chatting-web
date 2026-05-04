@@ -47,7 +47,6 @@ class SchoolController extends Controller
         }
 
         $schools = School::query()
-            ->with(['province:id,code,name', 'regency:id,province_id,code,name,type', 'district:id,regency_id,code,name', 'village:id,district_id,code,name'])
             ->search($search)
             ->when($provinceId > 0, fn ($query) => $query->where('province_id', $provinceId))
             ->when($regencyId > 0, fn ($query) => $query->where('regency_id', $regencyId))
@@ -71,10 +70,8 @@ class SchoolController extends Controller
                 'sort_by' => $sortBy,
                 'sort_direction' => $sortDirection,
             ],
-            'filterOptions' => [
-                ...$this->regionOptions(),
-                ...$this->getFilterOptions(),
-            ],
+            'filterOptions' => $this->getFilterOptions(),
+            'regionOptions' => Inertia::optional(fn (): array => $this->getRegionFilterOptions()),
         ]);
     }
 
@@ -462,6 +459,27 @@ class SchoolController extends Controller
                 ->orderBy('bentuk_pendidikan')
                 ->pluck('bentuk_pendidikan')
                 ->values()
+                ->toArray(),
+        ];
+    }
+
+    /**
+     * @return array<string, array<int, array<string, int|string|null>>>
+     */
+    private function getRegionFilterOptions(): array
+    {
+        return [
+            'provinces' => Province::query()
+                ->orderBy('code')
+                ->get(['id', 'code', 'name'])
+                ->toArray(),
+            'regencies' => Regency::query()
+                ->orderBy('code')
+                ->get(['id', 'province_id', 'code', 'name', 'type'])
+                ->toArray(),
+            'districts' => District::query()
+                ->orderBy('code')
+                ->get(['id', 'regency_id', 'code', 'name'])
                 ->toArray(),
         ];
     }

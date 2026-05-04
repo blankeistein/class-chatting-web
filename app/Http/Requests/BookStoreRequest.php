@@ -19,6 +19,7 @@ class BookStoreRequest extends FormRequest
             'uuid' => ['nullable', 'string', 'max:255', 'unique:books,uuid'],
             'type' => ['required', 'string', Rule::in(['materi', 'penilaian'])],
             'cover_url' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,svg,webp', 'max:2048'],
+            'book_file' => ['nullable', 'file', 'mimes:zip', 'max:51200'],
             'tags' => ['nullable', 'array'],
             'url' => ['nullable', 'url'],
             'version' => ['nullable', 'integer'],
@@ -35,6 +36,9 @@ class BookStoreRequest extends FormRequest
             'cover_url.image' => 'Cover buku harus berupa gambar.',
             'cover_url.mimes' => 'Format cover buku tidak didukung.',
             'cover_url.max' => 'Ukuran cover buku maksimal 2MB.',
+            'book_file.file' => 'File buku tidak valid.',
+            'book_file.mimes' => 'Format file buku harus PDF atau EPUB.',
+            'book_file.max' => 'Ukuran file buku maksimal 50MB.',
             'url.url' => 'Download link harus berupa URL yang valid.',
             'version.integer' => 'Versi harus berupa angka.',
         ];

@@ -234,8 +234,6 @@ export default function Jobs() {
           <div className="flex items-center gap-3">
             <IconButton
               variant="ghost"
-              color="secondary"
-              size="sm"
               onClick={() => router.get(route("admin.videos.index"))}
             >
               <ArrowLeftIcon className="h-4 w-4" />

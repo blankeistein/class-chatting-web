@@ -71,8 +71,6 @@ export default function Show({ book }: { book: { data: Book } }) {
           <div className="flex items-center gap-3">
             <IconButton
               variant="ghost"
-              color="secondary"
-              size="sm"
               onClick={() => router.get(route("admin.books.index"))}
             >
               <ArrowLeftIcon className="h-4 w-4" />

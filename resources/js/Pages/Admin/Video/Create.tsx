@@ -228,7 +228,6 @@ export default function Create() {
           <div className="flex items-center gap-3">
             <IconButton
               variant="ghost"
-              color="secondary"
               onClick={() => router.get(route("admin.videos.index"))}
             >
               <ArrowLeftIcon className="h-5 w-5 dark:text-white" />

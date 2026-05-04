@@ -82,7 +82,6 @@ export default function Edit({ book }: { book: { data: Book } }) {
           <IconButton
             variant="ghost"
             onClick={() => router.get(route("admin.books.index"))}
-            className="rounded-full flex-shrink-0"
           >
             <ArrowLeftIcon className="w-5 h-5 dark:text-white" />
           </IconButton>
@@ -138,49 +137,6 @@ export default function Edit({ book }: { book: { data: Book } }) {
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-1">
-                    <Typography as="label" htmlFor="url" type="small" className="font-semibold dark:text-white">
-                      Download Link (Optional)
-                    </Typography>
-                    <Input
-                      id="url"
-                      placeholder="https://example.com/item"
-                      value={data.url}
-                      onChange={(e) => setData("url", e.target.value)}
-                      isError={!!errors.url}
-                    >
-                      <Input.Icon><LinkIcon className="w-4 h-4" /></Input.Icon>
-                    </Input>
-                    {errors.url && (
-                      <Typography type="small" color="error" className="mt-1 block">
-                        {errors.url}
-                      </Typography>
-                    )}
-                  </div>
-
-                  <div className="space-y-1">
-                    <Typography as="label" htmlFor="version" type="small" className="font-semibold dark:text-white">
-                      Versi
-                    </Typography>
-                    <Input
-                      id="version"
-                      type="number"
-                      placeholder="1"
-                      value={data.version}
-                      onChange={(e) => setData("version", parseInt(e.target.value) || 1)}
-                      isError={!!errors.version}
-                    >
-                      <Input.Icon><HashIcon className="w-4 h-4" /></Input.Icon>
-                    </Input>
-                    {errors.version && (
-                      <Typography type="small" color="error" className="mt-1 block">
-                        {errors.version}
-                      </Typography>
-                    )}
-                  </div>
-                </div>
-
                 <div className="space-y-2">
                   <Typography as="label" htmlFor="tags" type="small" className="font-semibold dark:text-white">
                     Tags
@@ -191,7 +147,7 @@ export default function Edit({ book }: { book: { data: Book } }) {
                         key={index}
                         size="sm"
                         variant="ghost"
-                        className="bg-primary/10 text-primary capitalize flex items-center gap-1"
+                        className="bg-primary/10 text-primary flex items-center gap-1"
                       >
                         <Chip.Label>{tag}</Chip.Label>
                         <XIcon className="w-3 h-3 cursor-pointer" onClick={() => removeTag(index)} />

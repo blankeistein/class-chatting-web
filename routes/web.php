@@ -47,6 +47,8 @@ Route::middleware('auth')->group(function () {
         Route::resource('activation-code', ActivationCodeController::class);
 
         Route::get('books/selection', [BookController::class, 'selection'])->name('books.selection');
+        Route::get('books/upload/{id}', [BookController::class, 'upload'])->name('books.upload');
+        Route::put('books/upload/{id}', [BookController::class, 'uploadFile'])->name('books.upload.post');
         Route::resource('books', BookController::class);
         Route::get('schools/import', [AdminSchoolController::class, 'importPage'])->name('schools.import-page');
         Route::post('schools/import', [AdminSchoolController::class, 'import'])->name('schools.import');

@@ -141,7 +141,6 @@ export default function Edit({ school, provinces, regencies, districts, villages
           <IconButton
             variant="ghost"
             onClick={() => router.get(route("admin.schools.index"))}
-            className="rounded-full flex-shrink-0"
           >
             <ArrowLeftIcon className="w-5 h-5 dark:text-white" />
           </IconButton>

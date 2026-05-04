@@ -89,12 +89,14 @@ export default function Show({ book }: { book: { data: Book } }) {
 
           <div className="flex flex-wrap items-center gap-2">
             <Button
+              as="a"
               variant="ghost"
               color="secondary"
               size="sm"
               className="flex items-center gap-2"
-              onClick={() => currentBook.url && window.open(currentBook.url, "_blank")}
-              disabled={!currentBook.url}
+              href={currentBook.url || undefined}
+              target="_blank"
+              rel="noopener noreferrer"
             >
               <ExternalLinkIcon className="h-4 w-4" />
               {currentBook.url ? "Buka Download Link" : "Download Link Tidak Tersedia"}
@@ -172,27 +174,6 @@ export default function Show({ book }: { book: { data: Book } }) {
                   ) : (
                     <Typography className="mt-3 text-sm text-slate-500 dark:text-slate-400">
                       Buku ini belum memiliki tag.
-                    </Typography>
-                  )}
-                </div>
-
-                <div>
-                  <Typography variant="small" className="font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                    Download Link
-                  </Typography>
-                  {currentBook.url ? (
-                    <a
-                      href={currentBook.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-3 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-primary transition hover:border-primary/40 hover:bg-primary/5 dark:border-slate-700 dark:bg-slate-900"
-                    >
-                      <ExternalLinkIcon className="h-4 w-4" />
-                      Buka tautan buku
-                    </a>
-                  ) : (
-                    <Typography className="mt-3 text-sm text-slate-500 dark:text-slate-400">
-                      Belum ada tautan eksternal untuk buku ini.
                     </Typography>
                   )}
                 </div>

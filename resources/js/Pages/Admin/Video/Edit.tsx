@@ -227,7 +227,6 @@ export default function Edit({ video }: { video: Video }) {
               variant="ghost"
               color="secondary"
               onClick={() => router.get(route("admin.videos.show", video.slug))}
-              className="rounded-full"
             >
               <ArrowLeftIcon className="h-5 w-5 dark:text-white" />
             </IconButton>

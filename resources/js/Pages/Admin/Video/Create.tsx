@@ -230,7 +230,6 @@ export default function Create() {
               variant="ghost"
               color="secondary"
               onClick={() => router.get(route("admin.videos.index"))}
-              className="rounded-full"
             >
               <ArrowLeftIcon className="h-5 w-5 dark:text-white" />
             </IconButton>

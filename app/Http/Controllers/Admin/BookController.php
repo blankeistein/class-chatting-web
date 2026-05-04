@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BookStoreRequest;
 use App\Http\Requests\BookUpdateRequest;
+use App\Http\Requests\BookUploadFileRequest;
 use App\Http\Resources\BookResource;
 use App\Models\Book;
 use Illuminate\Http\Request;
@@ -93,7 +94,7 @@ class BookController extends Controller
     {
         $book = Book::findOrFail($id);
 
-        $data = $request->safe()->only(['title', 'type', 'tags', 'url', 'version']);
+        $data = $request->safe()->only(['title', 'type', 'tags']);
 
         if ($request->hasFile('cover_url')) {
             $coverPath = $this->makeBookThumbnailPath($request->file('cover_url'), $book->uuid);
@@ -106,6 +107,34 @@ class BookController extends Controller
         $book->update($data);
 
         return redirect()->route('admin.books.index')->with('success', 'Buku berhasil diperbarui.');
+    }
+
+    public function upload(string $id)
+    {
+        $book = Book::findOrFail($id);
+
+        return Inertia::render('Admin/Buku/Upload', [
+            'book' => new BookResource($book),
+        ]);
+    }
+
+    public function uploadFile(BookUploadFileRequest $request, string $id)
+    {
+        $book = Book::findOrFail($id);
+        $data = $request->safe()->only(['url', 'version']);
+
+        if ($request->hasFile('book_file')) {
+            $bookFile = $request->file('book_file');
+            $storagePath = $this->makeBookFilePath($bookFile, $book->uuid);
+
+            $this->uploadFileToFirebase($bookFile, $storagePath);
+            $this->deleteFirebaseObject($this->extractFirebasePath($book->url));
+            $data['url'] = $this->buildFirebaseUrl($storagePath);
+        }
+
+        $book->update($data);
+
+        return redirect()->route('admin.books.upload', $book->id)->with('success', 'File buku berhasil diperbarui.');
     }
 
     public function selection(Request $request)

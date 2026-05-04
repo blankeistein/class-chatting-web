@@ -121,7 +121,6 @@ export default function Create() {
           <IconButton
             variant="ghost"
             onClick={() => router.get(route("admin.books.index"))}
-            className="rounded-full flex-shrink-0"
           >
             <ArrowLeftIcon className="w-5 h-5 dark:text-white" />
           </IconButton>

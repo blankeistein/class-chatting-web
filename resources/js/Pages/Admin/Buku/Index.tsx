@@ -25,6 +25,7 @@ import {
   MoreVerticalIcon,
   XIcon,
   DownloadCloudIcon,
+  UploadCloudIcon,
 } from "lucide-react";
 import { toast, Toaster } from "react-hot-toast";
 import { PageHeader } from "@/Components/PageHeader";
@@ -115,6 +116,9 @@ const BookRow = ({ book, onDelete }: { book: Book; onDelete: (book: Book) => voi
             </Menu.Item>
             <Menu.Item onClick={() => router.get(route("admin.books.edit", book.id))}>
               <EditIcon className="w-4 h-4 mr-2" /> Edit
+            </Menu.Item>
+            <Menu.Item onClick={() => router.get(route("admin.books.upload", book.id))}>
+              <UploadCloudIcon className="w-4 h-4 mr-2" /> Upload
             </Menu.Item>
             <Menu.Item onClick={() => onDelete(book)} className="text-red-500">
               <Trash2Icon className="w-4 h-4 mr-2" /> Hapus

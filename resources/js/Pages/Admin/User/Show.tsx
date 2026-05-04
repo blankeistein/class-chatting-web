@@ -48,7 +48,6 @@ export default function Show({ user }: { user: User }) {
             <IconButton
               variant="ghost"
               onClick={() => router.get(route("admin.users.index"))}
-              className="rounded-full flex-shrink-0"
             >
               <ArrowLeftIcon className="w-5 h-5 dark:text-white" />
             </IconButton>

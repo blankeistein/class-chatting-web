@@ -53,9 +53,7 @@ export const GridBookCard = memo(function GridBookCard({
   });
 
   const keywords = useMemo(() => {
-    return (book.keyword || "")
-      .split(",")
-      .map((keyword) => keyword.trim())
+    return (book.keyword || [])
       .filter((keyword) => keyword);
   }, [book.keyword]);
 

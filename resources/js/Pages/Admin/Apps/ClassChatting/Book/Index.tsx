@@ -53,7 +53,7 @@ export type Book = {
   id: string;
   bookPath: string;
   playstoreId: string;
-  keyword: string;
+  keyword: string[];
   lock: boolean;
   name: string;
   oldOrder: number;
@@ -102,7 +102,7 @@ const normalizeBook = (key: string, value: Partial<FirebaseBook>): Book => {
     id: value.id ?? key,
     bookPath: value.bookPath ?? key,
     playstoreId: value.playstoreId ?? value.id ?? key,
-    keyword: value.keyword ?? "",
+    keyword: value.keyword ? value.keyword.split(",").map((k) => k.trim()) : [],
     lock: Boolean(value.lock),
     name: value.name ?? "-",
     oldOrder: typeof value.order === "number" ? value.order : Number.MAX_SAFE_INTEGER,
@@ -290,11 +290,10 @@ export default function Index() {
       const matchesSearch = !query || [
         book.name,
         book.id,
-        book.keyword,
         book.status,
       ].some((value) => value.toLowerCase().includes(query));
 
-      const matchesKeyword = !hasKeywordFilter || extractBookKeywords(book.keyword).includes(selectedKeyword);
+      const matchesKeyword = !hasKeywordFilter || book.keyword.some((k) => k.includes(selectedKeyword));
       const matchesStatus = !hasStatusFilter || book.status === selectedStatus;
 
       return matchesSearch && matchesKeyword && matchesStatus;

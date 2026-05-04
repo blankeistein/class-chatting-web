@@ -35,8 +35,7 @@ export default function BookDetailDialog({
   onCopyLink,
 }: BookDetailDialogProps) {
   const keywords = useMemo(() => {
-    return (book?.keyword ?? "")
-      .split(",")
+    return (book?.keyword ?? [])
       .map((keyword) => keyword.trim())
       .filter((keyword) => keyword);
   }, [book?.keyword]);

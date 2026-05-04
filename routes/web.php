@@ -89,6 +89,7 @@ Route::middleware('auth')->group(function () {
 
             Route::get('book', [ClassChattingBookController::class, 'index'])->name('apps.class-chatting.book');
             Route::post('book/items', [ClassChattingBookController::class, 'store'])->name('apps.class-chatting.book.items.store');
+            Route::get('book/items/sync/{uuid}', [ClassChattingBookController::class, 'sync'])->name('apps.class-chatting.book.items.sync');
             Route::put('book/items/{documentId}', [ClassChattingBookController::class, 'update'])->name('apps.class-chatting.book.items.update');
             Route::put('book/items/lock/{documentId}', [ClassChattingBookController::class, 'updateLock'])->name('apps.class-chatting.book.items.lock.update');
             Route::patch('book/items/reorder', [ClassChattingBookController::class, 'reorder'])->name('apps.class-chatting.book.items.reorder');

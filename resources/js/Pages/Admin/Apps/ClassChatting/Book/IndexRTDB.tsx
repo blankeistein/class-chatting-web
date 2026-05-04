@@ -387,7 +387,7 @@ export default function IndexRTDB() {
         coverBook: newForm.cover,
         idBookPath: newForm.bookPath,
         idPlaystore: newForm.playstoreId,
-        keyword: newForm.keyword,
+        keyword: newForm.keyword.join(","),
         lock: newForm.lock,
         nameBook: newForm.name,
         orderBook: newForm.order,

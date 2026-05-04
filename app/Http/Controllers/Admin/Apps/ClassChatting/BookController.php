@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ClassChattingBookReorderRequest;
 use App\Http\Requests\ClassChattingBookStoreRequest;
 use App\Http\Requests\ClassChattingBookUpdateRequest;
+use App\Models\Book as DatabaseBook;
 use Google\Cloud\Firestore\FieldValue;
 use Google\Cloud\Firestore\FirestoreClient;
 use Illuminate\Http\JsonResponse;
@@ -35,6 +36,27 @@ class BookController extends Controller
         return Inertia::render('Admin/Apps/ClassChatting/Book/Category');
     }
 
+    public function sync(string $uuid): JsonResponse
+    {
+        $book = DatabaseBook::query()
+            ->where('uuid', $uuid)
+            ->first();
+
+        if (! $book) {
+            return response()->json([
+                'message' => 'Data buku database tidak ditemukan.',
+            ], 404);
+        }
+
+        return response()->json([
+            'data' => [
+                'cover' => $book->thumbnail,
+                'downloadLink' => $book->url ?? '',
+                'version' => $book->version ?? 1,
+            ],
+        ]);
+    }
+
     public function store(ClassChattingBookStoreRequest $request): JsonResponse
     {
         try {
@@ -53,7 +75,7 @@ class BookController extends Controller
                 'id' => $documentId,
                 'bookPath' => $documentId,
                 'playstoreId' => $documentId,
-                'keyword' => implode(',', $validated['tags'] ?? []),
+                'keyword' => $validated['keyword'] ? implode(',', $validated['keyword']) : '',
                 'lock' => false,
                 'name' => $validated['title'],
                 'order' => $validated['order'],
@@ -92,7 +114,7 @@ class BookController extends Controller
                 'id' => $validated['id'],
                 'bookPath' => $validated['bookPath'],
                 'playstoreId' => $validated['playstoreId'] ?? '',
-                'keyword' => $validated['keyword'] ?? '',
+                'keyword' => $validated['keyword'] ? implode(',', $validated['keyword']) : '',
                 'lock' => $validated['lock'],
                 'name' => $validated['name'],
                 'order' => $validated['order'],

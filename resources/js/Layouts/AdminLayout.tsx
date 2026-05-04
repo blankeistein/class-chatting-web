@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Avatar,
   Button,
@@ -13,13 +13,15 @@ import {
   Tooltip,
   Typography,
 } from "@material-tailwind/react";
-import { ArchiveIcon, BellIcon, BookIcon, Building2Icon, ChevronDownIcon, GithubIcon, Grid3X3, Grip, LayoutDashboardIcon, LayoutGrid, LogOutIcon, MailIcon, MapPinnedIcon, MenuIcon, MoonIcon, PiIcon, PinIcon, ScrollTextIcon, Settings2Icon, SunIcon, TicketIcon, Trash2Icon, UserCircle2Icon, VideoIcon, XIcon } from "lucide-react";
+import { ArchiveIcon, BellIcon, BookIcon, Building2Icon, ChevronDownIcon, GithubIcon, Grid3X3, Grip, LayoutDashboardIcon, LayoutGrid, LogOutIcon, MailIcon, MapPinnedIcon, MenuIcon, MoonIcon, PiIcon, PinIcon, ScrollTextIcon, Settings2Icon, SunIcon, TicketIcon, Trash2Icon, UserCircle2Icon, UserRoundCog, VideoIcon, XIcon } from "lucide-react";
 import { useTheme } from "../Contexts/ThemeContext";
 import { Link, router, usePage } from "@inertiajs/react";
 import { route } from "ziggy-js";
 import { AuthProps } from "@/types/global";
 import { NotificationMenu } from "../Components/NotificationMenu";
-import { signOutFirebase } from "../lib/firebase";
+import { getFirebaseAuth, signOutFirebase, syncFirebaseAuth } from "../lib/firebase";
+import toast from "react-hot-toast";
+import { User } from "firebase/auth";
 
 type ChildLinkType = {
   icon: React.ForwardRefExoticComponent<React.SVGProps<SVGSVGElement>>;
@@ -332,7 +334,8 @@ function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
   );
 }
 
-function ProfileMenu() {
+function ProfileMenu({ user }: { user: User | null }) {
+  const [isReAuthenticating, setIsReAuthenticating] = useState(false);
   const props = usePage<AuthProps>().props;
 
   const handleLogout = async (): Promise<void> => {
@@ -341,6 +344,30 @@ function ProfileMenu() {
     router.delete(route('logout'));
   };
 
+  const handleReAuthentication = async (): Promise<void> => {
+    setIsReAuthenticating(true);
+    router.get(route('admin.authenticate-firebase-user'), undefined, {
+      onSuccess: async (page) => {
+        const firebaseAuth = (page.props as {
+          auth?: {
+            firebase?: {
+              uid: string;
+              custom_token: string;
+            } | null;
+          };
+        }).auth?.firebase ?? null;
+
+        await syncFirebaseAuth(firebaseAuth);
+        setIsReAuthenticating(false);
+      },
+      onError: (errors) => {
+        Object.values(errors).forEach((error) => {
+          toast.error(error);
+        });
+      }
+    })
+  }
+
   return (
     <Menu placement="bottom-end">
       <Menu.Trigger
@@ -348,11 +375,15 @@ function ProfileMenu() {
         src={props.auth.user?.image}
         alt="profile-picture"
         size="sm"
-        className="border border-primary p-0.5 cursor-pointer"
+        className={`border ${user ? "border-success" : "border-error"} p-0.5 cursor-pointer`}
       />
       <Menu.Content className="z-20">
         <Menu.Item>
           <UserCircle2Icon className="mr-2 h-[18px] w-[18px]" /> Profil
+        </Menu.Item>
+        <Menu.Item onClick={handleReAuthentication} disabled={user !== null}>
+          <UserRoundCog className="h-4 w-4 mr-2" />
+          Re Authentication
         </Menu.Item>
         <Menu.Item as="a" href="/docs/api" target="_blank" rel="noopener">
           <ScrollTextIcon className="mr-2 h-[18px] w-[18px]" /> Dokumentasi API
@@ -368,7 +399,9 @@ function ProfileMenu() {
 }
 
 function TopNavbar({ onToggleSidebar }: { onToggleSidebar: () => void }) {
+  const auth = useMemo(() => getFirebaseAuth(), []);
   const [openNav, setOpenNav] = useState(false);
+  const [user, setUser] = useState<User | null>(auth?.currentUser || null);
 
   useEffect(() => {
     const handleResize = () => {
@@ -383,6 +416,16 @@ function TopNavbar({ onToggleSidebar }: { onToggleSidebar: () => void }) {
       window.removeEventListener("resize", handleResize);
     };
   }, []);
+
+  useEffect(() => {
+    auth?.onAuthStateChanged((user) => {
+      if (user) {
+        setUser(user);
+      } else {
+        setUser(null);
+      }
+    });
+  }, [auth])
 
   const { theme, toggleTheme } = useTheme();
 
@@ -443,7 +486,7 @@ function TopNavbar({ onToggleSidebar }: { onToggleSidebar: () => void }) {
                   </div>
                 </Menu.Content>
               </Menu>
-              <ProfileMenu />
+              <ProfileMenu user={user} />
             </div>
           </div>
         </Navbar>

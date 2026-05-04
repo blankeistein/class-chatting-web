@@ -13,7 +13,7 @@ import {
   Tooltip,
   Typography,
 } from "@material-tailwind/react";
-import { ArchiveIcon, ArrowLeft, BellIcon, BookIcon, Building2Icon, ChevronDownIcon, CircleArrowDown, DockIcon, GithubIcon, Grid3X3, Grip, LayoutDashboardIcon, LayoutGrid, ListCollapse, LogOutIcon, MailIcon, MapPinnedIcon, MenuIcon, MoonIcon, PiIcon, PinIcon, ScrollTextIcon, Settings, SettingsIcon, SunIcon, TicketIcon, Trash2Icon, UserCircle2Icon, UserRoundCog, VideoIcon, XIcon } from "lucide-react";
+import { ArchiveIcon, ArrowLeft, BellIcon, BookIcon, Building2Icon, ChevronDownIcon, CircleArrowDown, DockIcon, GithubIcon, Grid3X3, Grip, LayoutDashboardIcon, LayoutGrid, ListCollapse, LoaderIcon, LogOutIcon, MailIcon, MapPinnedIcon, MenuIcon, MoonIcon, PiIcon, PinIcon, ScrollTextIcon, Settings, SettingsIcon, SunIcon, TicketIcon, Trash2Icon, UserCircle2Icon, UserRoundCog, VideoIcon, XIcon } from "lucide-react";
 import { useTheme } from "../Contexts/ThemeContext";
 import { Link, router, usePage } from "@inertiajs/react";
 import { route } from "ziggy-js";
@@ -294,6 +294,7 @@ function Sidebar({ links, isCollapsed }: { links: LinkType[], isCollapsed: boole
 }
 
 function ProfileMenu({ user }: { user: User | null }) {
+  const [isReauthentication, setIsReAuthentication] = useState(false);
   const props = usePage<AuthProps>().props;
 
   const handleLogout = async (): Promise<void> => {
@@ -303,6 +304,7 @@ function ProfileMenu({ user }: { user: User | null }) {
   };
 
   const handleReAuthentication = async (): Promise<void> => {
+    setIsReAuthentication(true);
     router.get(route('admin.authenticate-firebase-user'), undefined, {
       onSuccess: async (page) => {
         const firebaseAuth = (page.props as {
@@ -315,6 +317,7 @@ function ProfileMenu({ user }: { user: User | null }) {
         }).auth?.firebase ?? null;
 
         await syncFirebaseAuth(firebaseAuth);
+        setIsReAuthentication(false);
       },
       onError: (errors) => {
         Object.values(errors).forEach((error) => {
@@ -337,12 +340,12 @@ function ProfileMenu({ user }: { user: User | null }) {
         <Menu.Item>
           <UserCircle2Icon className="mr-2 h-4 w-4" /> Profil
         </Menu.Item>
+        <Menu.Item onClick={handleReAuthentication} disabled={user !== null}>
+          {isReauthentication ? <LoaderIcon className="h-4 w-4 mr-2 animate-spin" /> : <UserRoundCog className="h-4 w-4 mr-2" />}
+          Re Authentication
+        </Menu.Item>
         <Menu.Item as="a" href="/docs/api" target="_blank" rel="noopener">
           <ScrollTextIcon className="mr-2 h-4 w-4" /> Dokumentasi API
-        </Menu.Item>
-        <Menu.Item onClick={handleReAuthentication} disabled={user !== null}>
-          <UserRoundCog className="h-4 w-4 mr-2" />
-          Re Authentication
         </Menu.Item>
         <hr className="!my-1 -mx-1 border-surface" />
         <Menu.Item className="text-error hover:bg-error/10 hover:text-error focus:bg-error/10 focus:text-error" onClick={() => void handleLogout()}>

@@ -13,7 +13,7 @@ import {
   Tooltip,
   Typography,
 } from "@material-tailwind/react";
-import { ArchiveIcon, BellIcon, BookIcon, Building2Icon, ChevronDownIcon, GithubIcon, Grid3X3, Grip, LayoutDashboardIcon, LayoutGrid, LogOutIcon, MailIcon, MapPinnedIcon, MenuIcon, MoonIcon, PiIcon, PinIcon, ScrollTextIcon, SunIcon, TicketIcon, Trash2Icon, UserCircle2Icon, VideoIcon, XIcon } from "lucide-react";
+import { ArchiveIcon, BellIcon, BookIcon, Building2Icon, ChevronDownIcon, GithubIcon, Grid3X3, Grip, LayoutDashboardIcon, LayoutGrid, LogOutIcon, MailIcon, MapPinnedIcon, MenuIcon, MoonIcon, PiIcon, PinIcon, ScrollTextIcon, Settings2Icon, SunIcon, TicketIcon, Trash2Icon, UserCircle2Icon, VideoIcon, XIcon } from "lucide-react";
 import { useTheme } from "../Contexts/ThemeContext";
 import { Link, router, usePage } from "@inertiajs/react";
 import { route } from "ziggy-js";
@@ -75,7 +75,7 @@ const Links: LinkType[] = [
     children: [
       {
         title: "Provinsi",
-        icon: PinIcon,
+        icon: MapPinnedIcon,
         routeName: "admin.regions.provinces.index",
       },
       {
@@ -95,10 +95,14 @@ const Links: LinkType[] = [
       },
     ]
   },
-
   {
     icon: UserCircle2Icon,
     title: "User",
+    routeName: "admin.users.index",
+  },
+  {
+    icon: Settings2Icon,
+    title: "Pengaturan",
     routeName: "admin.users.index",
   },
 ];

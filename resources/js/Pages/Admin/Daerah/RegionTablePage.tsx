@@ -48,6 +48,7 @@ export default function RegionTablePage({
   filterOptions,
   headings,
   renderCells,
+  actions,
 }: {
   title: string;
   routeName: string;
@@ -58,6 +59,7 @@ export default function RegionTablePage({
   filterOptions?: FilterOptions;
   headings: string[];
   renderCells: (item: any, index: number) => React.ReactNode;
+  actions?: React.ReactNode;
 }) {
   const [search, setSearch] = React.useState(filters?.search || "");
   const [sort, setSort] = React.useState(`${filters?.sort_by || "name"}|${filters?.sort_direction || "asc"}`);
@@ -96,7 +98,7 @@ export default function RegionTablePage({
       <Head title={title} />
 
       <div className="space-y-6 p-4">
-        <PageHeader title={title} description={description} />
+        <PageHeader title={title} description={description} actions={actions} />
 
         <Card className="border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <Card.Body className="space-y-4 p-4">

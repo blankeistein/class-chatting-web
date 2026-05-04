@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Button,
   Card,
@@ -254,6 +254,10 @@ export default function Index({ schools: paginatedSchools, filters, filterOption
 
     window.location.href = route("admin.schools.bulk-export", { ids: selectedIds.join(",") });
   };
+
+  useEffect(() => {
+    handleFilter();
+  }, [sort, perPage]);
 
   return (
     <>
@@ -545,7 +549,7 @@ export default function Index({ schools: paginatedSchools, filters, filterOption
               </IconButton>
             </div>
 
-            <div className="mt-6 grid grid-cols-1 h-max gap-4 md:grid-cols-2">
+            <div className="mt-6 flex flex-col h-max gap-4 md:grid-cols-2">
               {!regionOptions ? (
                 <div className="md:col-span-2 space-y-3">
                   <div className="h-10 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-800" />

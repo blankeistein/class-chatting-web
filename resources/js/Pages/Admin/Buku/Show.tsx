@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { Head, Link, router } from "@inertiajs/react";
-import { Button, Card, Chip, IconButton, Typography } from "@material-tailwind/react";
+import { Button, Card, Chip, IconButton, Tabs, Typography } from "@material-tailwind/react";
 import AdminLayout from "@/Layouts/AdminLayout";
 import {
   ArrowLeftIcon,
@@ -132,160 +132,185 @@ export default function Show({ book }: { book: { data: Book } }) {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,2fr)_380px]">
-          <Card className="overflow-hidden border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <div className="border-b border-slate-100 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-800/40">
-              <Typography variant="h5" className="font-bold text-slate-800 dark:text-white">
-                {currentBook.title}
-              </Typography>
-              <Typography className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                Informasi metadata dan akses buku digital.
-              </Typography>
-            </div>
-
-            <div className="grid grid-cols-1 gap-6 p-5 lg:grid-cols-[220px_minmax(0,1fr)]">
-              <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 shadow-sm dark:border-slate-800 dark:bg-slate-800/40">
-                <img
-                  src={currentBook.coverUrl}
-                  alt={currentBook.title}
-                  className="aspect-[3/4] w-full object-cover"
-                />
-              </div>
-
-              <div className="space-y-5">
-                <div>
-                  <Typography variant="small" className="font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                    Tipe Buku
+        <Tabs defaultValue="umum">
+          <Tabs.List>
+            <Tabs.Trigger value="umum">
+              Umum
+            </Tabs.Trigger>
+            <Tabs.Trigger value="aplikasi">
+              Aplikasi
+            </Tabs.Trigger>
+            <Tabs.TriggerIndicator />
+          </Tabs.List>
+          <Tabs.Panel value="umum">
+            <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,2fr)_380px]">
+              <Card className="overflow-hidden border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                <div className="border-b border-slate-100 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-800/40">
+                  <Typography variant="h5" className="font-bold text-slate-800 dark:text-white">
+                    {currentBook.title}
                   </Typography>
-                  <div className="mt-3">
-                    <Chip size="sm" variant="ghost" className="w-max bg-blue-50 capitalize text-blue-600 dark:bg-blue-900/20 dark:text-blue-300">
-                      <Chip.Label>{currentBook.type === "penilaian" ? "Penilaian" : "Materi"}</Chip.Label>
-                    </Chip>
-                  </div>
+                  <Typography className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                    Informasi metadata dan akses buku digital.
+                  </Typography>
                 </div>
 
-                <div>
-                  <Typography variant="small" className="font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                    Tags
-                  </Typography>
-                  {currentBook.tags && currentBook.tags.length > 0 ? (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {currentBook.tags.map((tag, index) => (
-                        <Chip
-                          key={`${currentBook.id}-${tag}-${index}`}
-                          size="sm"
-                          variant="ghost"
-                          className="bg-primary/10 capitalize text-primary"
-                        >
-                          <Chip.Label>{tag}</Chip.Label>
-                        </Chip>
-                      ))}
-                    </div>
-                  ) : (
-                    <Typography className="mt-3 text-sm text-slate-500 dark:text-slate-400">
-                      Buku ini belum memiliki tag.
-                    </Typography>
-                  )}
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          <div className="space-y-6">
-            <Card className="border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-              <Card.Body className="space-y-4 p-5">
-                <Typography variant="small" className="font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  Informasi Metadata
-                </Typography>
-
-                <div className="flex items-start gap-3 rounded-xl bg-slate-50 p-3 dark:bg-slate-800/50">
-                  <div className="rounded-lg bg-slate-200 p-2 dark:bg-slate-700">
-                    <IdCardIcon className="h-4 w-4 text-slate-600 dark:text-slate-200" />
+                <div className="grid grid-cols-1 gap-6 p-5 lg:grid-cols-[220px_minmax(0,1fr)]">
+                  <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 shadow-sm dark:border-slate-800 dark:bg-slate-800/40">
+                    <img
+                      src={currentBook.coverUrl}
+                      alt={currentBook.title}
+                      className="aspect-[3/4] w-full object-cover"
+                    />
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <Typography className="text-xs text-slate-500 dark:text-slate-400">UUID</Typography>
-                    <div className="mt-1 flex items-center gap-2">
-                      <Typography
-                        className="font-medium text-slate-700 dark:text-slate-200 truncate"
-                        title={currentBook.uuid}
-                      >
-                        {currentBook.uuid}
+
+                  <div className="space-y-5">
+                    <div>
+                      <Typography variant="small" className="font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                        Tipe Buku
                       </Typography>
-                      <IconButton
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleCopyUuid}
-                        className="h-8 w-8 rounded-lg text-slate-500 transition hover:bg-slate-200/80 hover:text-slate-700 dark:text-slate-300 dark:hover:bg-slate-700"
-                      >
-                        <CopyIcon className="h-4 w-4" />
-                      </IconButton>
+                      <div className="mt-3">
+                        <Chip size="sm" variant="ghost" className="w-max bg-blue-50 capitalize text-blue-600 dark:bg-blue-900/20 dark:text-blue-300">
+                          <Chip.Label>{currentBook.type === "penilaian" ? "Penilaian" : "Materi"}</Chip.Label>
+                        </Chip>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Typography variant="small" className="font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                        Tags
+                      </Typography>
+                      {currentBook.tags && currentBook.tags.length > 0 ? (
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {currentBook.tags.map((tag, index) => (
+                            <Chip
+                              key={`${currentBook.id}-${tag}-${index}`}
+                              size="sm"
+                              variant="ghost"
+                              className="bg-primary/10 capitalize text-primary"
+                            >
+                              <Chip.Label>{tag}</Chip.Label>
+                            </Chip>
+                          ))}
+                        </div>
+                      ) : (
+                        <Typography className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+                          Buku ini belum memiliki tag.
+                        </Typography>
+                      )}
                     </div>
                   </div>
                 </div>
+              </Card>
 
-                <div className="flex items-start gap-3 rounded-xl bg-slate-50 p-3 dark:bg-slate-800/50">
-                  <div className="rounded-lg bg-slate-200 p-2 dark:bg-slate-700">
-                    <BookIcon className="h-4 w-4 text-slate-600 dark:text-slate-200" />
-                  </div>
-                  <div className="min-w-0">
-                    <Typography className="text-xs text-slate-500 dark:text-slate-400">Judul</Typography>
-                    <Typography className="font-medium text-slate-700 dark:text-slate-200 truncate" title={currentBook.title} >
-                      {currentBook.title}
+              <div className="space-y-6">
+                <Card className="border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                  <Card.Body className="space-y-4 p-5">
+                    <Typography variant="small" className="font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                      Informasi Metadata
                     </Typography>
-                  </div>
-                </div>
 
-                <div className="flex items-start gap-3 rounded-xl bg-slate-50 p-3 dark:bg-slate-800/50">
-                  <div className="rounded-lg bg-slate-200 p-2 dark:bg-slate-700">
-                    <HashIcon className="h-4 w-4 text-slate-600 dark:text-slate-200" />
-                  </div>
-                  <div>
-                    <Typography className="text-xs text-slate-500 dark:text-slate-400">Versi</Typography>
-                    <Typography className="font-medium text-slate-700 dark:text-slate-200">
-                      v{currentBook.version}
-                    </Typography>
-                  </div>
-                </div>
+                    <div className="flex items-start gap-3 rounded-xl bg-slate-50 p-3 dark:bg-slate-800/50">
+                      <div className="rounded-lg bg-slate-200 p-2 dark:bg-slate-700">
+                        <IdCardIcon className="h-4 w-4 text-slate-600 dark:text-slate-200" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <Typography className="text-xs text-slate-500 dark:text-slate-400">UUID</Typography>
+                        <div className="mt-1 flex items-center gap-2">
+                          <Typography
+                            className="font-medium text-slate-700 dark:text-slate-200 truncate"
+                            title={currentBook.uuid}
+                          >
+                            {currentBook.uuid}
+                          </Typography>
+                          <IconButton
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleCopyUuid}
+                            className="h-8 w-8 rounded-lg text-slate-500 transition hover:bg-slate-200/80 hover:text-slate-700 dark:text-slate-300 dark:hover:bg-slate-700"
+                          >
+                            <CopyIcon className="h-4 w-4" />
+                          </IconButton>
+                        </div>
+                      </div>
+                    </div>
 
-                <div className="flex items-start gap-3 rounded-xl bg-slate-50 p-3 dark:bg-slate-800/50">
-                  <div className="rounded-lg bg-slate-200 p-2 dark:bg-slate-700">
-                    <TagIcon className="h-4 w-4 text-slate-600 dark:text-slate-200" />
-                  </div>
-                  <div>
-                    <Typography className="text-xs text-slate-500 dark:text-slate-400">Jumlah Tag</Typography>
-                    <Typography className="font-medium text-slate-700 dark:text-slate-200">
-                      {currentBook.tags?.length ?? 0} tag
-                    </Typography>
-                  </div>
-                </div>
+                    <div className="flex items-start gap-3 rounded-xl bg-slate-50 p-3 dark:bg-slate-800/50">
+                      <div className="rounded-lg bg-slate-200 p-2 dark:bg-slate-700">
+                        <BookIcon className="h-4 w-4 text-slate-600 dark:text-slate-200" />
+                      </div>
+                      <div className="min-w-0">
+                        <Typography className="text-xs text-slate-500 dark:text-slate-400">Judul</Typography>
+                        <Typography className="font-medium text-slate-700 dark:text-slate-200 truncate" title={currentBook.title}>
+                          {currentBook.title}
+                        </Typography>
+                      </div>
+                    </div>
 
-                <div className="flex items-start gap-3 rounded-xl bg-slate-50 p-3 dark:bg-slate-800/50">
-                  <div className="rounded-lg bg-slate-200 p-2 dark:bg-slate-700">
-                    <CalendarIcon className="h-4 w-4 text-slate-600 dark:text-slate-200" />
-                  </div>
-                  <div>
-                    <Typography className="text-xs text-slate-500 dark:text-slate-400">Dibuat</Typography>
-                    <Typography className="font-medium text-slate-700 dark:text-slate-200">
-                      {formatDateTime(currentBook.createdAt)}
-                    </Typography>
-                  </div>
-                </div>
+                    <div className="flex items-start gap-3 rounded-xl bg-slate-50 p-3 dark:bg-slate-800/50">
+                      <div className="rounded-lg bg-slate-200 p-2 dark:bg-slate-700">
+                        <HashIcon className="h-4 w-4 text-slate-600 dark:text-slate-200" />
+                      </div>
+                      <div>
+                        <Typography className="text-xs text-slate-500 dark:text-slate-400">Versi</Typography>
+                        <Typography className="font-medium text-slate-700 dark:text-slate-200">
+                          v{currentBook.version}
+                        </Typography>
+                      </div>
+                    </div>
 
-                <div className="flex items-start gap-3 rounded-xl bg-slate-50 p-3 dark:bg-slate-800/50">
-                  <div className="rounded-lg bg-slate-200 p-2 dark:bg-slate-700">
-                    <CalendarIcon className="h-4 w-4 text-slate-600 dark:text-slate-200" />
-                  </div>
-                  <div>
-                    <Typography className="text-xs text-slate-500 dark:text-slate-400">Diperbarui</Typography>
-                    <Typography className="font-medium text-slate-700 dark:text-slate-200">
-                      {formatDateTime(currentBook.updatedAt)}
-                    </Typography>
-                  </div>
-                </div>
+                    <div className="flex items-start gap-3 rounded-xl bg-slate-50 p-3 dark:bg-slate-800/50">
+                      <div className="rounded-lg bg-slate-200 p-2 dark:bg-slate-700">
+                        <TagIcon className="h-4 w-4 text-slate-600 dark:text-slate-200" />
+                      </div>
+                      <div>
+                        <Typography className="text-xs text-slate-500 dark:text-slate-400">Jumlah Tag</Typography>
+                        <Typography className="font-medium text-slate-700 dark:text-slate-200">
+                          {currentBook.tags?.length ?? 0} tag
+                        </Typography>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3 rounded-xl bg-slate-50 p-3 dark:bg-slate-800/50">
+                      <div className="rounded-lg bg-slate-200 p-2 dark:bg-slate-700">
+                        <CalendarIcon className="h-4 w-4 text-slate-600 dark:text-slate-200" />
+                      </div>
+                      <div>
+                        <Typography className="text-xs text-slate-500 dark:text-slate-400">Dibuat</Typography>
+                        <Typography className="font-medium text-slate-700 dark:text-slate-200">
+                          {formatDateTime(currentBook.createdAt)}
+                        </Typography>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3 rounded-xl bg-slate-50 p-3 dark:bg-slate-800/50">
+                      <div className="rounded-lg bg-slate-200 p-2 dark:bg-slate-700">
+                        <CalendarIcon className="h-4 w-4 text-slate-600 dark:text-slate-200" />
+                      </div>
+                      <div>
+                        <Typography className="text-xs text-slate-500 dark:text-slate-400">Diperbarui</Typography>
+                        <Typography className="font-medium text-slate-700 dark:text-slate-200">
+                          {formatDateTime(currentBook.updatedAt)}
+                        </Typography>
+                      </div>
+                    </div>
+                  </Card.Body>
+                </Card>
+              </div>
+            </div>
+          </Tabs.Panel>
+          <Tabs.Panel value="aplikasi">
+            <Card className="border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+              <Card.Body className="p-6">
+                <Typography variant="h6" className="font-semibold text-slate-800 dark:text-white">
+                  Aplikasi
+                </Typography>
+                <Typography className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                  Belum ada data aplikasi untuk buku ini.
+                </Typography>
               </Card.Body>
             </Card>
-          </div>
-        </div>
+          </Tabs.Panel>
+        </Tabs>
       </div>
     </>
   );

@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\Admin\Apps\ClassChatting;
 
+use App\Enums\AppEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ClassChattingBookReorderRequest;
 use App\Http\Requests\ClassChattingBookStoreRequest;
 use App\Http\Requests\ClassChattingBookUpdateRequest;
 use App\Models\Book as DatabaseBook;
+use App\Models\BookIntegration;
 use Google\Cloud\Firestore\FieldValue;
 use Google\Cloud\Firestore\FirestoreClient;
 use Illuminate\Http\JsonResponse;
@@ -62,6 +64,16 @@ class BookController extends Controller
         try {
             $validated = $request->validated();
             $documentId = $validated['uuid'];
+            $book = DatabaseBook::query()
+                ->where('uuid', $documentId)
+                ->first();
+
+            if (! $book) {
+                return response()->json([
+                    'message' => 'Data buku database tidak ditemukan.',
+                ], 404);
+            }
+
             $document = $this->booksCollection()->document($documentId);
 
             if ($document->snapshot()->exists()) {
@@ -85,6 +97,11 @@ class BookController extends Controller
                 'version' => $validated['version'] ?? 1,
                 'createdAt' => FieldValue::serverTimestamp(),
                 'updatedAt' => FieldValue::serverTimestamp(),
+            ]);
+
+            BookIntegration::query()->firstOrCreate([
+                'book_id' => $book->id,
+                'app_key' => AppEnum::CLASS_CHATTING->value,
             ]);
 
             return response()->json([
@@ -191,6 +208,9 @@ class BookController extends Controller
     public function destroy(string $documentId): JsonResponse
     {
         try {
+            $book = DatabaseBook::query()
+                ->where('uuid', $documentId)
+                ->first();
             $document = $this->booksCollection()->document($documentId);
             $snapshot = $document->snapshot();
 
@@ -242,6 +262,13 @@ class BookController extends Controller
                     array_keys(array_values($affectedBooks))
                 )
             );
+
+            if ($book) {
+                BookIntegration::query()
+                    ->where('book_id', $book->id)
+                    ->where('app_key', AppEnum::CLASS_CHATTING->value)
+                    ->delete();
+            }
 
             return response()->json([
                 'message' => 'Buku berhasil dihapus dari Firestore.',

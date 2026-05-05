@@ -9,7 +9,7 @@ import {
   Checkbox,
   Radio,
 } from "@material-tailwind/react";
-import { XCircleIcon, SearchIcon, Loader2Icon, HashIcon, Edit3Icon, Hammer, BookA } from "lucide-react";
+import { XCircleIcon, SearchIcon, Loader2Icon, HashIcon, Edit3Icon, Hammer, BookA, XIcon } from "lucide-react";
 import { toast } from "react-hot-toast";
 import axios from "axios";
 import { router } from "@inertiajs/react";
@@ -131,7 +131,6 @@ export default function GenerateCodeDialog({ open, setOpen }: GenerateCodeDialog
           <div className="flex items-center justify-between mb-6 px-4 pt-3">
             <div className="flex flex-col items-start gap-1">
               <Typography variant="h5" className="font-bold flex items-center">
-                <BookA className="mr-2 h-5 w-5" />
                 Generate Kode Baru
               </Typography>
               <Typography variant="small" className="font-normal text-slate-500">
@@ -143,7 +142,7 @@ export default function GenerateCodeDialog({ open, setOpen }: GenerateCodeDialog
               variant="ghost"
               onClick={() => setOpen(false)}
             >
-              <XCircleIcon className="h-5 w-5" />
+              <XIcon className="h-4 w-4" />
             </IconButton>
           </div>
 

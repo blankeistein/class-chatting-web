@@ -189,7 +189,7 @@ const NavList = ({ isCollapsed = false }: { isCollapsed?: boolean }) => {
                 <Menu.Trigger as="div" className="aspect-square w-10 h-10">
                   <List.Item
                     selected={hasActiveChild}
-                    className="aspect-square w-10 h-10 justify-center p-0 flex shrink-0"
+                    className="aspect-square w-10 h-10 justify-center p-0 flex shrink-0 cursor-pointer"
                   >
                     <Icon className="h-[20px] w-[20px]" />
                   </List.Item>
@@ -219,7 +219,7 @@ const NavList = ({ isCollapsed = false }: { isCollapsed?: boolean }) => {
 
           return (
             <div key={title}>
-              <List.Item selected={hasActiveChild} onClick={() => toggleGroup(title)}>
+              <List.Item selected={hasActiveChild} onClick={() => toggleGroup(title)} className="cursor-pointer">
                 <List.ItemStart>
                   <Icon className="h-[18px] w-[18px]" />
                 </List.ItemStart>

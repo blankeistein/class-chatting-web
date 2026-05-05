@@ -65,10 +65,6 @@ const openVideoDetail = (video: Video) => {
   router.get(route("admin.videos.show", video.slug));
 };
 
-const hasEmptyStoragePath = (video: Video) => {
-  return !video.storage_path || video.storage_path.trim() === "";
-};
-
 const VideoActions = ({
   video,
   onDelete,
@@ -188,11 +184,6 @@ const VideoGridCard = ({
           >
             {video.title}
           </Typography>
-          {hasEmptyStoragePath(video) && (
-            <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-red-700 dark:bg-red-900/40 dark:text-red-300">
-              Storage Path Kosong
-            </span>
-          )}
           <Typography className="line-clamp-3 text-sm text-slate-600 dark:text-slate-300">
             {video.description}
           </Typography>
@@ -493,11 +484,6 @@ export default function Index({
                               >
                                 {video.title}
                               </Typography>
-                              {hasEmptyStoragePath(video) && (
-                                <span className="mt-1 inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-red-700 dark:bg-red-900/40 dark:text-red-300">
-                                  Storage Path Kosong
-                                </span>
-                              )}
                               <Typography className="mt-1 flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
                                 <EyeIcon className="h-3.5 w-3.5" />
                                 Klik untuk lihat detail

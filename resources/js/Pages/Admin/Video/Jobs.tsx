@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Head, router } from "@inertiajs/react";
 import { Button, Card, Chip, Dialog, IconButton, Input, Select, Typography } from "@material-tailwind/react";
+import Checkbox from "@/Components/Checkbox";
 import AdminLayout from "@/Layouts/AdminLayout";
 import {
   ArrowLeftIcon,
@@ -11,10 +12,12 @@ import {
   OctagonAlertIcon,
   RefreshCcwIcon,
   ServerIcon,
+  Trash2Icon,
 } from "lucide-react";
 import { onAuthStateChanged } from "firebase/auth";
-import { collection, onSnapshot, query } from "firebase/firestore";
+import { collection, deleteDoc, doc, onSnapshot, query, writeBatch } from "firebase/firestore";
 import { getFirebaseAuth, getFirebaseFirestore } from "@/lib/firebase";
+import { Toaster, toast } from "react-hot-toast";
 
 type HlsJob = {
   id: string;
@@ -153,6 +156,8 @@ export default function Jobs() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
   const perPage = 10;
 
   const statusOptions = [
@@ -221,6 +226,10 @@ export default function Jobs() {
     setSelectedJob(nextSelectedJob);
   }, [jobs, selectedJob]);
 
+  useEffect(() => {
+    setSelectedIds((currentIds) => currentIds.filter((id) => jobs.some((job) => job.id === id)));
+  }, [jobs]);
+
   const filteredJobs = jobs.filter((job) => {
     const matchesSearch = job.job_id.toLowerCase().includes(search.toLowerCase());
     const matchesStatus = statusFilter === "all" || job.status === statusFilter;
@@ -230,10 +239,113 @@ export default function Jobs() {
 
   const totalPages = Math.max(1, Math.ceil(filteredJobs.length / perPage));
   const paginatedJobs = filteredJobs.slice((currentPage - 1) * perPage, currentPage * perPage);
+  const allPageSelected = paginatedJobs.length > 0 && paginatedJobs.every((job) => selectedIds.includes(job.id));
+  const selectedCount = selectedIds.length;
+
+  const toggleSelect = (jobId: string): void => {
+    setSelectedIds((currentIds) => {
+      if (currentIds.includes(jobId)) {
+        return currentIds.filter((id) => id !== jobId);
+      }
+
+      return [...currentIds, jobId];
+    });
+  };
+
+  const toggleSelectAllCurrentPage = (): void => {
+    if (allPageSelected) {
+      setSelectedIds((currentIds) => currentIds.filter((id) => !paginatedJobs.some((job) => job.id === id)));
+
+      return;
+    }
+
+    setSelectedIds((currentIds) => {
+      const nextIds = new Set(currentIds);
+
+      paginatedJobs.forEach((job) => {
+        nextIds.add(job.id);
+      });
+
+      return Array.from(nextIds);
+    });
+  };
+
+  const handleDeleteJob = async (job: HlsJob): Promise<void> => {
+    if (!firestore) {
+      toast.error("Firebase Firestore belum siap.");
+
+      return;
+    }
+
+    if (!window.confirm(`Hapus job "${job.job_id}" dari Firestore?`)) {
+      return;
+    }
+
+    setIsDeleting(true);
+
+    try {
+      await deleteDoc(doc(firestore, "hls_jobs", job.id));
+      setSelectedIds((currentIds) => currentIds.filter((id) => id !== job.id));
+
+      if (selectedJob?.id === job.id) {
+        setSelectedJob(null);
+      }
+
+      toast.success("Job berhasil dihapus dari Firestore.");
+    } catch (error) {
+      console.error(error);
+      toast.error("Gagal menghapus job dari Firestore.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleBulkDelete = async (): Promise<void> => {
+    if (!firestore) {
+      toast.error("Firebase Firestore belum siap.");
+
+      return;
+    }
+
+    if (selectedIds.length === 0) {
+      toast.error("Pilih minimal satu job untuk dihapus.");
+
+      return;
+    }
+
+    if (!window.confirm(`Hapus ${selectedIds.length} job terpilih dari Firestore?`)) {
+      return;
+    }
+
+    setIsDeleting(true);
+
+    try {
+      const batch = writeBatch(firestore);
+
+      selectedIds.forEach((id) => {
+        batch.delete(doc(firestore, "hls_jobs", id));
+      });
+
+      await batch.commit();
+      setSelectedIds([]);
+
+      if (selectedJob && selectedIds.includes(selectedJob.id)) {
+        setSelectedJob(null);
+      }
+
+      toast.success("Job terpilih berhasil dihapus.");
+    } catch (error) {
+      console.error(error);
+      toast.error("Gagal menghapus job terpilih.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <>
       <Head title="Tugas Converter HLS" />
+      <Toaster position="top-center" />
 
       <div className="space-y-6 p-4">
         <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
@@ -265,6 +377,32 @@ export default function Jobs() {
             {isLoading ? "Memuat..." : "Muat Ulang"}
           </Button>
         </div>
+
+        {selectedCount > 0 && (
+          <Card color="secondary" className="fixed bottom-8 left-1/2 z-30 flex w-[90%] -translate-x-1/2 flex-row items-center justify-between gap-3 p-3 text-white shadow-xl lg:w-[620px]">
+            <div className="flex items-center gap-3">
+              <Checkbox
+                checked={allPageSelected}
+                onChange={toggleSelectAllCurrentPage}
+                color="primary"
+              />
+              <Typography variant="small" className="font-bold text-white">
+                {selectedCount} Job Terpilih
+              </Typography>
+            </div>
+            <Button
+              size="sm"
+              variant="ghost"
+              color="error"
+              className="flex items-center gap-2"
+              onClick={() => void handleBulkDelete()}
+              disabled={isDeleting}
+            >
+              <Trash2Icon className="h-4 w-4" />
+              {isDeleting ? "Menghapus..." : "Hapus Terpilih"}
+            </Button>
+          </Card>
+        )}
 
         <Card className="border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <Card.Body className="p-4">
@@ -322,7 +460,14 @@ export default function Jobs() {
               <table className="min-w-full table-auto text-left">
                 <thead>
                   <tr>
-                    {["ID", "Status", "Tanggal"].map((head) => (
+                    <th className="w-12 border-y border-slate-100 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-800/50">
+                      <Checkbox
+                        checked={allPageSelected}
+                        onChange={toggleSelectAllCurrentPage}
+                        color="primary"
+                      />
+                    </th>
+                    {["ID", "Status", "Tanggal", "Aksi"].map((head) => (
                       <th
                         key={head}
                         className="border-y border-slate-100 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-800/50"
@@ -345,13 +490,23 @@ export default function Jobs() {
                     return (
                       <tr
                         key={job.id}
-                        className="cursor-pointer border-b border-slate-100 transition-colors hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/50"
+                        className={`border-b border-slate-100 transition-colors hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/50 ${selectedIds.includes(job.id) ? "bg-blue-50/30 dark:bg-blue-900/10" : ""}`}
                         onClick={() => setSelectedJob(job)}
                       >
+                        <td className="p-4" onClick={(event) => event.stopPropagation()}>
+                          <Checkbox
+                            checked={selectedIds.includes(job.id)}
+                            onChange={() => toggleSelect(job.id)}
+                            color="primary"
+                          />
+                        </td>
                         <td className="p-4">
                           <div>
                             <Typography className="font-medium text-slate-800 dark:text-white">
                               {job.job_id}
+                            </Typography>
+                            <Typography className="text-xs text-slate-500 dark:text-slate-400">
+                              {inferVideoTitle(job)}
                             </Typography>
                           </div>
                         </td>
@@ -367,6 +522,19 @@ export default function Jobs() {
                           <Typography className="text-sm text-slate-600 dark:text-slate-300">
                             {formatDateTime(job.created_at)}
                           </Typography>
+                        </td>
+                        <td className="p-4" onClick={(event) => event.stopPropagation()}>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            color="error"
+                            className="flex items-center gap-2"
+                            onClick={() => void handleDeleteJob(job)}
+                            disabled={isDeleting}
+                          >
+                            <Trash2Icon className="h-4 w-4" />
+                            Hapus
+                          </Button>
                         </td>
                       </tr>
                     );
@@ -503,6 +671,14 @@ export default function Jobs() {
                 )}
 
                 <div className="flex flex-wrap items-center justify-end gap-2">
+                  <Button
+                    variant="ghost"
+                    color="error"
+                    onClick={() => void handleDeleteJob(selectedJob)}
+                    disabled={isDeleting}
+                  >
+                    {isDeleting ? "Menghapus..." : "Hapus Job"}
+                  </Button>
                   {selectedJob.video_slug && (
                     <Button
                       variant="ghost"

@@ -129,6 +129,7 @@ return [
     ],
 
     'admin_path' => env('ADMIN_PATH', 'admin'),
+    'login' => env('LOGIN_PATH', 'login'),
 
     'api_key' => env('APP_API_KEY'),
 

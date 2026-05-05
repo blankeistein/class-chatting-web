@@ -21,7 +21,7 @@ class FirebaseWebhookController extends Controller
         description: 'Webhook yang menerima event pembuatan user dari Firebase lalu melakukan sinkronisasi atau pembaruan data user lokal.'
     )]
     #[HeaderParameter('X-Firebase-Secret', 'Shared secret untuk memverifikasi bahwa request berasal dari sumber webhook yang sah.', required: true, example: 'firebase-webhook-secret')]
-    #[BodyParameter('uid', 'Firebase UID pengguna.', required: true, example: 'firebase-user-001')]
+    #[BodyParameter('uuid', 'Firebase UUID pengguna.', required: true, example: 'firebase-user-001')]
     #[BodyParameter('email', 'Alamat email pengguna.', required: true, example: 'user@example.com')]
     #[BodyParameter('displayName', 'Nama tampilan pengguna.', required: false, example: 'Budi')]
     #[BodyParameter('photoURL', 'URL avatar pengguna.', required: false, example: 'https://example.com/avatar.jpg')]
@@ -29,7 +29,7 @@ class FirebaseWebhookController extends Controller
     public function userCreated(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'uid' => 'required|string',
+            'uuid' => 'required|string',
             'email' => 'required|email',
             'displayName' => 'nullable|string',
             'photoURL' => 'nullable|url',
@@ -37,7 +37,7 @@ class FirebaseWebhookController extends Controller
         ]);
 
         $user = User::updateOrCreate(
-            ['firebase_uid' => $validated['uid']],
+            ['firebase_uid' => $validated['uuid']],
             [
                 'name' => $validated['displayName'] ?? 'User',
                 'email' => $validated['email'],
@@ -47,7 +47,7 @@ class FirebaseWebhookController extends Controller
             ]
         );
 
-        Log::info('Firebase user synced', ['uid' => $validated['uid']]);
+        Log::info('Firebase user synced', ['uuid' => $validated['uuid'], 'user_id' => $user->id]);
 
         return response()->json(['message' => 'User synced', 'id' => $user->id], 201);
     }

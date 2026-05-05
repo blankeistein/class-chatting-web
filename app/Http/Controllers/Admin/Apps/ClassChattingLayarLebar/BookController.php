@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Http\Controllers\Admin\Apps\AnakIndonesiaMenghafal;
+namespace App\Http\Controllers\Admin\Apps\ClassChattingLayarLebar;
 
 use App\Enums\AppEnum;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\AnakIndonesiaMenghafal\BookReorderRequest;
-use App\Http\Requests\AnakIndonesiaMenghafal\BookStoreRequest;
-use App\Http\Requests\AnakIndonesiaMenghafal\BookUpdateRequest;
+use App\Http\Requests\ClassChattingLayarLebar\BookReorderRequest;
+use App\Http\Requests\ClassChattingLayarLebar\BookStoreRequest;
+use App\Http\Requests\ClassChattingLayarLebar\BookUpdateRequest;
 use App\Models\Book;
 use App\Models\BookIntegration;
 use Google\Cloud\Firestore\FieldValue;
@@ -25,12 +25,12 @@ class BookController extends Controller
 
     public function index(): Response
     {
-        return Inertia::render('Admin/Apps/AnakIndonesiaMenghafal/Book/Index');
+        return Inertia::render('Admin/Apps/ClassChattingLayarLebar/Book/Index');
     }
 
     public function category(): Response
     {
-        return Inertia::render('Admin/Apps/AnakIndonesiaMenghafal/Book/Category');
+        return Inertia::render('Admin/Apps/ClassChattingLayarLebar/Book/Category');
     }
 
     public function sync(string $uuid): JsonResponse
@@ -96,7 +96,7 @@ class BookController extends Controller
 
             BookIntegration::query()->firstOrCreate([
                 'book_id' => $book->id,
-                'app_key' => AppEnum::ANAK_INDONESIA_MENGHAFAL->value,
+                'app_key' => AppEnum::CLASS_CHATTING_LAYAR_LEBAR->value,
             ]);
 
             return response()->json([
@@ -261,7 +261,7 @@ class BookController extends Controller
             if ($book) {
                 BookIntegration::query()
                     ->where('book_id', $book->id)
-                    ->where('app_key', AppEnum::ANAK_INDONESIA_MENGHAFAL->value)
+                    ->where('app_key', AppEnum::CLASS_CHATTING_LAYAR_LEBAR->value)
                     ->delete();
             }
 
@@ -277,7 +277,7 @@ class BookController extends Controller
 
     private function booksCollection()
     {
-        return $this->firestore->collection('apps/anak-indonesia-menghafal/books');
+        return $this->firestore->collection('apps/class-chatting-layar-lebar/books');
     }
 
     private function batchUpdateBookOrders(array $books): void

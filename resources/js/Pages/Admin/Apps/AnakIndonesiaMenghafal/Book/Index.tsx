@@ -40,12 +40,12 @@ import { Toaster, toast } from "react-hot-toast";
 import { collection, onSnapshot } from "firebase/firestore";
 import AdminAppLayout from "@/Layouts/AdminAppLayout";
 import { getFirebaseFirestore } from "@/lib/firebase";
-import BookEditDialog from "./Partials/EditBookDialog";
-import { GridBookCard } from "./Partials/GridBookCard";
-import AddBookDialog, { type Book as NewBook } from "./Partials/AddBookDialog";
-import BookDetailDialog from "./Partials/BookDetailDialog";
+import BookEditDialog from "@/Pages/Admin/Apps/Partials/Book/EditBookDialog";
+import { GridBookCard } from "@/Pages/Admin/Apps/Partials/Book/GridBookCard";
+import AddBookDialog, { type Book as NewBook } from "@/Pages/Admin/Apps/Partials/Book/AddBookDialog";
+import BookDetailDialog from "@/Pages/Admin/Apps/Partials/Book/BookDetailDialog";
 import { PageHeader } from "@/Components/PageHeader";
-import SortableBookTableRow from "./Partials/SortableBookTableRow";
+import SortableBookTableRow from "@/Pages/Admin/Apps/Partials/Book/SortableBookTableRow";
 
 export type Book = {
   originalKey: string;
@@ -53,7 +53,7 @@ export type Book = {
   id: string;
   bookPath: string;
   playstoreId: string;
-  keyword: string;
+  keyword: string[];
   lock: boolean;
   name: string;
   oldOrder: number;
@@ -92,8 +92,8 @@ type FirebaseBookCategory = {
   order: number;
 };
 
-const BOOKS_COLLECTION = "apps/AnakIndonesiaMenghafal/books";
-const BOOK_CATEGORIES_COLLECTION = "apps/AnakIndonesiaMenghafal/book_categories";
+const BOOKS_COLLECTION = "apps/anak-indonesia-menghafal/books";
+const BOOK_CATEGORIES_COLLECTION = "apps/anak-indonesia-menghafal/book_categories";
 
 const normalizeBook = (key: string, value: Partial<FirebaseBook>): Book => {
   return {
@@ -102,7 +102,7 @@ const normalizeBook = (key: string, value: Partial<FirebaseBook>): Book => {
     id: value.id ?? key,
     bookPath: value.bookPath ?? key,
     playstoreId: value.playstoreId ?? value.id ?? key,
-    keyword: value.keyword ?? "",
+    keyword: value.keyword ? value.keyword.split(",").map((k) => k.trim()) : [],
     lock: Boolean(value.lock),
     name: value.name ?? "-",
     oldOrder: typeof value.order === "number" ? value.order : Number.MAX_SAFE_INTEGER,
@@ -290,11 +290,10 @@ export default function Index() {
       const matchesSearch = !query || [
         book.name,
         book.id,
-        book.keyword,
         book.status,
       ].some((value) => value.toLowerCase().includes(query));
 
-      const matchesKeyword = !hasKeywordFilter || extractBookKeywords(book.keyword).includes(selectedKeyword);
+      const matchesKeyword = !hasKeywordFilter || book.keyword.some((k) => k.includes(selectedKeyword));
       const matchesStatus = !hasStatusFilter || book.status === selectedStatus;
 
       return matchesSearch && matchesKeyword && matchesStatus;
@@ -346,7 +345,7 @@ export default function Index() {
     setIsSavingOrder(true);
 
     try {
-      await axios.patch(route("admin.apps.class-chatting.book.items.reorder"), {
+      await axios.patch(route("admin.apps.anak-indonesia-menghafal.book.items.reorder"), {
         books: changedBooks,
       });
 
@@ -372,7 +371,7 @@ export default function Index() {
     }
 
     try {
-      await axios.post(route("admin.apps.class-chatting.book.items.store"), {
+      await axios.post(route("admin.apps.anak-indonesia-menghafal.book.items.store"), {
         uuid: book.uuid,
         title: book.title,
         cover: book.coverUrl,
@@ -396,7 +395,7 @@ export default function Index() {
     setActiveDeleteKey(book.originalKey);
 
     try {
-      await axios.delete(route("admin.apps.class-chatting.book.items.destroy", { documentId: book.originalKey }));
+      await axios.delete(route("admin.apps.anak-indonesia-menghafal.book.items.destroy", { documentId: book.originalKey }));
       toast.success("Buku berhasil dihapus dari Firestore.");
     } catch (error) {
       console.error("Error deleting book:", error);
@@ -432,7 +431,7 @@ export default function Index() {
     setActiveEditKey(newForm.originalKey);
 
     try {
-      await axios.put(route("admin.apps.class-chatting.book.items.update", { documentId: newForm.originalKey }), {
+      await axios.put(route("admin.apps.anak-indonesia-menghafal.book.items.update", { documentId: newForm.originalKey }), {
         cover: newForm.cover,
         id: newForm.id,
         bookPath: newForm.bookPath,
@@ -459,7 +458,7 @@ export default function Index() {
 
   const updateLockStatus = useCallback(async (book: Book, lock: boolean) => {
     try {
-      await axios.put(route("admin.apps.class-chatting.book.items.lock.update", { documentId: book.originalKey }), {
+      await axios.put(route("admin.apps.anak-indonesia-menghafal.book.items.lock.update", { documentId: book.originalKey }), {
         lock: lock
       });
       toast.success(`Buku berhasil ${lock ? "dikunci" : "dibuka kuncinya"}.`);
@@ -593,7 +592,7 @@ export default function Index() {
             <div className="flex flex-col lg:flex-row gap-2">
               <div className="w-full space-y-1">
                 <Typography as="label" htmlFor="cari-buku" type="small" color="default" className="font-semibold">
-                  Pencarian dan aksi cepat
+                  Cari
                 </Typography>
                 <Input
                   value={search}
@@ -771,9 +770,6 @@ export default function Index() {
             </div>
             <Typography variant="h6" className="mt-4 text-slate-800 dark:text-white">
               Buku tidak ditemukan
-            </Typography>
-            <Typography className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-              Periksa kata kunci pencarian atau pastikan collection <span className="font-mono">books</span> sudah memiliki data.
             </Typography>
           </Card>
         )}

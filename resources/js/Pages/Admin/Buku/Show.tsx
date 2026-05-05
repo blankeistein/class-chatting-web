@@ -1,16 +1,17 @@
 import React, { useState } from "react";
 import { Head, Link, router } from "@inertiajs/react";
-import { Button, Card, Chip, IconButton, Tabs, Typography } from "@material-tailwind/react";
+import { Button, Card, Chip, IconButton, Menu, Tabs, Typography } from "@material-tailwind/react";
 import AdminLayout from "@/Layouts/AdminLayout";
 import {
   ArrowLeftIcon,
   BookIcon,
   CalendarIcon,
+  CloudDownloadIcon,
   CopyIcon,
   EditIcon,
-  ExternalLinkIcon,
   HashIcon,
   IdCardIcon,
+  MoreVerticalIcon,
   TagIcon,
   Trash2Icon,
   UploadCloudIcon,
@@ -100,44 +101,35 @@ export default function Show({ book }: { book: { data: Book } }) {
               href={currentBook.url || undefined}
               target="_blank"
               rel="noopener noreferrer"
+              aria-disabled={!currentBook.url}
             >
-              <ExternalLinkIcon className="h-4 w-4" />
-              {currentBook.url ? "Buka Download Link" : "Download Link Tidak Tersedia"}
+              <CloudDownloadIcon className="h-4 w-4" />
+              Download Link
             </Button>
-            <Button
-              as={Link}
-              size="sm"
-              color="secondary"
-              className="flex items-center gap-2"
-              href={route("admin.books.edit", currentBook.id)}
-            >
-              <EditIcon className="h-4 w-4" />
-              Edit Buku
-            </Button>
-            <Button
-              as={Link}
-              size="sm"
-              color="secondary"
-              className="flex items-center gap-2"
-              href={route("admin.books.upload", currentBook.id)}
-            >
-              <UploadCloudIcon className="h-4 w-4" />
-              Upload Buku
-            </Button>
-            <Button
-              size="sm"
-              color="error"
-              className="flex items-center gap-2"
-              onClick={handleDelete}
-            >
-              <Trash2Icon className="h-4 w-4" />
-              Hapus
-            </Button>
+            <Menu placement="bottom-end">
+              <Menu.Trigger as={IconButton} variant="outline" size="sm">
+                <MoreVerticalIcon className="w-4 h-4" />
+              </Menu.Trigger>
+              <Menu.Content>
+                <Menu.Item as={Link} href={route("admin.books.edit", currentBook.id)}>
+                  <EditIcon className="h-4 w-4 mr-2" />
+                  Edit Buku
+                </Menu.Item>
+                <Menu.Item as={Link} href={route("admin.books.upload", currentBook.id)}>
+                  <UploadCloudIcon className="h-4 w-4 mr-2" />
+                  Upload Buku
+                </Menu.Item>
+                <Menu.Item onClick={handleDelete} className="text-error">
+                  <Trash2Icon className="h-4 w-4 mr-2" />
+                  Hapus
+                </Menu.Item>
+              </Menu.Content>
+            </Menu>
           </div>
         </div>
 
         <Tabs defaultValue="umum">
-          <Tabs.List>
+          <Tabs.List className="mx-1">
             <Tabs.Trigger value="umum">
               Umum
             </Tabs.Trigger>

@@ -40,12 +40,12 @@ import { Toaster, toast } from "react-hot-toast";
 import { collection, onSnapshot } from "firebase/firestore";
 import AdminAppLayout from "@/Layouts/AdminAppLayout";
 import { getFirebaseFirestore } from "@/lib/firebase";
-import BookEditDialog from "./Partials/EditBookDialog";
-import { GridBookCard } from "./Partials/GridBookCard";
-import AddBookDialog, { type Book as NewBook } from "./Partials/AddBookDialog";
-import BookDetailDialog from "./Partials/BookDetailDialog";
+import BookEditDialog from "@/Pages/Admin/Apps/Partials/Book/EditBookDialog";
+import { GridBookCard } from "@/Pages/Admin/Apps/Partials/Book/GridBookCard";
+import AddBookDialog, { type Book as NewBook } from "@/Pages/Admin/Apps/Partials/Book/AddBookDialog";
+import BookDetailDialog from "@/Pages/Admin/Apps/Partials/Book/BookDetailDialog";
 import { PageHeader } from "@/Components/PageHeader";
-import SortableBookTableRow from "./Partials/SortableBookTableRow";
+import SortableBookTableRow from "@/Pages/Admin/Apps/Partials/Book/SortableBookTableRow";
 
 export type Book = {
   originalKey: string;
@@ -770,9 +770,6 @@ export default function Index() {
             </div>
             <Typography variant="h6" className="mt-4 text-slate-800 dark:text-white">
               Buku tidak ditemukan
-            </Typography>
-            <Typography className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-              Periksa kata kunci pencarian atau pastikan collection <span className="font-mono">books</span> sudah memiliki data.
             </Typography>
           </Card>
         )}

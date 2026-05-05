@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Admin\Apps\ClassChatting;
 
 use App\Enums\AppEnum;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\ClassChattingBookReorderRequest;
-use App\Http\Requests\ClassChattingBookStoreRequest;
-use App\Http\Requests\ClassChattingBookUpdateRequest;
+use App\Http\Requests\ClassChatting\BookReorderRequest;
+use App\Http\Requests\ClassChatting\BookStoreRequest;
+use App\Http\Requests\ClassChatting\BookUpdateRequest;
 use App\Models\Book as DatabaseBook;
 use App\Models\BookIntegration;
 use Google\Cloud\Firestore\FieldValue;
@@ -59,7 +59,7 @@ class BookController extends Controller
         ]);
     }
 
-    public function store(ClassChattingBookStoreRequest $request): JsonResponse
+    public function store(BookStoreRequest $request): JsonResponse
     {
         try {
             $validated = $request->validated();
@@ -87,7 +87,7 @@ class BookController extends Controller
                 'id' => $documentId,
                 'bookPath' => $documentId,
                 'playstoreId' => $documentId,
-                'keyword' => $validated['keyword'] ? implode(',', $validated['keyword']) : '',
+                'keyword' => $validated['tags'] ? implode(',', $validated['tags']) : '',
                 'lock' => false,
                 'name' => $validated['title'],
                 'order' => $validated['order'],
@@ -114,7 +114,7 @@ class BookController extends Controller
         }
     }
 
-    public function update(ClassChattingBookUpdateRequest $request, string $documentId): JsonResponse
+    public function update(BookUpdateRequest $request, string $documentId): JsonResponse
     {
         try {
             $validated = $request->validated();
@@ -183,7 +183,7 @@ class BookController extends Controller
         }
     }
 
-    public function reorder(ClassChattingBookReorderRequest $request): JsonResponse
+    public function reorder(BookReorderRequest $request): JsonResponse
     {
         try {
             $this->batchUpdateBookOrders(

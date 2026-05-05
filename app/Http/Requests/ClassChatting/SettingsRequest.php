@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\ClassChatting;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
-class ClassChattingSettingsRequest extends FormRequest
+class SettingsRequest extends FormRequest
 {
     public function authorize(): bool
     {

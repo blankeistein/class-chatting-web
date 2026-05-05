@@ -114,7 +114,7 @@ export const AppsLinks: AppLinkType[] = [
   {
     icon: "/assets/images/icons/class-chatting.webp",
     title: "Class Chatting",
-    routeName: "admin.apps.class-chatting",
+    routeName: "admin.apps.class-chatting.index",
   },
   {
     icon: "/assets/images/icons/class-chatting-ulangan-online.webp",
@@ -124,17 +124,17 @@ export const AppsLinks: AppLinkType[] = [
   {
     icon: "/assets/images/icons/anak-indonesia-menghafal.webp",
     title: "Anak Indonesia Menghafal",
-    routeName: "admin.apps.anak-indonesia-menghafal",
+    routeName: "admin.apps.anak-indonesia-menghafal.index",
   },
   {
     icon: "/assets/images/icons/class-chatting-for-kids.webp",
     title: "For Kids",
-    routeName: "admin.dashboard",
+    routeName: "admin.apps.class-chatting-for-kids.index",
   },
   {
     icon: "/assets/images/icons/class-chatting-layar-lebar.webp",
     title: "Layar Lebar",
-    routeName: "admin.dashboard",
+    routeName: "admin.apps.class-chatting-layar-lebar.index",
   }
 ]
 

@@ -3,7 +3,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { Card, Chip, IconButton, Menu, Typography } from "@material-tailwind/react";
 import { ArrowDownIcon, ArrowUpIcon, Copy, EyeIcon, GripVerticalIcon, LoaderCircleIcon, LockIcon, MoreVertical, PencilIcon, Trash2Icon, UnlockIcon } from "lucide-react";
 import { memo, useMemo } from "react";
-import { Book } from "../Index";
+import { Book } from "@/Pages/Admin/Apps/ClassChatting/Book/Index";
 
 type GridBookCardProps = {
   book: Book;
@@ -53,9 +53,7 @@ export const GridBookCard = memo(function GridBookCard({
   });
 
   const keywords = useMemo(() => {
-    return (book.keyword || "")
-      .split(",")
-      .map((keyword) => keyword.trim())
+    return (book.keyword || [])
       .filter((keyword) => keyword);
   }, [book.keyword]);
 

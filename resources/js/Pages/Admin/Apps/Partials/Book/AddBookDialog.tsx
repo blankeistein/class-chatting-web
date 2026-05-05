@@ -112,7 +112,7 @@ export default function AddBookDialog({
             <div className="space-y-3 pr-1">
               {isLoading ? (
                 Array.from({ length: 4 }).map((_, index) => (
-                  <div key={index} className="h-24 animate-pulse rounded-2xl border border-slate-200 bg-slate-100" />
+                  <div key={index} className="h-28 animate-pulse rounded-2xl border bg-gray-300" />
                 ))
               ) : books.length > 0 ? (
                 books.map((book) => {

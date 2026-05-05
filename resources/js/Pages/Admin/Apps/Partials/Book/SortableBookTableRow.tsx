@@ -1,8 +1,8 @@
 import { useSortable } from "@dnd-kit/sortable";
-import { Book } from "../Index";
 import { CSS } from "@dnd-kit/utilities";
 import { BookIcon, Copy, EyeIcon, GripVerticalIcon, LoaderCircleIcon, LockIcon, MoreVertical, PencilIcon, Trash2Icon, UnlockIcon } from "lucide-react";
 import { Chip, IconButton, Menu, Typography } from "@material-tailwind/react";
+import { Book } from "@/Pages/Admin/Apps/ClassChatting/Book/Index";
 
 type SortableBookTableRowProps = {
   book: Book;

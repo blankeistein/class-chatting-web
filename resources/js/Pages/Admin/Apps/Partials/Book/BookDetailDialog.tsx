@@ -8,7 +8,7 @@ import {
   ShieldCheckIcon,
   XIcon,
 } from "lucide-react";
-import { Book } from "../Index";
+import { Book } from "@/Pages/Admin/Apps/ClassChatting/Book/Index";
 
 type BookDetailDialogProps = {
   open: boolean;

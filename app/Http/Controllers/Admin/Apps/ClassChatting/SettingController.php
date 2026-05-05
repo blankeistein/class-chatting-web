@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin\Apps\ClassChatting;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\ClassChattingSettingsRequest;
+use App\Http\Requests\ClassChatting\SettingsRequest;
 use Google\Cloud\Firestore\FirestoreClient;
 use Illuminate\Http\JsonResponse;
 use Inertia\Inertia;
@@ -20,7 +20,7 @@ class SettingController extends Controller
         return Inertia::render('Admin/Apps/ClassChatting/Settings');
     }
 
-    public function update(ClassChattingSettingsRequest $request): JsonResponse
+    public function update(SettingsRequest $request): JsonResponse
     {
         try {
             $this->firestore

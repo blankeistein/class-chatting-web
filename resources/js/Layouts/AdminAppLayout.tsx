@@ -68,7 +68,56 @@ const AnakIndonesiaMenghafalLinks: LinkType[] = [
   {
     title: "Buku",
     icon: BookIcon,
-    routeName: "admin.apps.anak-indonesia-menghafal.book"
+    children: [
+      {
+        title: "Daftar",
+        icon: ListCollapse,
+        routeName: "admin.apps.anak-indonesia-menghafal.book"
+      },
+      {
+        title: "Kategori",
+        icon: LayoutGrid,
+        routeName: "admin.apps.anak-indonesia-menghafal.book.category"
+      }
+    ]
+  },
+];
+
+const ClassChattingForKidsLinks: LinkType[] = [
+  {
+    title: "Buku",
+    icon: BookIcon,
+    children: [
+      {
+        title: "Daftar",
+        icon: ListCollapse,
+        routeName: "admin.apps.class-chatting-for-kids.book"
+      },
+      {
+        title: "Kategori",
+        icon: LayoutGrid,
+        routeName: "admin.apps.class-chatting-for-kids.book.category"
+      }
+    ]
+  },
+];
+
+const ClassChattingLayarLebarLinks: LinkType[] = [
+  {
+    title: "Buku",
+    icon: BookIcon,
+    children: [
+      {
+        title: "Daftar",
+        icon: ListCollapse,
+        routeName: "admin.apps.class-chatting-layar-lebar.book"
+      },
+      {
+        title: "Kategori",
+        icon: LayoutGrid,
+        routeName: "admin.apps.class-chatting-layar-lebar.book.category"
+      }
+    ]
   },
 ];
 
@@ -243,13 +292,13 @@ const NavList = ({ links, isCollapsed = false }: { links: LinkType[], isCollapse
   )
 }
 
-function Sidebar({ title, links, isCollapsed }: { title: string, links: LinkType[], isCollapsed: boolean }) {
+function Sidebar({ title, logo, links, isCollapsed }: { title: string, logo: string, links: LinkType[], isCollapsed: boolean }) {
 
   return (
     <div className={`p-2 transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-[280px]'} hidden lg:block overflow-hidden`}>
       <Card className="flex flex-col h-full max-h-screen">
         <Card.Header className={`flex items-center gap-4 mb-0 mt-3 h-max transition-all duration-300 ${isCollapsed ? 'mx-1 px-1 justify-center' : 'mx-4'}`}>
-          <img src="/assets/images/icons/lestari-ilmu.webp" alt="logo" className="h-8 w-8 flex-shrink-0" />
+          <img src={logo} alt="logo" className="h-8 w-8 flex-shrink-0 object-cover rounded" />
 
           {!isCollapsed && (
             <Typography
@@ -346,7 +395,7 @@ function ProfileMenu({ user }: { user: User | null }) {
   );
 }
 
-function TopNavbar({ title, links, onToggleSidebar }: { title: string, links: LinkType[], onToggleSidebar: () => void }) {
+function TopNavbar({ title, logo, links, onToggleSidebar }: { title: string, logo: string, links: LinkType[], onToggleSidebar: () => void }) {
   const auth = useMemo(() => getFirebaseAuth(), []);
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<User | null>(auth?.currentUser || null);
@@ -447,7 +496,7 @@ function TopNavbar({ title, links, onToggleSidebar }: { title: string, links: Li
           <Drawer.Panel placement="left">
             <div className="grid grid-rows-[max-content_auto_max-content] h-full">
               <div className="flex items-center gap-4 mb-4 px-2">
-                <img src="/assets/images/icons/lestari-ilmu.webp" alt="logo" className="h-8 w-8" />
+                <img src={logo} alt="logo" className="h-8 w-8" />
                 <Typography
                   type="h1"
                   className="block py-1 font-bold !text-lg text-surface-foreground whitespace-nowrap overflow-hidden truncate"
@@ -483,27 +532,41 @@ export default function AdminAppLayout({ appName, children }: { appName: string,
 
   let links: LinkType[] = [];
   let title: string = "";
+  let logo: string = "";
 
   switch (appName) {
     case "class-chatting":
       title = "Class Chatting";
       links = ClassChattingLinks;
+      logo = "/assets/images/icons/class-chatting.webp";
       break;
     case "anak-indonesia-menghafal":
       title = "Anak Indonesia Menghafal";
       links = AnakIndonesiaMenghafalLinks;
+      logo = "/assets/images/icons/anak-indonesia-menghafal.webp";
+      break;
+    case "class-chatting-for-kids":
+      title = "Class Chatting for Kids";
+      links = ClassChattingForKidsLinks;
+      logo = "/assets/images/icons/class-chatting-for-kids.webp";
+      break;
+    case "class-chatting-layar-lebar":
+      title = "Class Chatting Layar Lebar";
+      links = ClassChattingLayarLebarLinks;
+      logo = "/assets/images/icons/class-chatting-layar-lebar.webp";
       break;
     default:
       title = "Class Chatting Web";
       links = ClassChattingLinks;
+      logo = "/assets/images/icons/class-chatting.webp";
       break;
   }
 
   return (
     <div className="h-screen bg-background flex overflow-hidden">
-      <Sidebar title={title} links={links} isCollapsed={isCollapsed} />
+      <Sidebar title={title} logo={logo} links={links} isCollapsed={isCollapsed} />
       <div ref={contentRef} className="flex-1 overflow-auto">
-        <TopNavbar title={title} links={links} onToggleSidebar={() => setIsCollapsed(!isCollapsed)} />
+        <TopNavbar title={title} logo={logo} links={links} onToggleSidebar={() => setIsCollapsed(!isCollapsed)} />
         {children}
         <footer className="p-2 flex items-center justify-between border-t border-surface mt-auto">
           <Typography className="text-sm text-surface-foreground/60">

@@ -457,6 +457,7 @@ export default function Index({
                 <Select value={`${sortBy}|${sortDirection}`} onValueChange={handleSortChange}>
                   <Select.Trigger id="urutkan-berdasarkan" placeholder="Urutkan" />
                   <Select.List>
+                    <Select.Option value="updated_at|desc">Diperbarui</Select.Option>
                     <Select.Option value="created_at|desc">Terbaru</Select.Option>
                     <Select.Option value="created_at|asc">Terlama</Select.Option>
                     <Select.Option value="code|asc">Kode (A-Z)</Select.Option>

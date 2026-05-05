@@ -5,6 +5,8 @@ namespace App\Http\Controllers\API\V2;
 use App\Http\Controllers\Controller;
 use App\Models\ActivationCode;
 use App\Models\Book;
+use App\Models\User;
+use App\Models\UserBook;
 use Dedoc\Scramble\Attributes\BodyParameter;
 use Dedoc\Scramble\Attributes\Endpoint;
 use Dedoc\Scramble\Attributes\Group;
@@ -95,6 +97,10 @@ class BookController extends Controller
                     return $this->errorResponse(422, 114, 'Kode tidak cocok diaktifkan disini. [114]');
                 }
 
+                $user = User::query()
+                    ->where('firebase_uid', $validateData['uid'])
+                    ->first();
+
                 if ($code->type !== 'public') {
                     if (! empty($code->user_id) && $code->user_id !== $validateData['uid']) {
                         return $this->errorResponse(409, 109, 'Maaf kode yang anda masukkan sudah diaktifkan di akun lain [109]');
@@ -129,6 +135,19 @@ class BookController extends Controller
                     'code' => $validateData['code'],
                     'version' => 2,
                 ]);
+
+                if($user) {
+                    UserBook::query()->updateOrCreate(
+                        [
+                            'user_id' => $user->id,
+                            'book_id' => $book->id,
+                        ],
+                        [
+                            'activation_code_id' => $code->id,
+                        ]
+                    );
+                }
+
 
                 return $this->successResponse([
                     'message' => $message,

@@ -4,6 +4,7 @@ use App\Enums\ActivationCodeTierEnum;
 use App\Models\ActivationCode;
 use App\Models\ActivationItem;
 use App\Models\Book;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Kreait\Firebase\Exception\Auth\FailedToVerifyToken;
 use Kreait\Firebase\JWT\Contract\Token as ContractToken;
@@ -28,6 +29,13 @@ it('rejects v2 activation requests without a firebase bearer token', function ()
 });
 
 it('uses the firebase uid from the verified bearer token instead of the request body', function () {
+    $user = User::query()->create([
+        'name' => 'Firebase User',
+        'email' => 'firebase-user@example.com',
+        'password' => 'password',
+        'firebase_uid' => 'firebase-user-from-token',
+    ]);
+
     $book = Book::query()->create([
         'uuid' => 'book-uuid-001',
         'title' => 'Buku Aktivasi',
@@ -75,6 +83,12 @@ it('uses the firebase uid from the verified bearer token instead of the request 
 
     expect($activationCode->fresh())
         ->user_id->toBe('firebase-user-from-token');
+
+    $this->assertDatabaseHas('user_books', [
+        'user_id' => $user->id,
+        'book_id' => $book->id,
+        'activation_code_id' => $activationCode->id,
+    ]);
 });
 
 it('rejects v2 activation requests with an invalid firebase bearer token', function () {

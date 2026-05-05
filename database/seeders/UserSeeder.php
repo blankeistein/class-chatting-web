@@ -19,5 +19,13 @@ class UserSeeder extends Seeder
             'role' => 'admin',
             'email_verified_at' => now(),
         ]);
+
+        User::create([
+            'name' => 'Dika',
+            'email' => 'dika@lestariilmu.id',
+            'password' => bcrypt('password'),
+            'role' => 'admin',
+            'email_verified_at' => now(),
+        ]);
     }
 }

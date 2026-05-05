@@ -107,6 +107,11 @@ export default function Create() {
       return;
     }
 
+    if (currentStep >= 3) {
+      handleSubmit();
+      return;
+    }
+
     setCurrentStep((step) => Math.min(step + 1, STEPS.length) as (typeof STEPS)[number]["id"]);
   };
 
@@ -185,9 +190,7 @@ export default function Create() {
     );
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const handleSubmit = () => {
     post(route("admin.videos.store"), {
       onSuccess: () => {
         toast.success("Video berhasil diunggah.");
@@ -296,7 +299,7 @@ export default function Create() {
             </CardBody>
           </Card>
 
-          <form onSubmit={handleSubmit}>
+          <form>
             {currentStep === 1 && (
               <Card className="border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
                 <CardBody className="space-y-6 p-6">
@@ -630,21 +633,23 @@ export default function Create() {
                 {currentStep === 1 ? "Batal" : "Kembali"}
               </Button>
 
-              {currentStep < STEPS.length ? (
-                <Button type="button" color="primary" onClick={goNext} className="flex items-center justify-center gap-2">
-                  Lanjut
-                  <ArrowRightIcon className="h-4 w-4" />
-                </Button>
-              ) : (
-                <Button type="submit" color="primary" disabled={processing} className="flex items-center justify-center gap-2">
-                  <SaveIcon className="h-4 w-4" />
-                  {processing ? "Mengunggah..." : "Simpan Video"}
-                </Button>
-              )}
+              {
+                (currentStep < STEPS.length) ?
+                  <Button type="button" color="primary" onClick={goNext} className="flex items-center justify-center gap-2">
+                    Lanjut
+                    <ArrowRightIcon className="h-4 w-4" />
+                  </Button>
+                  :
+                  <Button type="button" color="primary" onClick={goNext} disabled={processing || !(currentStep >= STEPS.length)} className="flex items-center justify-center gap-2">
+                    <SaveIcon className="h-4 w-4" />
+                    {processing ? "Mengunggah..." : "Simpan Video"}
+                  </Button>
+              }
+
             </div>
           </form>
-        </div>
-      </div>
+        </div >
+      </div >
 
       <Dialog open={isCaptureModalOpen} onOpenChange={() => setIsCaptureModalOpen(false)} size="lg">
         <Dialog.Overlay>

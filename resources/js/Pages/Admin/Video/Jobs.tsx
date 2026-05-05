@@ -13,7 +13,7 @@ import {
   ServerIcon,
 } from "lucide-react";
 import { onAuthStateChanged } from "firebase/auth";
-import { collection, getDocs, query } from "firebase/firestore";
+import { collection, onSnapshot, query } from "firebase/firestore";
 import { getFirebaseAuth, getFirebaseFirestore } from "@/lib/firebase";
 
 type HlsJob = {
@@ -145,6 +145,7 @@ const inferVideoTitle = (job: HlsJob): string => {
 };
 
 export default function Jobs() {
+  const firestore = React.useMemo(() => getFirebaseFirestore(), []);
   const [jobs, setJobs] = useState<HlsJob[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -162,9 +163,7 @@ export default function Jobs() {
     { label: "Failed", value: "failed" },
   ];
 
-  const loadJobs = async (): Promise<void> => {
-    const firestore = getFirebaseFirestore();
-
+  useEffect(() => {
     if (!firestore) {
       setLoadError("Konfigurasi Firebase web belum lengkap, jadi data Firestore belum bisa diambil dari client.");
       setJobs([]);
@@ -176,26 +175,24 @@ export default function Jobs() {
     setIsLoading(true);
     setLoadError(null);
 
-    try {
-      const snapshot = await getDocs(query(collection(firestore, "hls_jobs")));
+    const jobsQuery = query(collection(firestore, "hls_jobs"));
+    const unsubscribe = onSnapshot(jobsQuery, (snapshot) => {
       const nextJobs = snapshot.docs
         .map((document) => normalizeJob(document.id, document.data() as FirestoreJobDocument))
         .sort((left, right) => (right.created_at ?? "").localeCompare(left.created_at ?? ""));
 
       setJobs(nextJobs);
-      setCurrentPage(1);
-    } catch (error) {
+      setLoadError(null);
+      setIsLoading(false);
+    }, (error) => {
       console.error(error);
       setLoadError("Gagal mengambil daftar tugas dari Firestore. Pastikan user sudah login Firebase dan Firestore rules mengizinkan akses.");
       setJobs([]);
-    } finally {
       setIsLoading(false);
-    }
-  };
+    });
 
-  useEffect(() => {
-    void loadJobs();
-  }, []);
+    return () => unsubscribe();
+  }, [firestore]);
 
   useEffect(() => {
     const auth = getFirebaseAuth();
@@ -214,6 +211,15 @@ export default function Jobs() {
   useEffect(() => {
     setCurrentPage(1);
   }, [search, statusFilter]);
+
+  useEffect(() => {
+    if (!selectedJob) {
+      return;
+    }
+
+    const nextSelectedJob = jobs.find((job) => job.id === selectedJob.id) ?? null;
+    setSelectedJob(nextSelectedJob);
+  }, [jobs, selectedJob]);
 
   const filteredJobs = jobs.filter((job) => {
     const matchesSearch = job.job_id.toLowerCase().includes(search.toLowerCase());
@@ -252,8 +258,8 @@ export default function Jobs() {
             color="secondary"
             size="sm"
             className="flex items-center gap-2"
-            onClick={() => void loadJobs()}
-            disabled={isLoading}
+            onClick={() => router.reload()}
+            disabled={isLoading || !firestore}
           >
             <RefreshCcwIcon className="h-4 w-4" />
             {isLoading ? "Memuat..." : "Muat Ulang"}
@@ -346,9 +352,6 @@ export default function Jobs() {
                           <div>
                             <Typography className="font-medium text-slate-800 dark:text-white">
                               {job.job_id}
-                            </Typography>
-                            <Typography className="text-xs text-slate-500 dark:text-slate-400">
-                              {inferVideoTitle(job)}
                             </Typography>
                           </div>
                         </td>

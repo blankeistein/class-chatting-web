@@ -268,7 +268,7 @@ export default function Create() {
                         }`}
                     >
                       <div className={`mt-0.5 flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${isCompleted
-                        ? "bg-primary text-white"
+                        ? "bg-success/20 text-success"
                         : isActive
                           ? "bg-primary/15 text-primary"
                           : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"

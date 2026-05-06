@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\VideoProviderEnum;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\VideoStoreRequest;
+use App\Http\Requests\VideoUpdateRequest;
 use App\Models\Video;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -81,48 +83,38 @@ class VideoController extends Controller
     /**
      * Store a newly created video in storage.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(VideoStoreRequest $request): RedirectResponse
     {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'video' => 'required|file|mimetypes:video/mp4,video/quicktime,video/x-msvideo|max:102400',
-            'thumbnail' => 'nullable|image|max:5120',
-            'tags' => 'nullable|array',
-            'tags.*' => 'string|max:50',
-        ], [
-            'title.required' => 'Judul wajib diisi.',
-            'title.string' => 'Judul harus berupa teks.',
-            'title.max' => 'Judul maksimal 255 karakter.',
-            'video.required' => 'File video wajib diunggah.',
-            'video.file' => 'File video harus berupa file.',
-            'video.mimetypes' => 'Format video harus mp4, mov, atau avi.',
-            'video.max' => 'Ukuran video maksimal 100MB.',
-            'thumbnail.image' => 'Thumbnail harus berupa gambar.',
-            'thumbnail.max' => 'Ukuran thumbnail maksimal 5MB.',
-        ]);
+        $validated = $request->validated();
+        $slug = Str::random(11);
+        $thumbnailUrl = $this->storeThumbnail($request, $slug);
+
+        if ($validated['provider'] === 'youtube') {
+            Video::create([
+                'title' => $validated['title'],
+                'slug' => $slug,
+                'description' => $validated['description'] ?? null,
+                'tags' => $validated['tags'] ?? [],
+                'uploaded_by' => Auth::id(),
+                'video_url' => trim($validated['yt_url']),
+                'thumbnail' => $thumbnailUrl,
+                'storage_path' => null,
+                'provider' => VideoProviderEnum::Local,
+            ]);
+
+            return redirect()->route('admin.videos.index')->with('success', 'Video berhasil diunggah.');
+        }
 
         $videoFile = $request->file('video');
-        $slug = Str::random(11);
         $storagePath = $this->makeStoragePath($videoFile, $slug);
 
         $this->uploadFileToFirebase($videoFile, $storagePath);
 
-        $thumbnailUrl = null;
-        if ($request->hasFile('thumbnail')) {
-            $thumbnailFile = $request->file('thumbnail');
-            $thumbnailPath = $this->makeThumbnailPath($slug);
-            $temporaryWebpPath = $this->convertImageToWebpTemporaryPath($thumbnailFile, 70);
-            $this->uploadLocalFileToFirebase($temporaryWebpPath, $thumbnailPath);
-            @unlink($temporaryWebpPath);
-            $thumbnailUrl = $this->buildFirebaseUrl($thumbnailPath);
-        }
-
         Video::create([
-            'title' => $request->title,
+            'title' => $validated['title'],
             'slug' => $slug,
-            'description' => $request->description,
-            'tags' => $request->tags ?? [],
+            'description' => $validated['description'] ?? null,
+            'tags' => $validated['tags'] ?? [],
             'uploaded_by' => Auth::id(),
             'video_url' => null,
             'thumbnail' => $thumbnailUrl,
@@ -131,6 +123,22 @@ class VideoController extends Controller
         ]);
 
         return redirect()->route('admin.videos.index')->with('success', 'Video berhasil diunggah.');
+    }
+
+    private function storeThumbnail(VideoStoreRequest $request, string $slug): ?string
+    {
+        if (! $request->hasFile('thumbnail')) {
+            return null;
+        }
+
+        $thumbnailFile = $request->file('thumbnail');
+        $thumbnailPath = $this->makeThumbnailPath($slug);
+        $temporaryWebpPath = $this->convertImageToWebpTemporaryPath($thumbnailFile, 70);
+
+        $this->uploadLocalFileToFirebase($temporaryWebpPath, $thumbnailPath);
+        @unlink($temporaryWebpPath);
+
+        return $this->buildFirebaseUrl($thumbnailPath);
     }
 
     /**
@@ -158,39 +166,33 @@ class VideoController extends Controller
     /**
      * Update the specified video in storage.
      */
-    public function update(Request $request, Video $video): RedirectResponse
+    public function update(VideoUpdateRequest $request, Video $video): RedirectResponse
     {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'video' => 'nullable|file|mimetypes:video/mp4,video/quicktime,video/x-msvideo|max:102400',
-            'thumbnail' => 'nullable|image|max:5120',
-            'tags' => 'nullable|array',
-            'tags.*' => 'string|max:50',
-        ], [
-            'title.required' => 'Judul wajib diisi.',
-            'title.string' => 'Judul harus berupa teks.',
-            'title.max' => 'Judul maksimal 255 karakter.',
-            'video.file' => 'File video harus berupa file.',
-            'video.mimetypes' => 'Format video harus mp4, mov, atau avi.',
-            'video.max' => 'Ukuran video maksimal 100MB.',
-            'thumbnail.image' => 'Thumbnail harus berupa gambar.',
-            'thumbnail.max' => 'Ukuran thumbnail maksimal 5MB.',
-        ]);
-
+        $validated = $request->validated();
         $updateData = [
-            'title' => $request->title,
-            'description' => $request->description,
-            'tags' => $request->tags ?? [],
+            'title' => $validated['title'],
+            'description' => $validated['description'] ?? null,
+            'tags' => $validated['tags'] ?? [],
         ];
 
-        if ($request->hasFile('video')) {
+        if ($validated['provider'] === 'youtube') {
+            if ($video->provider === VideoProviderEnum::Firebase) {
+                $this->deleteFirebaseObject($video->storage_path);
+                $this->deleteFirebaseDirectory($this->makeHlsDirectory($video->slug));
+            }
+
+            $updateData['video_url'] = trim($validated['yt_url']);
+            $updateData['storage_path'] = null;
+            $updateData['provider'] = VideoProviderEnum::Local;
+        } elseif ($request->hasFile('video')) {
             $videoFile = $request->file('video');
             $storagePath = $this->makeStoragePath($videoFile, $video->slug);
 
             $this->uploadFileToFirebase($videoFile, $storagePath);
-            $this->deleteFirebaseObject($video->storage_path);
-            $this->deleteFirebaseDirectory($this->makeHlsDirectory($video->slug));
+            if ($video->provider === VideoProviderEnum::Firebase) {
+                $this->deleteFirebaseObject($video->storage_path);
+                $this->deleteFirebaseDirectory($this->makeHlsDirectory($video->slug));
+            }
 
             $updateData['video_url'] = null;
             $updateData['storage_path'] = $storagePath;
@@ -221,9 +223,10 @@ class VideoController extends Controller
     {
         if ($video->provider === VideoProviderEnum::Firebase) {
             $this->deleteFirebaseObject($video->storage_path);
-            $this->deleteFirebaseObject($this->extractFirebasePath($video->thumbnail));
             $this->deleteFirebaseDirectory($this->makeHlsDirectory($video->slug));
         }
+
+        $this->deleteFirebaseObject($this->extractFirebasePath($video->thumbnail));
 
         $video->delete();
 

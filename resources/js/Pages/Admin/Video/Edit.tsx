@@ -8,6 +8,7 @@ import {
   IconButton,
   Input,
   Progress,
+  Select,
   Textarea,
   Typography,
 } from "@material-tailwind/react";
@@ -24,12 +25,14 @@ import {
   VideoIcon,
 } from "lucide-react";
 import { toast, Toaster } from "react-hot-toast";
+import { resolveYoutubeId } from "./Create";
 
 interface Video {
   id: number;
   slug: string;
   title: string;
   description: string;
+  provider: string;
   video_url: string | null;
   thumbnail: string | null;
   tags?: string[];
@@ -50,6 +53,7 @@ const formatDate = (value?: string) => {
 };
 
 export default function Edit({ video }: { video: Video }) {
+  const initialProvider = video.provider === "firebase" ? "file" : resolveYoutubeId(video.video_url ?? "") ? "youtube" : "file";
   const [isVideoDragging, setIsVideoDragging] = useState(false);
   const [isThumbDragging, setIsThumbDragging] = useState(false);
   const [isCaptureModalOpen, setIsCaptureModalOpen] = useState(false);
@@ -66,7 +70,9 @@ export default function Edit({ video }: { video: Video }) {
     title: video.title,
     description: video.description,
     tags: video.tags || [],
+    provider: initialProvider as "file" | "youtube",
     video: null as File | null,
+    yt_url: initialProvider === "youtube" ? (video.video_url ?? "") : "",
     thumbnail: null as File | null,
     _method: "put",
   });
@@ -95,9 +101,15 @@ export default function Edit({ video }: { video: Video }) {
     setThumbPreviewUrl(video.thumbnail);
   }, [data.thumbnail, video.thumbnail]);
 
-  const activeVideoUrl = videoPreviewUrl || video.video_url;
+  const activeVideoUrl = data.provider === "file"
+    ? videoPreviewUrl || (video.provider === "firebase" ? video.video_url : null)
+    : null;
+  const activeYoutubeId = data.provider === "youtube"
+    ? resolveYoutubeId(data.yt_url || video.video_url || "")
+    : null;
   const activeVideoName = data.video?.name || "Video saat ini";
   const activeVideoSize = data.video ? `${(data.video.size / (1024 * 1024)).toFixed(2)} MB` : "File tersimpan di server";
+  const canCaptureFrame = data.provider === "file" && Boolean(activeVideoUrl);
 
   const handleVideoDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -138,7 +150,7 @@ export default function Edit({ video }: { video: Video }) {
   };
 
   const captureThumbnail = () => {
-    if (!videoRef.current) {
+    if (!videoRef.current || !canCaptureFrame) {
       return;
     }
 
@@ -215,6 +227,15 @@ export default function Edit({ video }: { video: Video }) {
     });
   };
 
+  const handleProviderChange = (value: "file" | "youtube") => {
+    setData((currentData) => ({
+      ...currentData,
+      provider: value,
+      video: value === "file" ? currentData.video : null,
+      yt_url: value === "youtube" ? currentData.yt_url : "",
+    }));
+  };
+
   return (
     <>
       <Head title="Edit Video" />
@@ -234,7 +255,7 @@ export default function Edit({ video }: { video: Video }) {
                 Edit Video
               </Typography>
               <Typography className="text-slate-500 dark:text-slate-400">
-                Perbarui metadata, thumbnail, dan ganti file video bila diperlukan.
+                Perbarui metadata, thumbnail, dan sumber video bila diperlukan.
               </Typography>
             </div>
           </div>
@@ -354,76 +375,104 @@ export default function Edit({ video }: { video: Video }) {
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <Typography variant="h6" className="font-bold text-slate-800 dark:text-white">
-                      Ganti Video
+                      Sumber Video
                     </Typography>
                     <Typography className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                      Upload file baru jika Anda ingin menggantikan video yang saat ini tersimpan.
+                      Anda bisa tetap memakai sumber saat ini, mengganti file, atau pindah ke URL YouTube.
                     </Typography>
                   </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    color="secondary"
-                    className="flex items-center gap-2"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <UploadCloudIcon className="h-4 w-4" />
-                    Pilih Video
-                  </Button>
                 </div>
 
-                <div
-                  className={`rounded-2xl border-2 border-dashed p-5 transition-all duration-300 ${isVideoDragging
-                    ? "border-primary bg-primary/10 dark:bg-primary/20"
-                    : "border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/40"
-                    }`}
-                  onDragOver={handleVideoDragOver}
-                  onDragLeave={handleVideoDragLeave}
-                  onDrop={handleVideoDrop}
-                >
-                  <input
-                    ref={fileInputRef}
-                    id="video"
-                    type="file"
-                    accept="video/mp4,video/quicktime,video/x-msvideo"
-                    className="hidden"
-                    onChange={(e) => setData("video", e.target.files?.[0] || null)}
-                  />
+                <div className="space-y-1">
+                  <Typography as="label" htmlFor="provider" type="small" color="default" className="font-semibold dark:text-white">
+                    Source
+                  </Typography>
+                  <Select value={data.provider} onValueChange={(value) => handleProviderChange(value as "file" | "youtube")}>
+                    <Select.Trigger className="w-full" value="Sumber Video" />
+                    <Select.List>
+                      <Select.Option value="file">File</Select.Option>
+                      <Select.Option value="youtube">Youtube</Select.Option>
+                    </Select.List>
+                  </Select>
+                  {errors.provider && (
+                    <Typography type="small" color="error" className="mt-1 block">
+                      {errors.provider}
+                    </Typography>
+                  )}
+                </div>
 
-                  <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                    <div className="flex items-start gap-4">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                        <VideoIcon className="h-6 w-6" />
-                      </div>
-                      <div className="min-w-0">
-                        <Typography className="font-semibold text-slate-800 dark:text-white">
-                          {activeVideoName}
-                        </Typography>
-                        <Typography className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                          {data.video ? "Video baru siap diunggah saat disimpan." : "Belum memilih file baru. Video lama akan tetap dipakai."}
-                        </Typography>
-                        <Typography className="mt-2 text-xs text-slate-400 dark:text-slate-500">
-                          {activeVideoSize}
-                        </Typography>
-                      </div>
-                    </div>
-
-                    {data.video && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        color="secondary"
-                        onClick={() => setData("video", null)}
-                      >
-                        Batalkan Ganti Video
-                      </Button>
+                {data.provider === "youtube" ? (
+                  <div className="space-y-1">
+                    <Typography as="label" htmlFor="yt_url" type="small" color="default" className="font-semibold dark:text-white">
+                      URL Youtube
+                    </Typography>
+                    <Input
+                      id="yt_url"
+                      placeholder="Masukkan URL video Youtube"
+                      value={data.yt_url}
+                      onChange={(e) => setData("yt_url", e.target.value)}
+                      isError={!!errors.yt_url}
+                    />
+                    {errors.yt_url && (
+                      <Typography type="small" color="error" className="mt-1 block">
+                        {errors.yt_url}
+                      </Typography>
                     )}
                   </div>
+                ) : (
+                  <div
+                    className={`rounded-2xl border-2 border-dashed p-5 transition-all duration-300 ${isVideoDragging
+                      ? "border-primary bg-primary/10 dark:bg-primary/20"
+                      : "border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/40"
+                      }`}
+                    onDragOver={handleVideoDragOver}
+                    onDragLeave={handleVideoDragLeave}
+                    onDrop={handleVideoDrop}
+                  >
+                    <input
+                      ref={fileInputRef}
+                      id="video"
+                      type="file"
+                      accept="video/mp4,video/quicktime,video/x-msvideo"
+                      className="hidden"
+                      onChange={(e) => setData("video", e.target.files?.[0] || null)}
+                    />
 
-                  <Typography className="mt-4 text-xs text-slate-500 dark:text-slate-400">
-                    Drag & drop video ke area ini atau pilih manual. Format: MP4, MOV, AVI. Maks 100MB.
-                  </Typography>
-                </div>
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                      <div className="flex items-start gap-4">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                          <VideoIcon className="h-6 w-6" />
+                        </div>
+                        <div className="min-w-0">
+                          <Typography className="font-semibold text-slate-800 dark:text-white">
+                            {activeVideoName}
+                          </Typography>
+                          <Typography className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                            {data.video ? "Video baru siap diunggah saat disimpan." : "Belum memilih file baru. Video lama akan tetap dipakai."}
+                          </Typography>
+                          <Typography className="mt-2 text-xs text-slate-400 dark:text-slate-500">
+                            {activeVideoSize}
+                          </Typography>
+                        </div>
+                      </div>
+
+                      <Button
+                        type="button"
+                        variant="outline"
+                        color="secondary"
+                        className="flex items-center gap-2"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <UploadCloudIcon className="h-4 w-4" />
+                        Pilih Video
+                      </Button>
+                    </div>
+
+                    <Typography className="mt-4 text-xs text-slate-500 dark:text-slate-400">
+                      Drag & drop video ke area ini atau pilih manual. Format: MP4, MOV, AVI. Maks 100MB.
+                    </Typography>
+                  </div>
+                )}
 
                 {errors.video && (
                   <Typography type="small" color="error" className="mt-1 block">
@@ -451,6 +500,7 @@ export default function Edit({ video }: { video: Video }) {
                     className="flex items-center gap-2"
                     onClick={() => setIsCaptureModalOpen(true)}
                     type="button"
+                    disabled={!canCaptureFrame}
                   >
                     <CameraIcon className="h-4 w-4" />
                     Ambil Frame
@@ -523,8 +573,18 @@ export default function Edit({ video }: { video: Video }) {
               </div>
               <CardBody className="space-y-4 p-5">
                 <div className="overflow-hidden rounded-2xl border border-slate-200 bg-black shadow-inner dark:border-slate-800">
-                  {activeVideoUrl ? (
-                    <>
+                  {data.provider === "youtube" && activeYoutubeId ? (
+                    <div className="flex aspect-video items-center justify-center bg-black">
+                      <iframe
+                        src={`https://www.youtube.com/embed/${activeYoutubeId}`}
+                        title="YouTube Video Preview"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        className="h-full w-full"
+                      />
+                    </div>
+                  ) : activeVideoUrl ? (
+                    <div>
                       <video
                         ref={videoRef}
                         key={activeVideoUrl}
@@ -536,8 +596,11 @@ export default function Edit({ video }: { video: Video }) {
                         <source src={activeVideoUrl} />
                         Browser Anda tidak mendukung pemutaran video HTML5.
                       </video>
-                    </>
-
+                    </div>
+                  ) : data.provider === "youtube" ? (
+                    <div className="flex aspect-video items-center justify-center px-6 text-center text-sm text-slate-300">
+                      URL YouTube belum valid, jadi preview belum bisa ditampilkan.
+                    </div>
                   ) : (
                     <div className="flex aspect-video items-center justify-center px-6 text-center text-sm text-slate-300">
                       URL HLS belum tersedia. Preview akan muncul setelah service transcoding mengirim callback.
@@ -567,11 +630,15 @@ export default function Edit({ video }: { video: Video }) {
                       Status Video
                     </Typography>
                     <Typography className="mt-1 font-medium text-slate-800 dark:text-white">
-                      {data.video
-                        ? "Akan diganti setelah tombol simpan ditekan."
-                        : activeVideoUrl
-                          ? "Masih menggunakan video yang saat ini tersimpan."
-                          : "Menunggu URL HLS dari service transcoding."}
+                      {data.provider === "youtube"
+                        ? activeYoutubeId
+                          ? "Akan memakai tautan YouTube saat disimpan."
+                          : "Masukkan URL YouTube yang valid."
+                        : data.video
+                          ? "Akan diganti setelah tombol simpan ditekan."
+                          : activeVideoUrl
+                            ? "Masih menggunakan video yang saat ini tersimpan."
+                            : "Menunggu URL HLS dari service transcoding."}
                     </Typography>
                   </div>
                 </div>
@@ -611,7 +678,7 @@ export default function Edit({ video }: { video: Video }) {
             </div>
 
             <div className="flex w-full justify-center bg-black">
-              {activeVideoUrl ? (
+              {canCaptureFrame && activeVideoUrl ? (
                 <video
                   ref={videoRef}
                   preload="metadata"
@@ -624,7 +691,7 @@ export default function Edit({ video }: { video: Video }) {
                 </video>
               ) : (
                 <div className="flex min-h-[320px] w-full items-center justify-center px-6 text-center text-sm text-slate-300">
-                  Tidak ada URL HLS yang bisa dipakai untuk mengambil frame saat ini.
+                  Thumbnail dari frame hanya tersedia untuk video file/Firebase yang bisa diputar lewat HTML5.
                 </div>
               )}
             </div>
@@ -640,7 +707,7 @@ export default function Edit({ video }: { video: Video }) {
                   className="flex flex-shrink-0 items-center gap-2"
                   onClick={captureThumbnail}
                   type="button"
-                  disabled={!activeVideoUrl}
+                  disabled={!canCaptureFrame}
                 >
                   <CameraIcon className="h-4 w-4" />
                   Simpan Frame
@@ -658,7 +725,7 @@ export default function Edit({ video }: { video: Video }) {
               Hapus Video
             </Typography>
             <Typography className="mb-6 mt-2 text-foreground">
-              Apakah Anda yakin ingin menghapus video <strong>{video.title}</strong>? File video dan thumbnail terkait juga akan dihapus dari penyimpanan.
+              Apakah Anda yakin ingin menghapus video <strong>{video.title}</strong>? Asset Firebase yang terkait, termasuk thumbnail, juga akan dibersihkan bila tersedia.
             </Typography>
             <div className="mb-1 flex items-center justify-end gap-2">
               <Button

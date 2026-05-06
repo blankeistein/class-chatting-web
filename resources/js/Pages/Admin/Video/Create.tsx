@@ -8,6 +8,7 @@ import {
   IconButton,
   Input,
   Progress,
+  Select,
   Textarea,
   Typography,
 } from "@material-tailwind/react";
@@ -44,6 +45,46 @@ const STEPS = [
   },
 ] as const;
 
+
+export function resolveYoutubeId(input: string): string | null {
+  if (!input) return null;
+
+  const value = input.trim();
+
+  // Kalau user langsung input video ID
+  if (/^[a-zA-Z0-9_-]{11}$/.test(value)) {
+    return value;
+  }
+
+  try {
+    const url = new URL(value);
+
+    // youtube.com/watch?v=VIDEO_ID
+    const v = url.searchParams.get("v");
+    if (v && /^[a-zA-Z0-9_-]{11}$/.test(v)) {
+      return v;
+    }
+
+    // youtu.be/VIDEO_ID
+    if (url.hostname.includes("youtu.be")) {
+      const id = url.pathname.split("/").filter(Boolean)[0];
+      return /^[a-zA-Z0-9_-]{11}$/.test(id) ? id : null;
+    }
+
+    // youtube.com/embed/VIDEO_ID
+    // youtube.com/shorts/VIDEO_ID
+    // youtube.com/live/VIDEO_ID
+    const parts = url.pathname.split("/").filter(Boolean);
+    const possibleId = parts.find((part) =>
+      /^[a-zA-Z0-9_-]{11}$/.test(part)
+    );
+
+    return possibleId ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export default function Create() {
   const [currentStep, setCurrentStep] = useState<(typeof STEPS)[number]["id"]>(1);
   const [isVideoDragging, setIsVideoDragging] = useState(false);
@@ -61,7 +102,9 @@ export default function Create() {
     title: "",
     description: "",
     thumbnail: null as File | null,
+    provider: "file" as "file" | "youtube",
     video: null as File | null,
+    yt_url: null as string | null,
     tags: [] as string[],
   });
 
@@ -102,9 +145,21 @@ export default function Create() {
       return;
     }
 
-    if (currentStep === 2 && !data.video) {
-      toast.error("Pilih file video sebelum lanjut.");
-      return;
+    if (currentStep === 2) {
+      if (data.provider === "file" && !data.video) {
+        toast.error("Pilih file video sebelum lanjut.");
+        return;
+      }
+
+      if (data.provider === "youtube" && !data.yt_url?.trim()) {
+        toast.error("Masukkan URL Youtube sebelum lanjut.");
+        return;
+      }
+
+      if (data.provider === "youtube" && data.yt_url && !resolveYoutubeId(data.yt_url)) {
+        toast.error("URL Youtube belum valid.");
+        return;
+      }
     }
 
     if (currentStep >= 3) {
@@ -393,76 +448,116 @@ export default function Create() {
                     </Typography>
                   </div>
 
-                  <div
-                    className={`rounded-2xl border-2 border-dashed p-5 transition-all duration-300 ${isVideoDragging
-                      ? "border-primary bg-primary/10 dark:bg-primary/20"
-                      : "border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/40"
-                      }`}
-                    onDragOver={handleVideoDragOver}
-                    onDragLeave={handleVideoDragLeave}
-                    onDrop={handleVideoDrop}
-                  >
-                    <input
-                      ref={fileInputRef}
-                      id="video"
-                      type="file"
-                      accept="video/mp4,video/quicktime,video/x-msvideo"
-                      className="hidden"
-                      onChange={(e) => setData("video", e.target.files?.[0] || null)}
-                    />
-
-                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                      <div className="flex items-start gap-4">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                          <VideoIcon className="h-6 w-6" />
-                        </div>
-                        <div className="min-w-0">
-                          <Typography className="font-semibold text-slate-800 dark:text-white">
-                            {activeVideoName}
-                          </Typography>
-                          <Typography className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                            {data.video ? "File video siap diunggah saat formulir disimpan." : "Belum memilih file video."}
-                          </Typography>
-                          <Typography className="mt-2 text-xs text-slate-400 dark:text-slate-500">
-                            {activeVideoSize}
-                          </Typography>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-wrap justify-end gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          color="secondary"
-                          className="flex items-center gap-2"
-                          onClick={() => fileInputRef.current?.click()}
-                        >
-                          <UploadCloudIcon className="h-4 w-4" />
-                          Pilih Video
-                        </Button>
-                        {data.video && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            color="secondary"
-                            onClick={() => setData("video", null)}
-                          >
-                            Batalkan Pilihan
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-
-                    <Typography className="mt-4 text-xs text-slate-500 dark:text-slate-400">
-                      Drag & drop video ke area ini atau pilih manual. Format: MP4, MOV, AVI. Maks 100MB.
+                  <div className="space-y-1">
+                    <Typography as="label" htmlFor="tags" type="small" color="default" className="font-semibold dark:text-white">
+                      Source
                     </Typography>
+                    <Select value={data.provider} onValueChange={(value) => setData("provider", value as "file" | "youtube")}>
+                      <Select.Trigger className="w-full" value="Sumber Video" />
+                      <Select.List>
+                        <Select.Option value="file">File</Select.Option>
+                        <Select.Option value="youtube">Youtube</Select.Option>
+                      </Select.List>
+                    </Select>
                   </div>
 
-                  {errors.video && (
-                    <Typography type="small" color="error" className="mt-1 block">
-                      {errors.video}
-                    </Typography>
-                  )}
+                  {
+                    data.provider === "youtube" && (
+                      <div className="space-y-1">
+                        <Typography as="label" htmlFor="yt_url" type="small" color="default" className="font-semibold dark:text-white">
+                          URL Youtube
+                        </Typography>
+                        <Input
+                          id="yt_url"
+                          placeholder="Masukkan URL video Youtube"
+                          value={data.yt_url || ""}
+                          onChange={(e) => setData("yt_url", e.target.value)}
+                          isError={!!errors.yt_url}
+                        />
+                        {errors.yt_url && (
+                          <Typography type="small" color="error" className="mt-1 block">
+                            {errors.yt_url}
+                          </Typography>
+                        )}
+                      </div>
+                    )
+                  }
+                  {
+                    data.provider === "file" && (
+                      <>
+                        <div
+                          className={`rounded-2xl border-2 border-dashed p-5 transition-all duration-300 ${isVideoDragging
+                            ? "border-primary bg-primary/10 dark:bg-primary/20"
+                            : "border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/40"
+                            }`}
+                          onDragOver={handleVideoDragOver}
+                          onDragLeave={handleVideoDragLeave}
+                          onDrop={handleVideoDrop}
+                        >
+                          <input
+                            ref={fileInputRef}
+                            id="video"
+                            type="file"
+                            accept="video/mp4,video/quicktime,video/x-msvideo"
+                            className="hidden"
+                            onChange={(e) => setData("video", e.target.files?.[0] || null)}
+                          />
+
+                          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                            <div className="flex items-start gap-4">
+                              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                                <VideoIcon className="h-6 w-6" />
+                              </div>
+                              <div className="min-w-0">
+                                <Typography className="font-semibold text-slate-800 dark:text-white">
+                                  {activeVideoName}
+                                </Typography>
+                                <Typography className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                                  {data.video ? "File video siap diunggah saat formulir disimpan." : "Belum memilih file video."}
+                                </Typography>
+                                <Typography className="mt-2 text-xs text-slate-400 dark:text-slate-500">
+                                  {activeVideoSize}
+                                </Typography>
+                              </div>
+                            </div>
+
+                            <div className="flex flex-wrap justify-end gap-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                color="secondary"
+                                className="flex items-center gap-2"
+                                onClick={() => fileInputRef.current?.click()}
+                              >
+                                <UploadCloudIcon className="h-4 w-4" />
+                                Pilih Video
+                              </Button>
+                              {data.video && (
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  color="secondary"
+                                  onClick={() => setData("video", null)}
+                                >
+                                  Batalkan Pilihan
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+
+                          <Typography className="mt-4 text-xs text-slate-500 dark:text-slate-400">
+                            Drag & drop video ke area ini atau pilih manual. Format: MP4, MOV, AVI. Maks 100MB.
+                          </Typography>
+                        </div>
+
+                        {errors.video && (
+                          <Typography type="small" color="error" className="mt-1 block">
+                            {errors.video}
+                          </Typography>
+                        )}
+                      </>
+                    )
+                  }
 
                   <div className="overflow-hidden rounded-2xl border border-slate-200 bg-black shadow-inner dark:border-slate-800">
                     {videoPreviewUrl ? (
@@ -473,6 +568,25 @@ export default function Create() {
                         className="aspect-video w-full bg-black"
                         crossOrigin="anonymous"
                       />
+                    ) : data.provider === "youtube" && data.yt_url && resolveYoutubeId(data.yt_url) ? (
+                      <div className="flex items-center justify-center bg-black aspect-video">
+                        <iframe
+                          src={`https://www.youtube.com/embed/${resolveYoutubeId(data.yt_url)}`}
+                          title="YouTube Video Preview"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          className="w-full h-full"
+                        />
+                      </div>
+                    ) : data.provider === "youtube" && data.yt_url && !resolveYoutubeId(data.yt_url) ? (
+                      <div className="flex aspect-video items-center justify-center bg-slate-950 text-slate-500">
+                        <div className="text-center">
+                          <VideoIcon className="mx-auto h-10 w-10" />
+                          <Typography className="mt-3 text-sm text-slate-400">
+                            URL Youtube tidak valid. Pastikan format benar.
+                          </Typography>
+                        </div>
+                      </div>
                     ) : (
                       <div className="flex aspect-video items-center justify-center bg-slate-950 text-slate-500">
                         <div className="text-center">
@@ -588,7 +702,13 @@ export default function Create() {
                           Video
                         </Typography>
                         <Typography className="mt-1 font-medium text-slate-800 dark:text-white">
-                          {data.video ? "Siap diunggah" : "Belum ada file"}
+                          {data.provider === "youtube"
+                            ? data.yt_url?.trim()
+                              ? "Tautan Youtube siap disimpan"
+                              : "URL Youtube belum diisi"
+                            : data.video
+                              ? "Siap diunggah"
+                              : "Belum ada file"}
                         </Typography>
                       </div>
                       <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/50">

@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { doc, onSnapshot } from "firebase/firestore";
 import { getFirebaseFirestore } from "@/lib/firebase";
+import { resolveYoutubeId } from "./Create";
 
 interface Video {
   id: number;
@@ -163,8 +164,12 @@ export default function Show({ video }: { video: Video }) {
   const [isJobLoading, setIsJobLoading] = React.useState(true);
   const [jobLoadError, setJobLoadError] = React.useState<string | null>(null);
   const isFirebaseVideo = video.provider === "firebase";
-  const providerLabel = video.provider === "firebase" ? "Firebase" : "Local";
-  const providerStatusMessage = "Video ini menggunakan provider local, jadi tidak memiliki status transcoding Firebase.";
+  const youtubeId = resolveYoutubeId(video.video_url ?? "");
+  const isYoutubeVideo = !isFirebaseVideo && Boolean(youtubeId);
+  const providerLabel = isFirebaseVideo ? "Firebase" : isYoutubeVideo ? "YouTube" : "Local";
+  const providerStatusMessage = isYoutubeVideo
+    ? "Video ini menggunakan sumber YouTube, jadi tidak memiliki status transcoding Firebase."
+    : "Video ini menggunakan provider local, jadi tidak memiliki status transcoding Firebase.";
 
   React.useEffect(() => {
     if (!isFirebaseVideo) {
@@ -247,7 +252,7 @@ export default function Show({ video }: { video: Video }) {
               disabled={!video.video_url}
             >
               <ExternalLinkIcon className="h-4 w-4" />
-              {video.video_url ? "Buka File" : "Menunggu HLS"}
+              {video.video_url ? (isYoutubeVideo ? "Buka YouTube" : "Buka File") : "Menunggu HLS"}
             </Button>
             <Button
               size="sm"
@@ -290,7 +295,17 @@ export default function Show({ video }: { video: Video }) {
 
                 <div className="bg-black p-2 sm:p-4">
                   <div className="overflow-hidden rounded-xl border border-slate-800 bg-black shadow-inner">
-                    {video.video_url ? (
+                    {isYoutubeVideo && youtubeId ? (
+                      <div className="flex aspect-video items-center justify-center bg-black">
+                        <iframe
+                          src={`https://www.youtube.com/embed/${youtubeId}`}
+                          title="YouTube Video Player"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          className="h-full w-full"
+                        />
+                      </div>
+                    ) : video.video_url ? (
                       <video
                         key={video.video_url}
                         controls

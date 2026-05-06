@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\PrivateAPI;
 
+use App\Enums\VideoProviderEnum;
 use App\Http\Controllers\Controller;
 use App\Models\Video;
 use Dedoc\Scramble\Attributes\BodyParameter;
@@ -69,7 +70,7 @@ class VideoController extends Controller
     #[BodyParameter('tags', 'Daftar tag video.', required: false, type: 'array<int, string>', example: ['kelas-4', 'tajwid'])]
     public function create(Request $request): JsonResponse
     {
-        $data = $request->json()->all();
+        $data = $this->normalizeProvider($request->json()->all(), true);
 
         do {
             $videoId = Str::random(11);
@@ -136,7 +137,7 @@ class VideoController extends Controller
     #[BodyParameter('tags', 'Daftar tag video.', required: false, type: 'array<int, string>', example: ['kelas-4', 'tajwid'])]
     public function update(Request $request, string $video_id): JsonResponse
     {
-        $data = $request->json()->all();
+        $data = $this->normalizeProvider($request->json()->all());
         $updated = Video::where('video_id', $video_id)->update($data);
 
         if ($updated === false) {
@@ -176,5 +177,17 @@ class VideoController extends Controller
             'status' => 'error',
             'message' => 'Delete Failed',
         ], 500)->header('Access-Control-Allow-Origin', '*');
+    }
+
+    private function normalizeProvider(array $data, bool $setDefault = false): array
+    {
+        if (array_key_exists('provider', $data)) {
+            $data['provider'] = VideoProviderEnum::tryFrom((string) $data['provider'])?->value
+                ?? VideoProviderEnum::Local->value;
+        } elseif ($setDefault) {
+            $data['provider'] = VideoProviderEnum::Local->value;
+        }
+
+        return $data;
     }
 }

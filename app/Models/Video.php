@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\VideoProviderEnum;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -23,15 +24,19 @@ class Video extends Model
         'tags',
     ];
 
-    public function getRouteKeyName()
+    public function getRouteKeyName(): string
     {
         return 'slug';
     }
 
-    protected $casts = [
-        'metadata' => 'array',
-        'tags' => 'array',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'metadata' => 'array',
+            'tags' => 'array',
+            'provider' => VideoProviderEnum::class,
+        ];
+    }
 
     /**
      * Get the user that uploaded the video.

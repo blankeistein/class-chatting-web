@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\VideoProviderEnum;
 use App\Models\Video;
 use Illuminate\Database\Seeder;
 
@@ -26,7 +27,7 @@ class VideoSeeder extends Seeder
             Video::create([
                 'title' => "Video Pembahasan Bab $i",
                 'slug' => "video-pembahasan-bab-$i",
-                'provider' => 'youtube',
+                'provider' => VideoProviderEnum::Local,
                 'video_url' => 'https://youtu.be/dummy',
             ]);
         }

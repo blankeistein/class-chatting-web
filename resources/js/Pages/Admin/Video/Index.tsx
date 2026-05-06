@@ -36,6 +36,7 @@ interface Video {
   slug: string;
   title: string;
   description: string;
+  provider: string;
   storage_path: string | null;
   video_url: string | null;
   thumbnail: string | null;
@@ -45,6 +46,8 @@ interface Video {
     name: string;
   };
 }
+
+const ALL_PROVIDERS = "__all__";
 
 const SORT_OPTIONS = [
   { label: "Terbaru", value: "latest" },
@@ -232,13 +235,16 @@ const VideoGridCard = ({
 export default function Index({
   videos: paginatedVideos,
   filters,
+  videoProviders,
 }: {
   videos: any;
-  filters?: { search?: string; sort?: string };
+  filters?: { search?: string; sort?: string; provider?: string };
+  videoProviders: Record<string, string>;
 }) {
   const [videos, setVideos] = useState<Video[]>(paginatedVideos.data);
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [search, setSearch] = useState(filters?.search || "");
+  const [provider, setProvider] = useState(filters?.provider || ALL_PROVIDERS);
   const [sort, setSort] = useState(
     SORT_OPTIONS.find((option) => option.value === (filters?.sort || "latest")) ||
     SORT_OPTIONS[0],
@@ -252,14 +258,16 @@ export default function Index({
     setVideos(paginatedVideos.data);
   }, [paginatedVideos.data]);
 
+  const currentProvider = provider === ALL_PROVIDERS ? undefined : provider;
+
   const handleFilter = () => {
     router.get(
       route("admin.videos.index"),
-      { search, sort: sort.value },
+      { search, sort: sort.value, provider: currentProvider, per_page: perPage },
       {
         preserveState: true,
         replace: true,
-        only: ["videos", "filters"],
+        only: ["videos", "filters", "videoProviders"],
       },
     );
   };
@@ -365,7 +373,7 @@ export default function Index({
                       setSort(option);
                       router.get(
                         route("admin.videos.index"),
-                        { search, sort: value, per_page: perPage },
+                        { search, sort: value, provider: currentProvider, per_page: perPage },
                         { preserveState: true, replace: true },
                       );
                     }
@@ -384,6 +392,39 @@ export default function Index({
                 </Select>
               </div>
               <div className="w-full sm:w-48 space-y-1">
+                <Typography as="label" htmlFor="provider" type="small" color="default" className="font-semibold">
+                  Provider
+                </Typography>
+                <Select
+                  value={provider}
+                  onValueChange={(value) => {
+                    if (value) {
+                      setProvider(value);
+                      router.get(
+                        route("admin.videos.index"),
+                        {
+                          search,
+                          sort: sort.value,
+                          provider: value === ALL_PROVIDERS ? undefined : value,
+                          per_page: perPage,
+                        },
+                        { preserveState: true, replace: true },
+                      );
+                    }
+                  }}
+                >
+                  <Select.Trigger id="provider" placeholder="Semua provider" />
+                  <Select.List>
+                    <Select.Option value={ALL_PROVIDERS}>Semua provider</Select.Option>
+                    {Object.entries(videoProviders).map(([value, label]) => (
+                      <Select.Option key={value} value={value}>
+                        {label}
+                      </Select.Option>
+                    ))}
+                  </Select.List>
+                </Select>
+              </div>
+              <div className="w-full sm:w-48 space-y-1">
                 <Typography as="label" htmlFor="jumlah-item" type="small" color="default" className="font-semibold">
                   Jumlah Item
                 </Typography>
@@ -392,7 +433,7 @@ export default function Index({
                     setPerPage(val);
                     router.get(
                       route("admin.videos.index"),
-                      { search, sort: sort.value, per_page: val },
+                      { search, sort: sort.value, provider: currentProvider, per_page: val },
                       { preserveState: true, replace: true },
                     );
                   }
@@ -537,7 +578,11 @@ export default function Index({
           ) : (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
               {videos.map((video) => (
-                <VideoGridCard key={video.id} video={video} onDelete={openDelete} />
+                <VideoGridCard
+                  key={video.id}
+                  video={video}
+                  onDelete={openDelete}
+                />
               ))}
             </div>
           )

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\VideoProviderEnum;
 use App\Http\Controllers\Controller;
 use App\Models\Video;
 use Illuminate\Http\RedirectResponse;
@@ -31,6 +32,12 @@ class VideoController extends Controller
             });
         }
 
+        $provider = VideoProviderEnum::tryFrom((string) $request->input('provider'));
+
+        if ($provider) {
+            $query->where('provider', $provider->value);
+        }
+
         $sort = $request->input('sort', 'latest');
         switch ($sort) {
             case 'oldest':
@@ -53,7 +60,8 @@ class VideoController extends Controller
 
         return Inertia::render('Admin/Video/Index', [
             'videos' => $videos,
-            'filters' => $request->only(['search', 'sort']),
+            'filters' => $request->only(['search', 'sort', 'provider']),
+            'videoProviders' => VideoProviderEnum::labels(),
         ]);
     }
 
@@ -119,7 +127,7 @@ class VideoController extends Controller
             'video_url' => null,
             'thumbnail' => $thumbnailUrl,
             'storage_path' => $storagePath,
-            'provider' => 'firebase',
+            'provider' => VideoProviderEnum::Firebase,
         ]);
 
         return redirect()->route('admin.videos.index')->with('success', 'Video berhasil diunggah.');
@@ -186,7 +194,7 @@ class VideoController extends Controller
 
             $updateData['video_url'] = null;
             $updateData['storage_path'] = $storagePath;
-            $updateData['provider'] = 'firebase';
+            $updateData['provider'] = VideoProviderEnum::Firebase;
         }
 
         if ($request->hasFile('thumbnail')) {
@@ -211,7 +219,7 @@ class VideoController extends Controller
      */
     public function destroy(Video $video): RedirectResponse
     {
-        if ($video->provider === 'firebase') {
+        if ($video->provider === VideoProviderEnum::Firebase) {
             $this->deleteFirebaseObject($video->storage_path);
             $this->deleteFirebaseObject($this->extractFirebasePath($video->thumbnail));
             $this->deleteFirebaseDirectory($this->makeHlsDirectory($video->slug));

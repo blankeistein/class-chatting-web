@@ -26,6 +26,7 @@ interface Video {
   slug: string;
   title: string;
   description: string | null;
+  provider: string;
   video_url: string | null;
   thumbnail: string | null;
   tags?: string[];
@@ -161,8 +162,19 @@ export default function Show({ video }: { video: Video }) {
   const [job, setJob] = React.useState<HlsJob | null>(null);
   const [isJobLoading, setIsJobLoading] = React.useState(true);
   const [jobLoadError, setJobLoadError] = React.useState<string | null>(null);
+  const isFirebaseVideo = video.provider === "firebase";
+  const providerLabel = video.provider === "firebase" ? "Firebase" : "Local";
+  const providerStatusMessage = "Video ini menggunakan provider local, jadi tidak memiliki status transcoding Firebase.";
 
   React.useEffect(() => {
+    if (!isFirebaseVideo) {
+      setJob(null);
+      setIsJobLoading(false);
+      setJobLoadError(null);
+
+      return;
+    }
+
     if (!firestore) {
       setJob(null);
       setIsJobLoading(false);
@@ -194,7 +206,7 @@ export default function Show({ video }: { video: Video }) {
     });
 
     return () => unsubscribe();
-  }, [firestore, video.slug]);
+  }, [firestore, isFirebaseVideo, video.slug]);
 
   const handleDelete = () => {
     if (confirm(`Apakah Anda yakin ingin menghapus video \"${video.title}\"?`)) {
@@ -358,6 +370,18 @@ export default function Show({ video }: { video: Video }) {
 
                     <div className="flex items-start gap-3 rounded-xl bg-slate-50 p-3 dark:bg-slate-800/50">
                       <div className="rounded-lg bg-slate-200 p-2 dark:bg-slate-700">
+                        <ServerIcon className="h-4 w-4 text-slate-600 dark:text-slate-200" />
+                      </div>
+                      <div>
+                        <Typography className="text-xs text-slate-500 dark:text-slate-400">Provider</Typography>
+                        <Typography className="font-medium text-slate-700 dark:text-slate-200">
+                          {providerLabel}
+                        </Typography>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3 rounded-xl bg-slate-50 p-3 dark:bg-slate-800/50">
+                      <div className="rounded-lg bg-slate-200 p-2 dark:bg-slate-700">
                         <CalendarIcon className="h-4 w-4 text-slate-600 dark:text-slate-200" />
                       </div>
                       <div>
@@ -402,7 +426,11 @@ export default function Show({ video }: { video: Video }) {
             </div>
           </Tabs.Panel>
           <Tabs.Panel value="status">
-            {isJobLoading ? (
+            {!isFirebaseVideo ? (
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400">
+                {providerStatusMessage}
+              </div>
+            ) : isJobLoading ? (
               <Card className="border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
                 <Card.Body className="space-y-4 p-5">
                   <div className="h-5 w-48 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />

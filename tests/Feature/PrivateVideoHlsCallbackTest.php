@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\VideoProviderEnum;
 use App\Models\User;
 use App\Models\Video;
 
@@ -19,7 +20,7 @@ it('updates the video hls url by slug through the api endpoint', function () {
         'uploaded_by' => $user->id,
         'video_url' => null,
         'storage_path' => 'videos/video-hls-pending/source-video.mp4',
-        'provider' => 'firebase',
+        'provider' => VideoProviderEnum::Firebase,
         'tags' => [],
     ]);
 

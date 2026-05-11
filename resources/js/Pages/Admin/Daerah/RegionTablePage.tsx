@@ -158,7 +158,7 @@ export default function RegionTablePage({
                 {filterOptions?.provinces && (
                   <div className="space-y-1">
                     <Typography as="label" htmlFor="province-filter" type="small" color="default" className="font-semibold">
-                      Filter Provinsi
+                      Provinsi
                     </Typography>
                     <Select
                       value={provinceId}
@@ -184,7 +184,7 @@ export default function RegionTablePage({
                 {filterOptions?.regencies && (
                   <div className="space-y-1">
                     <Typography as="label" htmlFor="regency-filter" type="small" color="default" className="font-semibold">
-                      Filter Kabupaten
+                      Kabupaten
                     </Typography>
                     <Select
                       value={regencyId}
@@ -210,7 +210,7 @@ export default function RegionTablePage({
                 {filterOptions?.districts && (
                   <div className="space-y-1">
                     <Typography as="label" htmlFor="district-filter" type="small" color="default" className="font-semibold">
-                      Filter Kecamatan
+                      Kecamatan
                     </Typography>
                     <Select
                       value={districtId}

@@ -51,6 +51,6 @@ Route::middleware(['throttle:1000,1', 'private.api'])->group(function () {
 });
 
 // Firebase Webhook
-Route::middleware(['throttle:1000,1', 'firebase.webhook'])->prefix('firebase')->group(function () {
+Route::middleware(['throttle:1000,1', 'firebase.id_token'])->prefix('firebase')->group(function () {
     Route::post('/webhook/user-created', [FirebaseWebhookController::class, 'userCreated']);
 });

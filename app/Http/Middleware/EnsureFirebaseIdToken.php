@@ -24,12 +24,20 @@ class EnsureFirebaseIdToken
         }
 
         try {
-            $verifiedToken = Firebase::auth()->verifyIdToken($idToken);
+            $leewayInSeconds = 5;
+            $verifiedToken = Firebase::auth()->verifyIdToken($idToken, false, $leewayInSeconds);
         } catch (FailedToVerifyToken) {
             return response()->json([
                 'status' => false,
                 'errorCode' => 401,
                 'message' => 'Unauthorized. Firebase token is invalid.',
+                'version' => 2,
+            ], 401);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'errorCode' => 401,
+                'message' => 'Unauthorized. ' . $e->getMessage(),
                 'version' => 2,
             ], 401);
         }

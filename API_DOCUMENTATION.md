@@ -13,9 +13,8 @@ Cakupan dokumentasi:
 - Firebase webhook: endpoint di bawah prefix `/api/firebase`
 
 Aturan autentikasi utama:
-- Public book activation menggunakan field body `api_key`
+- Public API v2 dan Firebase webhook menggunakan Firebase ID token sebagai Bearer token (`Authorization: Bearer <firebase_id_token>`)
 - Private API menggunakan path parameter `{api_key}`
-- Firebase webhook menggunakan header `X-Firebase-Secret`
 
 Tujuan file `openapi.json`:
 - Dibaca AI agent atau LLM

@@ -33,7 +33,6 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => AdminMiddleware::class,
             'firebase.id_token' => EnsureFirebaseIdToken::class,
-            'firebase.webhook' => VerifyFirebaseWebhook::class,
             'private.api' => EnsurePrivateApiKey::class,
         ]);
     })

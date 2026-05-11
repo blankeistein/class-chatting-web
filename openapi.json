@@ -22,7 +22,7 @@
         },
         {
             "name": "Firebase Webhooks",
-            "description": "Webhook internal untuk sinkronisasi data pengguna dari Firebase."
+            "description": "Webhook untuk sinkronisasi data pengguna dari Firebase. Memerlukan Firebase ID token sebagai Bearer token."
         },
         {
             "name": "Videos",
@@ -1513,16 +1513,9 @@
                 "tags": [
                     "Public Books"
                 ],
-                "parameters": [
+                "security": [
                     {
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true,
-                        "description": "Firebase ID token bearer. Format: `Bearer <firebase_id_token>`.",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "example": "Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6Ij..."
+                        "firebaseIdToken": []
                     }
                 ],
                 "requestBody": {
@@ -1581,6 +1574,11 @@
                 "summary": "Check activation code level v2",
                 "tags": [
                     "Public Books"
+                ],
+                "security": [
+                    {
+                        "firebaseIdToken": []
+                    }
                 ],
                 "parameters": [
                     {
@@ -1838,19 +1836,14 @@
         "/firebase/webhook/user-created": {
             "post": {
                 "operationId": "firebaseWebhookUserCreated",
-                "description": "Webhook yang menerima event pembuatan user dari Firebase lalu melakukan sinkronisasi atau pembaruan data user lokal.",
+                "description": "Webhook yang menerima event pembuatan user dari Firebase lalu melakukan sinkronisasi atau pembaruan data user lokal. Memerlukan Firebase ID token yang valid sebagai Bearer token.",
                 "summary": "Sync created Firebase user",
                 "tags": [
                     "Firebase Webhooks"
                 ],
-                "parameters": [
+                "security": [
                     {
-                        "name": "X-Firebase-Secret",
-                        "in": "header",
-                        "required": true,
-                        "description": "Shared secret untuk memverifikasi bahwa request berasal dari sumber webhook yang sah.",
-                        "schema": {},
-                        "example": "firebase-webhook-secret"
+                        "firebaseIdToken": []
                     }
                 ],
                 "requestBody": {
@@ -2724,6 +2717,14 @@
                         }
                     }
                 }
+            }
+        },
+        "securitySchemes": {
+            "firebaseIdToken": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "Firebase ID Token",
+                "description": "Firebase ID token yang diperoleh dari Firebase Authentication SDK. Kirim sebagai `Authorization: Bearer <firebase_id_token>`."
             }
         }
     }

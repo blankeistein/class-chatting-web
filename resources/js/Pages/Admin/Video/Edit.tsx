@@ -590,6 +590,7 @@ export default function Edit({ video }: { video: Video }) {
                         key={activeVideoUrl}
                         preload="metadata"
                         controls
+                        crossOrigin="anonymous"
                         className="aspect-video w-full bg-black"
                         poster={thumbPreviewUrl || undefined}
                       >
@@ -683,6 +684,7 @@ export default function Edit({ video }: { video: Video }) {
                   ref={videoRef}
                   preload="metadata"
                   controls
+                  crossOrigin="anonymous"
                   className="max-h-[500px] w-full object-contain"
                   poster={thumbPreviewUrl || undefined}
                 >

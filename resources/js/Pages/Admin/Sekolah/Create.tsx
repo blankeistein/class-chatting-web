@@ -68,7 +68,7 @@ export default function Create({ provinces, regencies, districts, villages }: { 
     address: "",
     rt: "",
     rw: "",
-    latitute: "",
+    latitude: "",
     longitude: "",
   });
 
@@ -88,7 +88,7 @@ export default function Create({ provinces, regencies, districts, villages }: { 
       address: payload.address.trim() === "" ? null : payload.address.trim(),
       rt: payload.rt === "" ? null : Number(payload.rt),
       rw: payload.rw === "" ? null : Number(payload.rw),
-      latitute: payload.latitute === "" ? null : Number(payload.latitute),
+      latitude: payload.latitude === "" ? null : Number(payload.latitude),
       longitude: payload.longitude === "" ? null : Number(payload.longitude),
     }));
 
@@ -325,18 +325,18 @@ export default function Create({ provinces, regencies, districts, villages }: { 
                 </div>
 
                 <div className="space-y-1">
-                  <Typography as="label" htmlFor="latitute" type="small" className="font-semibold dark:text-white">
+                  <Typography as="label" htmlFor="latitude" type="small" className="font-semibold dark:text-white">
                     Latitude
                   </Typography>
                   <Input
-                    id="latitute"
+                    id="latitude"
                     type="number"
                     step="0.0000001"
-                    value={data.latitute}
-                    onChange={(event) => setData("latitute", event.target.value)}
-                    isError={!!errors.latitute}
+                    value={data.latitude}
+                    onChange={(event) => setData("latitude", event.target.value)}
+                    isError={!!errors.latitude}
                   />
-                  {errors.latitute && <Typography type="small" color="error">{errors.latitute}</Typography>}
+                  {errors.latitude && <Typography type="small" color="error">{errors.latitude}</Typography>}
                 </div>
 
                 <div className="space-y-1">

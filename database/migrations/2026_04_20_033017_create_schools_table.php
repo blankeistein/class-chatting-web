@@ -24,7 +24,7 @@ return new class extends Migration
             $table->text('address')->nullable();
             $table->unsignedInteger('rt')->nullable();
             $table->unsignedInteger('rw')->nullable();
-            $table->decimal('latitute', 10, 6)->nullable();
+            $table->decimal('latitude', 10, 6)->nullable();
             $table->decimal('longitude', 10, 6)->nullable();
             $table->string('old_code', 50)->nullable()->default(null);
             $table->timestamps();

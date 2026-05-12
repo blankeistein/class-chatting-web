@@ -25,7 +25,7 @@ class SchoolResource extends JsonResource
             'address' => $this->address,
             'rt' => $this->rt,
             'rw' => $this->rw,
-            'latitute' => $this->latitute,
+            'latitude' => $this->latitude,
             'longitude' => $this->longitude,
             'province' => $this->whenLoaded('province', function (): array {
                 return [

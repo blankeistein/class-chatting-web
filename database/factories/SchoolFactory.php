@@ -38,7 +38,7 @@ class SchoolFactory extends Factory
             'address' => fake()->address(),
             'rt' => fake()->numberBetween(1, 20),
             'rw' => fake()->numberBetween(1, 20),
-            'latitute' => fake()->latitude(-11, 6),
+            'latitude' => fake()->latitude(-11, 6),
             'longitude' => fake()->longitude(95, 141),
         ];
     }

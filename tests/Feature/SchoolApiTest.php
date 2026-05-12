@@ -37,7 +37,7 @@ it('returns paginated schools with region context', function () {
         'province_id' => $province->id,
         'regency_id' => $regency->id,
         'district_id' => $district->id,
-        'latitute' => -6.2485000,
+        'latitude' => -6.2485000,
         'longitude' => 106.7995000,
     ]);
 

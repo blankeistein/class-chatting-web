@@ -21,7 +21,7 @@ type School = {
   address?: string | null;
   rt?: number | null;
   rw?: number | null;
-  latitute?: number | string | null;
+  latitude?: number | string | null;
   longitude?: number | string | null;
   province?: {
     id: number;
@@ -128,7 +128,7 @@ export default function Show({ school }: { school: { data: School } }) {
               <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
                 <InfoItem label="Alamat" value={schoolData.address} />
                 <InfoItem label="RT/RW" value={schoolData.rt || schoolData.rw ? `${schoolData.rt || "-"} / ${schoolData.rw || "-"}` : "-"} />
-                <InfoItem label="Latitude" value={schoolData.latitute} />
+                <InfoItem label="Latitude" value={schoolData.latitude} />
                 <InfoItem label="Longitude" value={schoolData.longitude} />
               </div>
             </div>

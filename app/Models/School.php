@@ -26,7 +26,7 @@ class School extends Model
         'address',
         'rt',
         'rw',
-        'latitute',
+        'latitude',
         'longitude',
     ];
 

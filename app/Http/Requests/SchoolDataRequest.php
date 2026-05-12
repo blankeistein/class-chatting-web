@@ -37,7 +37,7 @@ class SchoolDataRequest extends FormRequest
             'address' => ['nullable', 'string'],
             'rt' => ['nullable', 'integer', 'min:0'],
             'rw' => ['nullable', 'integer', 'min:0'],
-            'latitute' => ['nullable', 'numeric', 'between:-90,90'],
+            'latitude' => ['nullable', 'numeric', 'between:-90,90'],
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
         ];
     }
@@ -66,8 +66,8 @@ class SchoolDataRequest extends FormRequest
             'rt.min' => 'RT tidak boleh kurang dari 0.',
             'rw.integer' => 'RW harus berupa angka.',
             'rw.min' => 'RW tidak boleh kurang dari 0.',
-            'latitute.numeric' => 'Latitude harus berupa angka desimal.',
-            'latitute.between' => 'Latitude harus berada di antara -90 sampai 90.',
+            'latitude.numeric' => 'Latitude harus berupa angka desimal.',
+            'latitude.between' => 'Latitude harus berada di antara -90 sampai 90.',
             'longitude.numeric' => 'Longitude harus berupa angka desimal.',
             'longitude.between' => 'Longitude harus berada di antara -180 sampai 180.',
         ];

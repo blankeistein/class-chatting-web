@@ -324,7 +324,7 @@ class SchoolController extends Controller
                     'rt' => $this->toNullableInteger($this->csvValue($row, $headerMap, 'rt')),
                     'rw' => $this->toNullableInteger($this->csvValue($row, $headerMap, 'rw')),
                     'longitude' => $this->toNullableFloat($this->csvValue($row, $headerMap, 'bujur')),
-                    'latitute' => $this->toNullableFloat($this->csvValue($row, $headerMap, 'lintang')),
+                    'latitude' => $this->toNullableFloat($this->csvValue($row, $headerMap, 'lintang')),
                     'old_code' => $this->nullIfEmpty($this->csvValue($row, $headerMap, 'old_id')),
                 ];
 

@@ -24,7 +24,7 @@ Route::prefix('v2')->group(function () {
     Route::get('/book/level/{code}', [V2BookController::class, 'activationCheckLevel'])->middleware(['throttle:500,1', 'firebase.id_token']);
 });
 
-Route::prefix('v1/regions')->group(function () {
+Route::prefix('v1/regions')->middleware('throttle:120,1')->group(function () {
     Route::get('/provinces', [RegionController::class, 'provinces']);
     Route::get('/provinces/{province:code}', [RegionController::class, 'province']);
     Route::get('/provinces/{province:code}/regencies', [RegionController::class, 'regenciesByProvince']);
@@ -41,7 +41,7 @@ Route::prefix('v1/regions')->group(function () {
     Route::get('/villages/{village:code}', [RegionController::class, 'village']);
 });
 
-Route::prefix('v1/schools')->group(function () {
+Route::prefix('v1/schools')->middleware('throttle:120,1')->group(function () {
     Route::get('/', [SchoolController::class, 'index']);
     Route::get('/{school}', [SchoolController::class, 'show']);
 });

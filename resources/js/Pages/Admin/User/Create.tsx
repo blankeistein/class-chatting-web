@@ -13,6 +13,7 @@ import AdminLayout from "@/Layouts/AdminLayout";
 import { Head, router, useForm } from "@inertiajs/react";
 import { ArrowLeftIcon, SaveIcon, UserPlusIcon, LockIcon, MailIcon, UserIcon, PhoneIcon } from "lucide-react";
 import { toast, Toaster } from "react-hot-toast";
+import { PageHeader } from "@/Components/PageHeader";
 
 export default function Create() {
   const { data, setData, post, processing, errors } = useForm({
@@ -38,23 +39,21 @@ export default function Create() {
 
   return (
     <>
-      <Head title="Tambah User Baru" />
+      <Head title="Tambah Pengguna" />
       <Toaster position="top-center" />
 
       <div className="p-4 space-y-6">
-        <div className="flex items-center gap-4">
-          <IconButton
-            variant="ghost"
-            onClick={() => router.get(route("admin.users.index"))}
-          >
-            <ArrowLeftIcon className="w-5 h-5 dark:text-white" />
-          </IconButton>
-          <div>
-            <Typography variant="h4" className="text-xl font-bold text-slate-800 dark:text-white">
-              Tambah User Baru
-            </Typography>
-          </div>
-        </div>
+        <PageHeader
+          title="Tambah Pengguna"
+          backAction={
+            <IconButton
+              variant="ghost"
+              onClick={() => router.get(route("admin.users.index"))}
+            >
+              <ArrowLeftIcon className="w-5 h-5 dark:text-white" />
+            </IconButton>
+          }
+        />
 
         <Card className="shadow-sm border border-slate-200 dark:border-slate-800 dark:bg-slate-900 overflow-hidden max-w-2xl mx-auto">
           <CardBody className="p-6">

@@ -13,6 +13,7 @@ import AdminLayout from "@/Layouts/AdminLayout";
 import { Head, router, useForm } from "@inertiajs/react";
 import { ArrowLeftIcon, SaveIcon, ImageIcon, XIcon, TagIcon, LinkIcon, HashIcon, RefreshCcwIcon, FileUpIcon, FileTextIcon } from "lucide-react";
 import { toast, Toaster } from "react-hot-toast";
+import { PageHeader } from "@/Components/PageHeader";
 
 const generateCustomID = (length: number = 32): string => {
   const characters: string = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -117,19 +118,17 @@ export default function Create() {
       <Head title="Tambah Buku Baru" />
       <Toaster position="top-center" />
       <div className="p-4 space-y-6">
-        <div className="flex items-center gap-4">
-          <IconButton
-            variant="ghost"
-            onClick={() => router.get(route("admin.books.index"))}
-          >
-            <ArrowLeftIcon className="w-5 h-5 dark:text-white" />
-          </IconButton>
-          <div>
-            <Typography variant="h4" className="text-xl font-bold text-slate-800 dark:text-white">
-              Tambah Buku Baru
-            </Typography>
-          </div>
-        </div>
+        <PageHeader
+          title="Tambah Buku Baru"
+          backAction={
+            <IconButton
+              variant="ghost"
+              onClick={() => router.get(route("admin.books.index"))}
+            >
+              <ArrowLeftIcon className="w-5 h-5 dark:text-white" />
+            </IconButton>
+          }
+        />
 
         <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">

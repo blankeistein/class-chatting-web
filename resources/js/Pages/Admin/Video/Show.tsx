@@ -21,6 +21,7 @@ import {
 import { doc, onSnapshot } from "firebase/firestore";
 import { getFirebaseFirestore } from "@/lib/firebase";
 import { resolveYoutubeId } from "./Create";
+import { PageHeader } from "@/Components/PageHeader";
 
 interface Video {
   id: number;
@@ -224,56 +225,49 @@ export default function Show({ video }: { video: Video }) {
       <Head title={`Detail Video - ${video.title}`} />
 
       <div className="mx-auto space-y-6 p-4">
-        <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-          <div className="flex items-center gap-3">
-            <IconButton
-              variant="ghost"
-              onClick={() => router.get(route("admin.videos.index"))}
-            >
-              <ArrowLeftIcon className="h-4 w-4" />
-            </IconButton>
-            <div>
-              <Typography variant="h4" className="font-bold text-slate-800 dark:text-white">
-                Detail Video
-              </Typography>
-              <Typography variant="small" className="text-slate-500 dark:text-slate-400">
-                Lihat informasi lengkap dan putar video langsung dari halaman ini.
-              </Typography>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              variant="ghost"
-              color="secondary"
-              size="sm"
-              className="flex items-center gap-2"
-              onClick={() => video.video_url && window.open(video.video_url, "_blank")}
-              disabled={!video.video_url}
-            >
-              <ExternalLinkIcon className="h-4 w-4" />
-              {video.video_url ? (isYoutubeVideo ? "Buka YouTube" : "Buka File") : "Menunggu HLS"}
-            </Button>
-            <Button
-              size="sm"
-              color="secondary"
-              className="flex items-center gap-2"
-              onClick={() => router.get(route("admin.videos.edit", video.slug))}
-            >
-              <EditIcon className="h-4 w-4" />
-              Edit Video
-            </Button>
-            <Button
-              size="sm"
-              color="error"
-              className="flex items-center gap-2"
-              onClick={handleDelete}
-            >
-              <Trash2Icon className="h-4 w-4" />
-              Hapus
-            </Button>
-          </div>
-        </div>
+        <PageHeader
+          title="Detail Video"
+          description="Lihat informasi lengkap dan putar video."
+          actions={
+            <>
+              <Button
+                variant="ghost"
+                color="secondary"
+                size="sm"
+                className="flex items-center gap-2"
+                onClick={() => video.video_url && window.open(video.video_url, "_blank")}
+                disabled={!video.video_url}
+              >
+                <ExternalLinkIcon className="h-4 w-4" />
+                {video.video_url ? (isYoutubeVideo ? "Buka YouTube" : "Buka File") : "Menunggu HLS"}
+              </Button>
+              <Button
+                size="sm"
+                color="secondary"
+                className="flex items-center gap-2"
+                onClick={() => router.get(route("admin.videos.edit", video.slug))}
+              >
+                <EditIcon className="h-4 w-4" />
+                Edit Video
+              </Button>
+              <Button
+                size="sm"
+                color="error"
+                className="flex items-center gap-2"
+                onClick={handleDelete}
+              >
+                <Trash2Icon className="h-4 w-4" />
+                Hapus
+              </Button>
+            </>
+          }
+          backAction={<IconButton
+            variant="ghost"
+            onClick={() => router.get(route("admin.videos.index"))}
+          >
+            <ArrowLeftIcon className="h-4 w-4" />
+          </IconButton>}
+        />
 
         <Tabs defaultValue="umum">
           <Tabs.List className="mx-1">

@@ -13,6 +13,7 @@ import AdminLayout from "@/Layouts/AdminLayout";
 import { Head, router, useForm } from "@inertiajs/react";
 import { ArrowLeftIcon, SaveIcon, ImageIcon, XIcon, TagIcon, LinkIcon, HashIcon } from "lucide-react";
 import { toast, Toaster } from "react-hot-toast";
+import { PageHeader } from "@/Components/PageHeader";
 
 interface Book {
   id: number;
@@ -78,19 +79,17 @@ export default function Edit({ book }: { book: { data: Book } }) {
       <Toaster position="top-center" />
 
       <div className="p-4 space-y-6">
-        <div className="flex items-center gap-4">
-          <IconButton
-            variant="ghost"
-            onClick={() => router.get(route("admin.books.index"))}
-          >
-            <ArrowLeftIcon className="w-5 h-5 dark:text-white" />
-          </IconButton>
-          <div>
-            <Typography variant="h4" className="text-xl font-bold text-slate-800 dark:text-white">
-              Edit Buku
-            </Typography>
-          </div>
-        </div>
+        <PageHeader
+          title="Edit Buku"
+          backAction={
+            <IconButton
+              variant="ghost"
+              onClick={() => router.get(route("admin.books.index"))}
+            >
+              <ArrowLeftIcon className="w-5 h-5 dark:text-white" />
+            </IconButton>
+          }
+        />
 
         <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">

@@ -12,10 +12,10 @@ interface PageHeaderProps {
 export function PageHeader({ title, description, actions, backAction, className = "" }: PageHeaderProps) {
   return (
     <div className={`flex flex-col md:flex-row justify-between items-start md:items-center gap-4 ${className}`}>
-      <div className="flex gap-2 items-center">
+      <div className="flex gap-3 items-center">
         {backAction && backAction}
         <div>
-          <Typography variant="h4" className="font-bold text-slate-800 dark:text-white">
+          <Typography variant="h4" className="text-xl font-bold text-slate-800 dark:text-white">
             {title}
           </Typography>
           {description && (

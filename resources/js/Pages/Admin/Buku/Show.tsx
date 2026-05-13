@@ -17,6 +17,7 @@ import {
   UploadCloudIcon,
 } from "lucide-react";
 import { toast, Toaster } from "react-hot-toast";
+import { PageHeader } from "@/Components/PageHeader";
 
 interface Book {
   id: number;
@@ -73,60 +74,55 @@ export default function Show({ book }: { book: { data: Book } }) {
       <Toaster position="top-center" />
 
       <div className="mx-auto space-y-6 p-4">
-        <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-          <div className="flex items-center gap-3">
+        <PageHeader
+          title="Informasi Buku"
+          description="Lihat detail lengkap buku digital yang tersedia di aplikasi."
+          backAction={
             <IconButton
               variant="ghost"
               onClick={() => router.get(route("admin.books.index"))}
             >
-              <ArrowLeftIcon className="h-4 w-4" />
+              <ArrowLeftIcon className="w-5 h-5 dark:text-white" />
             </IconButton>
-            <div>
-              <Typography variant="h4" className="font-bold text-slate-800 dark:text-white">
-                Informasi Buku
-              </Typography>
-              <Typography variant="small" className="text-slate-500 dark:text-slate-400">
-                Lihat detail lengkap buku digital yang tersedia di aplikasi.
-              </Typography>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              as="a"
-              variant="ghost"
-              color="secondary"
-              size="sm"
-              className="flex items-center gap-2"
-              href={currentBook.url || undefined}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-disabled={!currentBook.url}
-            >
-              <CloudDownloadIcon className="h-4 w-4" />
-              Download Link
-            </Button>
-            <Menu placement="bottom-end">
-              <Menu.Trigger as={IconButton} variant="outline" size="sm">
-                <MoreVerticalIcon className="w-4 h-4" />
-              </Menu.Trigger>
-              <Menu.Content>
-                <Menu.Item as={Link} href={route("admin.books.edit", currentBook.id)}>
-                  <EditIcon className="h-4 w-4 mr-2" />
-                  Edit Buku
-                </Menu.Item>
-                <Menu.Item as={Link} href={route("admin.books.upload", currentBook.id)}>
-                  <UploadCloudIcon className="h-4 w-4 mr-2" />
-                  Upload Buku
-                </Menu.Item>
-                <Menu.Item onClick={handleDelete} className="text-error">
-                  <Trash2Icon className="h-4 w-4 mr-2" />
-                  Hapus
-                </Menu.Item>
-              </Menu.Content>
-            </Menu>
-          </div>
-        </div>
+          }
+          actions={
+            <>
+              <Button
+                as="a"
+                variant="ghost"
+                color="secondary"
+                size="sm"
+                className="flex items-center gap-2"
+                href={currentBook.url || undefined}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-disabled={!currentBook.url}
+              >
+                <CloudDownloadIcon className="h-4 w-4" />
+                Download Link
+              </Button>
+              <Menu placement="bottom-end">
+                <Menu.Trigger as={IconButton} variant="outline" size="sm">
+                  <MoreVerticalIcon className="w-4 h-4" />
+                </Menu.Trigger>
+                <Menu.Content>
+                  <Menu.Item as={Link} href={route("admin.books.edit", currentBook.id)}>
+                    <EditIcon className="h-4 w-4 mr-2" />
+                    Edit Buku
+                  </Menu.Item>
+                  <Menu.Item as={Link} href={route("admin.books.upload", currentBook.id)}>
+                    <UploadCloudIcon className="h-4 w-4 mr-2" />
+                    Upload Buku
+                  </Menu.Item>
+                  <Menu.Item onClick={handleDelete} className="text-error">
+                    <Trash2Icon className="h-4 w-4 mr-2" />
+                    Hapus
+                  </Menu.Item>
+                </Menu.Content>
+              </Menu>
+            </>
+          }
+        />
 
         <Tabs defaultValue="umum">
           <Tabs.List className="mx-1">

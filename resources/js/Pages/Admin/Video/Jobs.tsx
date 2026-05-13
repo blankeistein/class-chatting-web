@@ -18,6 +18,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { collection, deleteDoc, doc, onSnapshot, query, writeBatch } from "firebase/firestore";
 import { getFirebaseAuth, getFirebaseFirestore } from "@/lib/firebase";
 import { Toaster, toast } from "react-hot-toast";
+import { PageHeader } from "@/Components/PageHeader";
 
 type HlsJob = {
   id: string;
@@ -348,35 +349,30 @@ export default function Jobs() {
       <Toaster position="top-center" />
 
       <div className="space-y-6 p-4">
-        <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-          <div className="flex items-center gap-3">
+        <PageHeader
+          title="Tugas Video Converter"
+          description="Pantau proses konversi video ke HLS."
+          backAction={
             <IconButton
               variant="ghost"
               onClick={() => router.get(route("admin.videos.index"))}
             >
               <ArrowLeftIcon className="h-4 w-4" />
             </IconButton>
-            <div>
-              <Typography variant="h4" className="font-bold text-slate-800 dark:text-white">
-                Tugas Video Converter
-              </Typography>
-              <Typography className="text-slate-500 dark:text-slate-400">
-                Pantau proses konversi video ke HLS.
-              </Typography>
-            </div>
-          </div>
-
-          <Button
-            color="secondary"
-            size="sm"
-            className="flex items-center gap-2"
-            onClick={() => router.reload()}
-            disabled={isLoading || !firestore}
-          >
-            <RefreshCcwIcon className="h-4 w-4" />
-            {isLoading ? "Memuat..." : "Muat Ulang"}
-          </Button>
-        </div>
+          }
+          actions={
+            <Button
+              color="secondary"
+              size="sm"
+              className="flex items-center gap-2"
+              onClick={() => router.reload()}
+              disabled={isLoading || !firestore}
+            >
+              <RefreshCcwIcon className="h-4 w-4" />
+              {isLoading ? "Memuat..." : "Muat Ulang"}
+            </Button>
+          }
+        />
 
         {selectedCount > 0 && (
           <Card color="secondary" className="fixed bottom-8 left-1/2 z-30 flex w-[90%] -translate-x-1/2 flex-row items-center justify-between gap-3 p-3 text-white shadow-xl lg:w-[620px]">

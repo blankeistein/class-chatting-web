@@ -13,6 +13,7 @@ import AdminLayout from "@/Layouts/AdminLayout";
 import { Head, router, useForm } from "@inertiajs/react";
 import { ArrowLeftIcon, RefreshCwIcon, SaveIcon } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
+import { PageHeader } from "@/Components/PageHeader";
 
 type Province = {
   id: number;
@@ -110,17 +111,17 @@ export default function Create({ provinces, regencies, districts, villages }: { 
       <Toaster position="top-center" />
 
       <div className="p-4 space-y-6">
-        <div className="flex items-center gap-4">
-          <IconButton
-            variant="ghost"
-            onClick={() => router.get(route("admin.schools.index"))}
-          >
-            <ArrowLeftIcon className="w-5 h-5 dark:text-white" />
-          </IconButton>
-          <Typography variant="h4" className="text-xl font-bold text-slate-800 dark:text-white">
-            Tambah Sekolah
-          </Typography>
-        </div>
+        <PageHeader
+          title="Tambah Sekolah"
+          backAction={
+            <IconButton
+              variant="ghost"
+              onClick={() => router.get(route("admin.schools.index"))}
+            >
+              <ArrowLeftIcon className="w-5 h-5 dark:text-white" />
+            </IconButton>
+          }
+        />
 
         <Card className="shadow-sm border border-slate-200 dark:border-slate-800 dark:bg-slate-900 overflow-hidden max-w-4xl mx-auto">
           <CardBody className="p-6">

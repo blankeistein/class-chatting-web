@@ -9,6 +9,7 @@ import {
 import AdminLayout from "@/Layouts/AdminLayout";
 import { Head, router } from "@inertiajs/react";
 import { ArrowLeftIcon, EditIcon, MapPinIcon, ExternalLinkIcon } from "lucide-react";
+import { PageHeader } from "@/Components/PageHeader";
 
 type School = {
   id: number;
@@ -68,32 +69,28 @@ export default function Show({ school }: { school: { data: School } }) {
       <Head title={`Info Sekolah - ${schoolData.name}`} />
 
       <div className="p-4 space-y-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-4">
+        <PageHeader
+          title={schoolData.name}
+          description="Informasi lengkap data sekolah."
+          backAction={
             <IconButton
               variant="ghost"
               onClick={() => router.get(route("admin.schools.index"))}
             >
               <ArrowLeftIcon className="w-5 h-5 dark:text-white" />
             </IconButton>
-            <div>
-              <Typography variant="h4" className="text-xl font-bold text-slate-800 dark:text-white">
-                {schoolData.name}
-              </Typography>
-              <Typography className="text-sm text-slate-500 dark:text-slate-400">
-                Informasi lengkap data sekolah.
-              </Typography>
-            </div>
-          </div>
-          <Button
-            size="sm"
-            className="flex items-center gap-2"
-            onClick={() => router.get(route("admin.schools.edit", schoolData.code))}
-          >
-            <EditIcon className="h-4 w-4" />
-            Edit Sekolah
-          </Button>
-        </div>
+          }
+          actions={
+            <Button
+              size="sm"
+              className="flex items-center gap-2"
+              onClick={() => router.get(route("admin.schools.edit", schoolData.code))}
+            >
+              <EditIcon className="h-4 w-4" />
+              Edit Sekolah
+            </Button>
+          }
+        />
 
         <Card className="mx-auto max-w-5xl overflow-hidden border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <CardBody className="space-y-6 p-6">

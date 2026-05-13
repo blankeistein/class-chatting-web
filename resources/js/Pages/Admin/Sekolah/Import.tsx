@@ -10,6 +10,7 @@ import AdminLayout from "@/Layouts/AdminLayout";
 import { Head, router, useForm } from "@inertiajs/react";
 import { ArrowLeftIcon, FileSpreadsheetIcon, UploadCloudIcon, XIcon } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
+import { PageHeader } from "@/Components/PageHeader";
 
 type CsvPreview = {
   fileName: string;
@@ -208,22 +209,18 @@ export default function Import() {
       <Toaster position="top-center" />
 
       <div className="p-4 space-y-6">
-        <div className="flex items-center gap-4">
-          <IconButton
-            variant="ghost"
-            onClick={() => router.get(route("admin.schools.index"))}
-          >
-            <ArrowLeftIcon className="w-5 h-5 dark:text-white" />
-          </IconButton>
-          <div>
-            <Typography variant="h4" className="text-xl font-bold text-slate-800 dark:text-white">
-              Import Sekolah
-            </Typography>
-            <Typography className="text-slate-500 dark:text-slate-400">
-              Upload file CSV untuk menambahkan atau memperbarui data sekolah.
-            </Typography>
-          </div>
-        </div>
+        <PageHeader
+          title="Import Sekolah"
+          description="Upload file CSV untuk menambahkan atau memperbarui data sekolah."
+          backAction={
+            <IconButton
+              variant="ghost"
+              onClick={() => router.get(route("admin.schools.index"))}
+            >
+              <ArrowLeftIcon className="w-5 h-5 dark:text-white" />
+            </IconButton>
+          }
+        />
 
         <Card className="mx-auto max-w-5xl overflow-hidden border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <CardBody className="p-6">

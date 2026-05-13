@@ -14,6 +14,7 @@ import AdminLayout from "@/Layouts/AdminLayout";
 import { Head, router, useForm } from "@inertiajs/react";
 import { ArrowLeftIcon, SaveIcon, UserIcon, LockIcon, MailIcon, PhoneIcon, AlertCircleIcon } from "lucide-react";
 import { toast, Toaster } from "react-hot-toast";
+import { PageHeader } from "@/Components/PageHeader";
 
 interface User {
   id: number;
@@ -54,19 +55,17 @@ export default function Edit({ user }: { user: User }) {
       <Toaster position="top-center" />
 
       <div className="p-4 space-y-6">
-        <div className="flex items-center gap-4">
-          <IconButton
-            variant="ghost"
-            onClick={() => router.get(route("admin.users.index"))}
-          >
-            <ArrowLeftIcon className="w-5 h-5 dark:text-white" />
-          </IconButton>
-          <div>
-            <Typography variant="h4" className="text-xl font-bold text-slate-800 dark:text-white">
-              Edit User
-            </Typography>
-          </div>
-        </div>
+        <PageHeader
+          title="Edit Pengguna"
+          backAction={
+            <IconButton
+              variant="ghost"
+              onClick={() => router.get(route("admin.users.index"))}
+            >
+              <ArrowLeftIcon className="w-5 h-5 dark:text-white" />
+            </IconButton>
+          }
+        />
 
         <Card className="shadow-sm border border-slate-200 dark:border-slate-800 dark:bg-slate-900 overflow-hidden max-w-2xl mx-auto">
           <CardBody className="p-6">

@@ -29,6 +29,7 @@ import {
 import { Head, router } from "@inertiajs/react";
 import AdminLayout from "@/Layouts/AdminLayout";
 import { toast, Toaster } from "react-hot-toast";
+import { PageHeader } from "@/Components/PageHeader";
 
 interface User {
   name: string;
@@ -142,44 +143,30 @@ export default function Show({ activationCode }: { activationCode: { data: Activ
       <Toaster position="top-center" />
 
       <div className="p-4 space-y-6 mx-auto">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="flex items-center gap-3">
-            <IconButton
-              variant="ghost"
-              onClick={() => router.get(route('admin.activation-code.index'))}
-            >
-              <ArrowLeftIcon className="h-4 w-4" />
-            </IconButton>
-            <div>
-              <Typography variant="h4" className="font-bold text-slate-800 dark:text-white">
-                Detail Kode Aktivasi
-              </Typography>
-              <Typography variant="small" className="text-slate-500 dark:text-slate-400">
-                Informasi lengkap kode aktivasi.
-              </Typography>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              color={code.isActive ? "warning" : "success"}
-              onClick={handleToggleActive}
-            >
-              {code.isActive ? <ShieldXIcon className="h-4 w-4 mr-2" /> : <ShieldCheckIcon className="h-4 w-4 mr-2" />}
-              {code.isActive ? "Nonaktifkan" : "Aktifkan"}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              color="error"
-              onClick={handleDelete}
-            >
-              Hapus
-            </Button>
-          </div>
-        </div>
+        <PageHeader
+          title="Detail Kode Aktivasi"
+          description="Informasi lengkap kode aktivasi."
+          actions={
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                color={code.isActive ? "warning" : "success"}
+                onClick={handleToggleActive}
+              >
+                {code.isActive ? <ShieldXIcon className="h-4 w-4 mr-2" /> : <ShieldCheckIcon className="h-4 w-4 mr-2" />}
+                {code.isActive ? "Nonaktifkan" : "Aktifkan"}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                color="error"
+                onClick={handleDelete}
+              >
+                Hapus
+              </Button></>
+          }
+        />
 
         {/* Code Hero Card */}
         <Card className="shadow-sm border border-slate-200 dark:border-slate-800 dark:bg-slate-900 overflow-hidden">

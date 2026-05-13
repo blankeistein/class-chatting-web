@@ -26,6 +26,7 @@ import {
   VideoIcon,
 } from "lucide-react";
 import { toast, Toaster } from "react-hot-toast";
+import { PageHeader } from "@/Components/PageHeader";
 
 const STEPS = [
   {
@@ -282,24 +283,18 @@ export default function Create() {
       <Toaster position="top-center" />
 
       <div className="space-y-6 p-4">
-        <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-          <div className="flex items-center gap-3">
+        <PageHeader
+          title="Unggah Video Baru"
+          description="Ikuti langkah berikut untuk menyiapkan video sebelum dipublikasikan."
+          backAction={
             <IconButton
               variant="ghost"
               onClick={() => router.get(route("admin.videos.index"))}
             >
               <ArrowLeftIcon className="h-5 w-5 dark:text-white" />
             </IconButton>
-            <div>
-              <Typography variant="h4" className="font-bold text-slate-800 dark:text-white">
-                Unggah Video Baru
-              </Typography>
-              <Typography className="text-slate-500 dark:text-slate-400">
-                Ikuti langkah berikut untuk menyiapkan video sebelum dipublikasikan.
-              </Typography>
-            </div>
-          </div>
-        </div>
+          }
+        />
 
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-[300px_minmax(0,1fr)]">
           <Card className="border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">

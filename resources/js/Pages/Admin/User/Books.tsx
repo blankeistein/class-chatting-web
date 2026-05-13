@@ -80,7 +80,7 @@ export default function Books({
       <div className="p-4 space-y-6 min-h-screen">
         {/* Header Section */}
         <PageHeader
-          title={`Daftar Buku Milik ${user.name}`}
+          title={`Daftar Buku`}
           description={`Buku yang dimiliki oleh ${user.email}`}
           backAction={
             <IconButton

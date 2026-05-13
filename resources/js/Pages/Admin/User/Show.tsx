@@ -10,6 +10,7 @@ import {
 import AdminLayout from "@/Layouts/AdminLayout";
 import { Head, router } from "@inertiajs/react";
 import { ArrowLeftIcon, EditIcon, UserCheckIcon, UserXIcon, BookOpenIcon } from "lucide-react";
+import { PageHeader } from "@/Components/PageHeader";
 
 type User = {
   id: number;
@@ -43,43 +44,39 @@ export default function Show({ user }: { user: User }) {
       <Head title={`Informasi User - ${user.name}`} />
 
       <div className="p-4 space-y-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-4">
+        <PageHeader
+          title="Informasi User"
+          description="Detail profil dan status pengguna."
+          backAction={
             <IconButton
               variant="ghost"
               onClick={() => router.get(route("admin.users.index"))}
             >
               <ArrowLeftIcon className="w-5 h-5 dark:text-white" />
             </IconButton>
-            <div>
-              <Typography variant="h4" className="text-xl font-bold text-slate-800 dark:text-white">
-                Informasi User
-              </Typography>
-              <Typography className="text-sm text-slate-500 dark:text-slate-400">
-                Detail profil dan status pengguna.
-              </Typography>
-            </div>
-          </div>
-          <div className="ml-auto flex items-center gap-2">
-            <Button
-              size="sm"
-              className="flex items-center gap-2"
-              onClick={() => router.get(route("admin.users.edit", user.id))}
-            >
-              <EditIcon className="h-4 w-4" />
-              Edit User
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="flex items-center gap-2"
-              onClick={() => router.get(route("admin.users.books", user.id))}
-            >
-              <BookOpenIcon className="h-4 w-4" />
-              Daftar Buku
-            </Button>
-          </div>
-        </div>
+          }
+          actions={
+            <>
+              <Button
+                size="sm"
+                className="flex items-center gap-2"
+                onClick={() => router.get(route("admin.users.edit", user.id))}
+              >
+                <EditIcon className="h-4 w-4" />
+                Edit User
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex items-center gap-2"
+                onClick={() => router.get(route("admin.users.books", user.id))}
+              >
+                <BookOpenIcon className="h-4 w-4" />
+                Daftar Buku
+              </Button>
+            </>
+          }
+        />
 
         <Card className="mx-auto max-w-4xl overflow-hidden border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <CardBody className="space-y-6 p-6">

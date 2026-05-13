@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { toast, Toaster } from "react-hot-toast";
 import { resolveYoutubeId } from "./Create";
+import { PageHeader } from "@/Components/PageHeader";
 
 interface Video {
   id: number;
@@ -242,52 +243,47 @@ export default function Edit({ video }: { video: Video }) {
       <Toaster position="top-center" />
 
       <div className="space-y-6 p-4">
-        <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-          <div className="flex items-center gap-3">
+        <PageHeader
+          title="Edit Video"
+          description="Perbarui metadata, thumbnail, dan sumber video bila diperlukan."
+          actions={
+            <>
+              <Button
+                variant="ghost"
+                color="secondary"
+                onClick={() => router.get(route("admin.videos.show", video.slug))}
+              >
+                Kembali
+              </Button>
+              <Button
+                variant="outline"
+                color="error"
+                onClick={() => setIsDeleteModalOpen(true)}
+                className="flex items-center gap-2"
+              >
+                <Trash2Icon className="h-4 w-4" />
+                Hapus
+              </Button>
+              <Button
+                color="primary"
+                disabled={processing}
+                onClick={handleSubmit}
+                className="flex items-center gap-2"
+              >
+                <SaveIcon className="h-4 w-4" />
+                {processing ? "Menyimpan..." : "Simpan Perubahan"}
+              </Button>
+            </>
+          }
+          backAction={
             <IconButton
               variant="ghost"
               onClick={() => router.get(route("admin.videos.show", video.slug))}
             >
               <ArrowLeftIcon className="h-5 w-5 dark:text-white" />
             </IconButton>
-            <div>
-              <Typography variant="h4" className="font-bold text-slate-800 dark:text-white">
-                Edit Video
-              </Typography>
-              <Typography className="text-slate-500 dark:text-slate-400">
-                Perbarui metadata, thumbnail, dan sumber video bila diperlukan.
-              </Typography>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              variant="ghost"
-              color="secondary"
-              onClick={() => router.get(route("admin.videos.show", video.slug))}
-            >
-              Kembali
-            </Button>
-            <Button
-              variant="outline"
-              color="error"
-              onClick={() => setIsDeleteModalOpen(true)}
-              className="flex items-center gap-2"
-            >
-              <Trash2Icon className="h-4 w-4" />
-              Hapus
-            </Button>
-            <Button
-              color="primary"
-              disabled={processing}
-              onClick={handleSubmit}
-              className="flex items-center gap-2"
-            >
-              <SaveIcon className="h-4 w-4" />
-              {processing ? "Menyimpan..." : "Simpan Perubahan"}
-            </Button>
-          </div>
-        </div>
+          }
+        />
 
         <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.4fr)_420px]">
           <div className="space-y-6">

@@ -16,6 +16,7 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
@@ -93,100 +94,109 @@ class BookController extends Controller
             return $this->errorResponse(102, 'Mohon maaf aplikasi anda sudah usang, update aplikasi ke versi paling baru. [102]');
         }
 
-        $code = ActivationCode::query()
-            ->with(['items.model'])
-            ->where('code', $validateData['code'])
-            ->first();
+        try {
+            return DB::transaction(function () use ($validateData) {
+                $code = ActivationCode::query()
+                    ->with(['items.model', 'activatedIn.model'])
+                    ->where('code', $validateData['code'])
+                    ->lockForUpdate()
+                    ->first();
 
-        if (! $code) {
-            return $this->errorResponse(106, 'Kode yang anda masukkan tidak valid. [106]');
+                if (! $code) {
+                    return $this->errorResponse(106, 'Kode yang anda masukkan tidak valid. [106]');
+                }
+
+                if (! $code->is_active) {
+                    return $this->errorResponse(108, 'Mohon maaf, Kode ini tidak aktif atau sudah dinonaktifkan. [108]');
+                }
+
+                if ($code->max_activated !== null && $code->times_activated >= $code->max_activated) {
+                    return $this->errorResponse(113, 'Mohon maaf, Kode sudah mencapai batas pengaktifan. [113]');
+                }
+
+                $book = Book::query()->where('uuid', $validateData['package_name'])->first();
+
+                if (! $book) {
+                    return $this->errorResponse(107, 'Buku belum terdaftar, Mohon laporkan ini ke Customer Service kami. Terima Kasih :) [107]');
+                }
+
+                $supportedBooksKey = $code->items->pluck('model.uuid')->filter()->toArray();
+
+                if (empty($supportedBooksKey) || ! in_array($validateData['package_name'], $supportedBooksKey, true)) {
+                    return $this->errorResponse(108, "Kode yang anda masukkan tidak cocok untuk buku {$book->title}. Silahkan cek kode yang anda gunakan! [108A]");
+                }
+
+                if (! empty($validateData['tier']) && (int) $validateData['tier'] !== $code->tier->value) {
+                    return $this->errorResponse(114, 'Kode tidak cocok diaktifkan disini. [114]');
+                }
+
+                $nextTimesActivated = $code->times_activated + 1;
+
+                if ($code->type === 'public') {
+                    $code->update([
+                        'activated_at' => now(),
+                        'times_activated' => $nextTimesActivated,
+                    ]);
+                } else {
+                    if (! empty($code->user_id) && $code->user_id !== $validateData['uid']) {
+                        return $this->errorResponse(109, 'Maaf kode yang anda masukkan sudah diaktifkan di akun lain [109]');
+                    }
+
+                    if ($code->activatedIn !== null && $code->activatedIn->model->id !== $book->id) {
+                        $activatedBook = $code->activatedIn->model;
+                        $activatedBookTitle = $activatedBook?->title ?? 'buku lain';
+
+                        return $this->errorResponse(110, "Maaf kode yang anda masukkan sudah aktif di buku {$activatedBookTitle} [110]");
+                    }
+
+                    $updated = [
+                        'times_activated' => $nextTimesActivated,
+                    ];
+
+                    if (! $code->activated_in) {
+                        $activationItem = $code->items->where('model_id', $book->id)->first();
+
+                        $updated['activated_in'] = $activationItem->id;
+                        $updated['user_id'] = $validateData['uid'];
+                        $updated['activated_at'] = now();
+                    }
+
+                    $code->update($updated);
+                }
+
+                $user = User::where('firebase_uid', $validateData['uid'])->first();
+
+                if ($user) {
+                    UserBook::updateOrCreate(
+                        [
+                            'user_id' => $user->id,
+                            'book_id' => $book->id,
+                            'activation_code_id' => $code->id,
+                        ]
+                    );
+                }
+
+                $message = 'Kode berhasil diaktifkan. Semoga harimu menyenangkan :)';
+
+                if ($code->max_activated) {
+                    $limit = $code->max_activated - $nextTimesActivated;
+                    $message = "Kode berhasil diaktifkan. \nKode bisa diaktifkan {$limit} kali lagi";
+                }
+
+                Log::channel('activation-code')->info('Activation code activated', [
+                    'user_id' => $validateData['uid'],
+                    'code' => $validateData['code'],
+                ]);
+
+                return response()->json([
+                    'status' => 'success',
+                    'message' => $message,
+                    'version' => 1,
+                ]);
+            });
+        } catch (Exception $except) {
+            return $this->errorResponse(500, 'Terjadi kesalahan pada server. '.$except->getMessage());
         }
-
-        if (! $code->is_active) {
-            return $this->errorResponse(108, 'Mohon maaf, Kode ini tidak aktif atau sudah dinonaktifkan. [108]');
-        }
-
-        if ($code->max_activated !== null && $code->times_activated >= $code->max_activated) {
-            return $this->errorResponse(113, 'Mohon maaf, Kode sudah mencapai batas pengaktifan. [113]');
-        }
-
-        $book = Book::query()->where('uuid', $validateData['package_name'])->first();
-
-        if (! $book) {
-            return $this->errorResponse(107, 'Buku belum terdaftar, Mohon laporkan ini ke Customer Service kami. Terima Kasih :) [107]');
-        }
-
-        $supportedBooksKey = $code->items->pluck('model.uuid')->filter()->toArray();
-
-        if (empty($supportedBooksKey) || ! in_array($validateData['package_name'], $supportedBooksKey, true)) {
-            return $this->errorResponse(108, "Kode yang anda masukkan tidak cocok untuk buku {$book->title}. Silahkan cek kode yang anda gunakan! [108A]");
-        }
-
-        if (! empty($validateData['tier']) && (int) $validateData['tier'] !== $code->tier->value) {
-            return $this->errorResponse(114, 'Kode tidak cocok diaktifkan disini. [114]');
-        }
-
-        $user = User::where('firebase_uid', $validateData['uid'])->first();
-
-        if ($code->type === 'public') {
-            $code->update([
-                'activated_at' => now(),
-                'times_activated' => $code->times_activated + 1,
-            ]);
-        } else {
-            if (! empty($code->user_id) && $code->user_id !== $validateData['uid']) {
-                return $this->errorResponse(109, 'Maaf kode yang anda masukkan sudah diaktifkan di akun lain [109]');
-            }
-
-            if ($code->activatedIn !== null && $code->activatedIn->model->id !== $book->id) {
-                $activatedBook = $code->activatedIn->model;
-                $activatedBookTitle = $activatedBook?->title ?? 'buku lain';
-
-                return $this->errorResponse(110, "Maaf kode yang anda masukkan sudah aktif di buku {$activatedBookTitle} [110]");
-            }
-
-            $updated = [
-                'times_activated' => $code->times_activated + 1,
-            ];
-
-            if (! $code->activated_in) {
-                $activationItem = $code->items->where('model_id', $book->id)->first();
-
-                $updated['activated_in'] = $activationItem->id;
-                $updated['user_id'] = $validateData['uid'];
-                $updated['activated_at'] = now();
-            }
-
-            $code->update($updated);
-        }
-
-        if($user) {
-            UserBook::updateOrCreate(
-                [
-                    'user_id' => $user->id,
-                    'book_id' => $book->id,
-                    'activation_code_id' => $code->id,
-                ]
-            );
-        }
-
-        $message = 'Kode berhasil diaktifkan. Semoga harimu menyenangkan :)';
-
-        if ($code->max_activated) {
-            $limit = $code->max_activated - $code->times_activated;
-            $message = "Kode berhasil diaktifkan. \nKode bisa diaktifkan {$limit} kali lagi";
-        }
-
-        Log::channel('activation-code')->info('Activation code activated', [
-            'user_id' => $validateData['uid'],
-            'code' => $validateData['code'],
-        ]);
-
-        return response()->json([
-            'status' => 'success',
-            'message' => $message,
-            'version' => 1,
-        ]);
     }
 
     #[Endpoint(

@@ -64,7 +64,7 @@ class BookController extends Controller
         try {
             return DB::transaction(function () use ($validateData) {
                 $code = ActivationCode::query()
-                    ->with('items.model')
+                    ->with(['items.model', 'activatedIn.model'])
                     ->where('code', $validateData['code'])
                     ->lockForUpdate()
                     ->first();
@@ -97,10 +97,6 @@ class BookController extends Controller
                     return $this->errorResponse(422, 114, 'Kode tidak cocok diaktifkan disini. [114]');
                 }
 
-                $user = User::query()
-                    ->where('firebase_uid', $validateData['uid'])
-                    ->first();
-
                 $nextTimesActivated = $code->times_activated + 1;
 
                 if ($code->type === 'public') {
@@ -109,7 +105,7 @@ class BookController extends Controller
                         'times_activated' => $nextTimesActivated,
                     ]);
                 } else {
-                    if (! empty($code->user_id) && $code->user_id !== $user->firebase_uid) {
+                    if (! empty($code->user_id) && $code->user_id !== $validateData['uid']) {
                         return $this->errorResponse(409, 109, 'Maaf kode yang anda masukkan sudah diaktifkan di akun lain [109]');
                     }
 
@@ -135,7 +131,11 @@ class BookController extends Controller
                     $code->update($updated);
                 }
 
-                if($user) {
+                $user = User::query()
+                    ->where('firebase_uid', $validateData['uid'])
+                    ->first();
+
+                if ($user) {
                     UserBook::query()->updateOrCreate(
                         [
                             'user_id' => $user->id,

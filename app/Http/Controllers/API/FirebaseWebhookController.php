@@ -22,19 +22,27 @@ class FirebaseWebhookController extends Controller
     )]
     #[HeaderParameter('X-Firebase-Secret', 'Shared secret untuk memverifikasi bahwa request berasal dari sumber webhook yang sah.', required: true, example: 'firebase-webhook-secret')]
     #[BodyParameter('uuid', 'Firebase UUID pengguna.', required: true, example: 'firebase-user-001')]
-    #[BodyParameter('email', 'Alamat email pengguna.', required: true, example: 'user@example.com')]
+    #[BodyParameter('email', 'Alamat email pengguna. Wajib kecuali providerType anonymous.', required: false, example: 'user@example.com')]
     #[BodyParameter('displayName', 'Nama tampilan pengguna.', required: false, example: 'Budi')]
     #[BodyParameter('photoURL', 'URL avatar pengguna.', required: false, example: 'https://example.com/avatar.jpg')]
     #[BodyParameter('phoneNumber', 'Nomor telepon pengguna.', required: false, example: '+628123456789')]
+    #[BodyParameter('providerType', 'Tipe provider autentikasi Firebase (e.g. password, google.com, anonymous).', required: false, example: 'password')]
     public function userCreated(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'uuid' => 'required|string',
-            'email' => 'required|email',
+            'email' => 'required_unless:providerType,anonymous|nullable|email',
             'displayName' => 'nullable|string',
             'photoURL' => 'nullable|url',
             'phoneNumber' => 'nullable|string',
+            'providerType' => 'nullable|string',
         ]);
+
+        if (($validated['providerType'] ?? null) === 'anonymous') {
+            Log::info('Skipping anonymous Firebase user', ['uuid' => $validated['uuid']]);
+
+            return response()->json(['message' => 'Anonymous user skipped'], 200);
+        }
 
         $user = User::updateOrCreate(
             ['firebase_uid' => $validated['uuid']],

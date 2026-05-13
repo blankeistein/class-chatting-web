@@ -38,6 +38,7 @@ class SchoolFactory extends Factory
             'address' => fake()->address(),
             'rt' => fake()->numberBetween(1, 20),
             'rw' => fake()->numberBetween(1, 20),
+            'postcode' => fake()->numerify('#####'),
             'latitude' => fake()->latitude(-11, 6),
             'longitude' => fake()->longitude(95, 141),
         ];

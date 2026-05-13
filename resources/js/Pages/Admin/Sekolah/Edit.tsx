@@ -52,6 +52,7 @@ type School = {
   address: string | null;
   rt: number | null;
   rw: number | null;
+  postcode: string | null;
   latitude: string | null;
   longitude: string | null;
   province?: {
@@ -96,6 +97,7 @@ export default function Edit({ school, provinces, regencies, districts, villages
     address: schoolData.address || "",
     rt: schoolData.rt?.toString() || "",
     rw: schoolData.rw?.toString() || "",
+    postcode: schoolData.postcode || "",
     latitude: schoolData.latitude || "",
     longitude: schoolData.longitude || "",
     _method: "put",
@@ -117,6 +119,7 @@ export default function Edit({ school, provinces, regencies, districts, villages
       address: payload.address.trim() === "" ? null : payload.address.trim(),
       rt: payload.rt === "" ? null : Number(payload.rt),
       rw: payload.rw === "" ? null : Number(payload.rw),
+      postcode: payload.postcode.trim() === "" ? null : payload.postcode.trim(),
       latitude: payload.latitude === "" ? null : Number(payload.latitude),
       longitude: payload.longitude === "" ? null : Number(payload.longitude),
     }));
@@ -351,6 +354,20 @@ export default function Edit({ school, provinces, regencies, districts, villages
                     isError={!!errors.rw}
                   />
                   {errors.rw && <Typography type="small" color="error">{errors.rw}</Typography>}
+                </div>
+
+                <div className="space-y-1">
+                  <Typography as="label" htmlFor="postcode" type="small" className="font-semibold dark:text-white">
+                    Kode Pos (Opsional)
+                  </Typography>
+                  <Input
+                    id="postcode"
+                    placeholder="Contoh: 12345"
+                    value={data.postcode}
+                    onChange={(event) => setData("postcode", event.target.value)}
+                    isError={!!errors.postcode}
+                  />
+                  {errors.postcode && <Typography type="small" color="error">{errors.postcode}</Typography>}
                 </div>
 
                 <div className="space-y-1">

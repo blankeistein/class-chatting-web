@@ -8,7 +8,7 @@ import {
 } from "@material-tailwind/react";
 import AdminLayout from "@/Layouts/AdminLayout";
 import { Head, router } from "@inertiajs/react";
-import { ArrowLeftIcon, EditIcon } from "lucide-react";
+import { ArrowLeftIcon, EditIcon, MapPinIcon, ExternalLinkIcon } from "lucide-react";
 
 type School = {
   id: number;
@@ -21,6 +21,7 @@ type School = {
   address?: string | null;
   rt?: number | null;
   rw?: number | null;
+  postcode?: string | null;
   latitude?: number | string | null;
   longitude?: number | string | null;
   province?: {
@@ -128,10 +129,45 @@ export default function Show({ school }: { school: { data: School } }) {
               <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
                 <InfoItem label="Alamat" value={schoolData.address} />
                 <InfoItem label="RT/RW" value={schoolData.rt || schoolData.rw ? `${schoolData.rt || "-"} / ${schoolData.rw || "-"}` : "-"} />
+                <InfoItem label="Kode Pos" value={schoolData.postcode} />
                 <InfoItem label="Latitude" value={schoolData.latitude} />
                 <InfoItem label="Longitude" value={schoolData.longitude} />
               </div>
             </div>
+
+            {schoolData.latitude && schoolData.longitude && (
+              <div>
+                <div className="flex items-center justify-between">
+                  <Typography type="h6">
+                    <span className="flex items-center gap-2">
+                      <MapPinIcon className="h-5 w-5" />
+                      Lokasi di Peta
+                    </span>
+                  </Typography>
+                  <a
+                    href={`https://www.google.com/maps?q=${schoolData.latitude},${schoolData.longitude}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Button size="sm" variant="outline" className="flex items-center gap-2">
+                      <ExternalLinkIcon className="h-4 w-4" />
+                      Buka di Google Maps
+                    </Button>
+                  </a>
+                </div>
+                <div className="mt-4 overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800">
+                  <iframe
+                    title="Lokasi Sekolah"
+                    width="100%"
+                    height="350"
+                    style={{ border: 0 }}
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    src={`https://www.openstreetmap.org/export/embed.html?bbox=${Number(schoolData.longitude) - 0.005},${Number(schoolData.latitude) - 0.005},${Number(schoolData.longitude) + 0.005},${Number(schoolData.latitude) + 0.005}&layer=mapnik&marker=${schoolData.latitude},${schoolData.longitude}`}
+                  />
+                </div>
+              </div>
+            )}
           </CardBody>
         </Card>
       </div>

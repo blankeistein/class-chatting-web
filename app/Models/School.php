@@ -26,6 +26,7 @@ class School extends Model
         'address',
         'rt',
         'rw',
+        'postcode',
         'latitude',
         'longitude',
     ];

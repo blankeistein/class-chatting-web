@@ -165,7 +165,7 @@ class SchoolController extends Controller
                 return;
             }
 
-            fputcsv($file, ['ID', 'Code', 'NPSN', 'Nama', 'Bentuk Pendidikan', 'Status', 'Provinsi', 'Kabupaten/Kota', 'Kecamatan', 'Alamat']);
+            fputcsv($file, ['ID', 'Code', 'NPSN', 'Nama', 'Bentuk Pendidikan', 'Status', 'Provinsi', 'Kabupaten/Kota', 'Kecamatan', 'Alamat', 'Kode Pos']);
 
             foreach ($schools as $school) {
                 fputcsv($file, [
@@ -179,6 +179,7 @@ class SchoolController extends Controller
                     $school->regency?->name,
                     $school->district?->name,
                     $school->address,
+                    $school->postcode,
                 ]);
             }
 
@@ -228,7 +229,7 @@ class SchoolController extends Controller
             throw new \RuntimeException('File CSV tidak dapat dibaca.');
         }
 
-        $header = fgetcsv($handle);
+        $header = fgetcsv($handle, null, ';');
 
         if (! is_array($header)) {
             fclose($handle);
@@ -323,6 +324,7 @@ class SchoolController extends Controller
                     'address' => $this->nullIfEmpty($this->csvValue($row, $headerMap, 'dusun')),
                     'rt' => $this->toNullableInteger($this->csvValue($row, $headerMap, 'rt')),
                     'rw' => $this->toNullableInteger($this->csvValue($row, $headerMap, 'rw')),
+                    'postcode' => $this->nullIfEmpty($this->csvValue($row, $headerMap, 'kode_pos')),
                     'longitude' => $this->toNullableFloat($this->csvValue($row, $headerMap, 'bujur')),
                     'latitude' => $this->toNullableFloat($this->csvValue($row, $headerMap, 'lintang')),
                     'old_code' => $this->nullIfEmpty($this->csvValue($row, $headerMap, 'old_id')),

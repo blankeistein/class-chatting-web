@@ -80,7 +80,7 @@ function parseCsvContent(content: string): string[][] {
       continue;
     }
 
-    if (character === ",") {
+    if (character === ";") {
       pushCell();
       continue;
     }
@@ -111,7 +111,7 @@ async function buildCsvPreview(file: File): Promise<CsvPreview> {
     fileName: file.name,
     fileSize: formatFileSize(file.size),
     headers,
-    rows: bodyRows.slice(0, 5),
+    rows: bodyRows.slice(0, 100),
     totalRows: bodyRows.length,
   };
 }
@@ -281,7 +281,7 @@ export default function Import() {
 
               {importForm.data.file ? (
                 <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex gap-3 sm:flex-row sm:items-start justify-between">
                     <div className="flex items-start gap-3">
                       <div className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
                         <FileSpreadsheetIcon className="h-5 w-5 text-slate-500" />
@@ -298,7 +298,7 @@ export default function Import() {
                     <Button
                       type="button"
                       size="sm"
-                      variant="ghost"
+                      variant="outline"
                       color="error"
                       className="self-start"
                       onClick={() => {
@@ -335,7 +335,7 @@ export default function Import() {
                         Preview
                       </Typography>
                       <Typography className="mt-1 font-semibold text-slate-800 dark:text-white">
-                        {isPreviewLoading ? "Memuat..." : `${Math.min(importPreview?.rows.length ?? 0, 5)} baris`}
+                        {isPreviewLoading ? "Memuat..." : `${Math.min(importPreview?.rows.length ?? 0, 100)} baris`}
                       </Typography>
                     </div>
                   </div>
@@ -345,14 +345,14 @@ export default function Import() {
               {(isPreviewLoading || importPreview?.headers.length) && (
                 <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950">
                   {isPreviewLoading ? (
-                    <div className="mt-4 animate-pulse rounded-xl bg-slate-100 p-6 dark:bg-slate-900">
+                    <div className="animate-pulse rounded-xl bg-slate-100 p-6 dark:bg-slate-900">
                       <div className="h-4 w-1/3 rounded bg-slate-200 dark:bg-slate-800" />
                       <div className="mt-4 h-32 rounded bg-slate-200 dark:bg-slate-800" />
                     </div>
                   ) : importPreview?.headers.length ? (
-                    <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+                    <div className="max-h-[500px] overflow-auto overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
                       <table className="min-w-full table-auto text-left">
-                        <thead className="bg-slate-50 dark:bg-slate-900">
+                        <thead className="bg-slate-50 dark:bg-slate-900 sticky top-0">
                           <tr>
                             {importPreview.headers.map((header, index) => (
                               <th key={`${header}-${index}`} className="border-b border-slate-200 px-4 py-3 dark:border-slate-800">

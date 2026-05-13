@@ -37,6 +37,7 @@ class SchoolDataRequest extends FormRequest
             'address' => ['nullable', 'string'],
             'rt' => ['nullable', 'integer', 'min:0'],
             'rw' => ['nullable', 'integer', 'min:0'],
+            'postcode' => ['nullable', 'string', 'max:10'],
             'latitude' => ['nullable', 'numeric', 'between:-90,90'],
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
         ];
@@ -66,6 +67,7 @@ class SchoolDataRequest extends FormRequest
             'rt.min' => 'RT tidak boleh kurang dari 0.',
             'rw.integer' => 'RW harus berupa angka.',
             'rw.min' => 'RW tidak boleh kurang dari 0.',
+            'postcode.max' => 'Kode pos maksimal 10 karakter.',
             'latitude.numeric' => 'Latitude harus berupa angka desimal.',
             'latitude.between' => 'Latitude harus berada di antara -90 sampai 90.',
             'longitude.numeric' => 'Longitude harus berupa angka desimal.',

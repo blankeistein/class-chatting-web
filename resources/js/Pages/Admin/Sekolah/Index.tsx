@@ -11,7 +11,7 @@ import {
 } from "@material-tailwind/react";
 import AdminLayout from "@/Layouts/AdminLayout";
 import Checkbox from "@/Components/Checkbox";
-import { Head, router, useForm, usePage } from "@inertiajs/react";
+import { Head, Link, router, useForm, usePage } from "@inertiajs/react";
 import {
   Building2Icon,
   EditIcon,
@@ -466,7 +466,7 @@ export default function Index({ schools: paginatedSchools, filters, filterOption
                       </td>
                       <td className="p-4">
                         <div className="flex items-center gap-3">
-                          <Typography variant="small" className="font-bold text-slate-800 dark:text-white">
+                          <Typography as={Link} href={route("admin.schools.show", school.code)} className="font-bold text-slate-800 dark:text-white">
                             {school.name}
                           </Typography>
                         </div>

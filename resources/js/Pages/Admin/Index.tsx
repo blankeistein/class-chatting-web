@@ -3,30 +3,16 @@ import {
   Card,
   CardBody,
   Typography,
-  Chip,
-  Progress,
-  Avatar,
-  IconButton,
-  Button
 } from "@material-tailwind/react";
 import AdminLayout from "@/Layouts/AdminLayout";
 import { Head, router } from "@inertiajs/react";
 import { route } from "ziggy-js";
 import {
-  BanknoteIcon,
   UsersIcon,
   BookOpenIcon,
-  ActivityIcon,
-  LayersIcon,
-  TrendingUpIcon,
-  TrendingDownIcon,
-  MoreVerticalIcon,
-  ClockIcon,
-  CheckCircle2Icon,
-  XCircleIcon,
-  ArrowRightIcon,
   Video,
-  TicketIcon
+  TicketIcon,
+  School as SchoolIcon
 } from "lucide-react";
 import { PageHeader } from "@/Components/PageHeader";
 
@@ -35,6 +21,7 @@ interface Stats {
   total_users: number;
   total_videos: number;
   total_activation_codes: number;
+  total_schools: number;
 }
 
 export default function Index({ stats }: { stats: Stats }) {
@@ -59,6 +46,13 @@ export default function Index({ stats }: { stats: Stats }) {
       icon: Video,
       color: "bg-green-500",
       textColor: "text-green-600",
+    },
+    {
+      title: "Total Sekolah",
+      value: stats.total_schools?.toLocaleString(),
+      icon: SchoolIcon,
+      color: "bg-teal-500",
+      textColor: "text-teal-600",
     },
     {
       title: "Total Aktivasi",

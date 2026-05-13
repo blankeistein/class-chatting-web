@@ -5,7 +5,10 @@ namespace App\Http\Controllers\API\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\BookResource;
 use App\Models\ActivationCode;
+use App\Models\ActivationItem;
 use App\Models\Book;
+use App\Models\User;
+use App\Models\UserBook;
 use Dedoc\Scramble\Attributes\BodyParameter;
 use Dedoc\Scramble\Attributes\Endpoint;
 use Dedoc\Scramble\Attributes\Group;
@@ -166,7 +169,14 @@ class BookController extends Controller
             ]);
         }
 
-        if ($code->type !== 'public') {
+        $user = User::where('firebase_uid', $validateData['uid'])->first();
+
+        if($code === 'public') {
+            $code->update([
+                'activated_at' => now(),
+                'times_activated' => $code->times_activated + 1,
+            ]);
+        } else {
             if (! empty($code->user_id) && $code->user_id !== $validateData['uid']) {
                 return response()->json([
                     'status' => 'error',
@@ -176,8 +186,8 @@ class BookController extends Controller
                 ]);
             }
 
-            if ($code->activate_in !== null && $code->activate_in !== $book->id) {
-                $activatedBook = Book::query()->find($code->activate_in);
+            if ($code->activatedIn !== null && $code->activatedIn->model->id !== $book->id) {
+                $activatedBook = $code->activatedIn->model;
 
                 return response()->json([
                     'status' => 'error',
@@ -186,14 +196,29 @@ class BookController extends Controller
                     'version' => 1,
                 ]);
             }
+
+            $updated = [
+                'times_activated' => $code->times_activated + 1,
+            ];
+
+            if(! $code->activated_in) {
+                $activationItem = $code->items->where('model_id', $book->id)->first();
+
+                $updated['activated_in'] = $activationItem->id;
+                $updated['user_id'] = $validateData['uid'];
+                $updated['activated_at'] = now();
+            }
+
+            $code->update($updated);
         }
 
-        $code->update([
-            'user_id' => $validateData['uid'],
-            'activate_in' => $book->id,
-            'activated_at' => now(),
-            'times_activated' => $code->times_activated + 1,
-        ]);
+        UserBook::updateOrCreate(
+            [
+                'user_id' => $user->id,
+                'book_id' => $book->id,
+                'activation_code_id' => $code->id,
+            ]
+        );
 
         $message = 'Kode berhasil diaktifkan. Semoga harimu menyenangkan :)';
 

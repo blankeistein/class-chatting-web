@@ -24,6 +24,7 @@ import {
   UserCheckIcon,
   UserXIcon,
   EyeIcon,
+  BookOpenIcon,
 } from "lucide-react";
 import { toast, Toaster } from "react-hot-toast";
 import Pagination from "@/Components/Pagination";
@@ -436,6 +437,13 @@ export default function Index({ users: paginatedUsers, filters }: { users: any, 
                               >
                                 <EditIcon className="w-4 h-4 " />
                                 Edit User
+                              </Menu.Item>
+                              <Menu.Item
+                                className="flex items-center gap-2 dark:hover:bg-slate-800"
+                                onClick={() => router.get(route("admin.users.books", user.id))}
+                              >
+                                <BookOpenIcon className="w-4 h-4" />
+                                Daftar Buku
                               </Menu.Item>
                               <hr className="!my-1 -mx-1 border-slate-100 dark:border-slate-800" />
                               <Menu.Item

@@ -9,7 +9,7 @@ import {
 } from "@material-tailwind/react";
 import AdminLayout from "@/Layouts/AdminLayout";
 import { Head, router } from "@inertiajs/react";
-import { ArrowLeftIcon, EditIcon, UserCheckIcon, UserXIcon } from "lucide-react";
+import { ArrowLeftIcon, EditIcon, UserCheckIcon, UserXIcon, BookOpenIcon } from "lucide-react";
 
 type User = {
   id: number;
@@ -60,14 +60,25 @@ export default function Show({ user }: { user: User }) {
               </Typography>
             </div>
           </div>
-          <Button
-            size="sm"
-            className="flex items-center gap-2"
-            onClick={() => router.get(route("admin.users.edit", user.id))}
-          >
-            <EditIcon className="h-4 w-4" />
-            Edit User
-          </Button>
+          <div className="ml-auto flex items-center gap-2">
+            <Button
+              size="sm"
+              className="flex items-center gap-2"
+              onClick={() => router.get(route("admin.users.edit", user.id))}
+            >
+              <EditIcon className="h-4 w-4" />
+              Edit User
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="flex items-center gap-2"
+              onClick={() => router.get(route("admin.users.books", user.id))}
+            >
+              <BookOpenIcon className="h-4 w-4" />
+              Daftar Buku
+            </Button>
+          </div>
         </div>
 
         <Card className="mx-auto max-w-4xl overflow-hidden border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">

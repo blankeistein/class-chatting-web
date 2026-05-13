@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\UserBook;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -184,5 +185,31 @@ class UserController extends Controller
         User::query()->whereIn('id', $ids)->delete();
 
         return redirect()->back()->with('success', $ids->count().' user berhasil dihapus.');
+    }
+
+    /**
+     * Display the books owned by the specified user.
+     */
+    public function books(Request $request, User $user): Response
+    {
+        $query = UserBook::where('user_id', $user->id)
+            ->with(['book', 'activationCode']);
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->whereHas('book', function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%");
+            });
+        }
+
+        $perPage = (int) $request->input('perPage', 25);
+
+        $userBooks = $query->latest()->paginate($perPage)->withQueryString();
+
+        return Inertia::render('Admin/User/Books', [
+            'user' => $user,
+            'userBooks' => $userBooks,
+            'filters' => $request->only(['search']),
+        ]);
     }
 }

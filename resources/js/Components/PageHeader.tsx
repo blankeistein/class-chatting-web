@@ -5,21 +5,25 @@ interface PageHeaderProps {
   title: string;
   description?: string;
   actions?: ReactNode;
+  backAction?: ReactNode;
   className?: string;
 }
 
-export function PageHeader({ title, description, actions, className = "" }: PageHeaderProps) {
+export function PageHeader({ title, description, actions, backAction, className = "" }: PageHeaderProps) {
   return (
     <div className={`flex flex-col md:flex-row justify-between items-start md:items-center gap-4 ${className}`}>
-      <div>
-        <Typography variant="h4" className="font-bold text-slate-800 dark:text-white">
-          {title}
-        </Typography>
-        {description && (
-          <Typography className="text-slate-500 dark:text-slate-400">
-            {description}
+      <div className="flex gap-2 items-center">
+        {backAction && backAction}
+        <div>
+          <Typography variant="h4" className="font-bold text-slate-800 dark:text-white">
+            {title}
           </Typography>
-        )}
+          {description && (
+            <Typography className="text-slate-500 dark:text-slate-400">
+              {description}
+            </Typography>
+          )}
+        </div>
       </div>
       {actions && <div className="flex gap-2">{actions}</div>}
     </div>

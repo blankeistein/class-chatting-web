@@ -1,9 +1,9 @@
 <?php
 
 use App\Http\Controllers\Admin\ActivationCodeController;
+use App\Http\Controllers\Admin\Apps\AnakIndonesiaMenghafal\BookController as AnakIndonesiaMenghafalBookController;
 use App\Http\Controllers\Admin\Apps\ClassChatting\BookController as ClassChattingBookController;
 use App\Http\Controllers\Admin\Apps\ClassChatting\SettingController as ClassChattingSettingController;
-use App\Http\Controllers\Admin\Apps\AnakIndonesiaMenghafal\BookController as AnakIndonesiaMenghafalBookController;
 use App\Http\Controllers\Admin\Apps\ClassChattingForKids\BookController as ClassChattingForKidsBookController;
 use App\Http\Controllers\Admin\Apps\ClassChattingLayarLebar\BookController as ClassChattingLayarLebarBookController;
 use App\Http\Controllers\Admin\BookController;
@@ -77,6 +77,7 @@ Route::middleware('auth')->group(function () {
 
         Route::resource('videos', VideoController::class);
         Route::delete('users/bulk-delete', [UserController::class, 'bulkDelete'])->name('users.bulk-delete');
+        Route::get('users/{user}/books', [UserController::class, 'books'])->name('users.books');
         Route::resource('users', UserController::class);
 
         Route::get('apps', function () {

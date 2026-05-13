@@ -18,7 +18,7 @@ return new class extends Migration
             $table->foreignId('activation_code_id')->nullable()->constrained()->nullOnDelete();
             $table->timestamps();
 
-            $table->unique(['user_id', 'book_id']);
+            $table->unique(['user_id', 'book_id', 'activation_code_id']);
         });
     }
 

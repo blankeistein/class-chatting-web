@@ -209,6 +209,8 @@ class SchoolController extends Controller
             $result['skipped']
         );
 
+        dd($summary);
+
         $redirect = redirect()->back()->with('success', $summary);
 
         if ($result['errors'] !== []) {
@@ -284,7 +286,7 @@ class SchoolController extends Controller
         DB::transaction(function () use ($handle, $headerMap, $provinceCodeMap, $regencyCodeMap, $districtCodeMap, &$result): void {
             $rowNumber = 1;
 
-            while (($row = fgetcsv($handle)) !== false) {
+            while (($row = fgetcsv($handle, null, ';')) !== false) {
                 $rowNumber++;
 
                 if (! is_array($row) || $this->isRowEmpty($row)) {

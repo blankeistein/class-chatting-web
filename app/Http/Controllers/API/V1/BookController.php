@@ -140,8 +140,9 @@ class BookController extends Controller
 
             if ($code->activatedIn !== null && $code->activatedIn->model->id !== $book->id) {
                 $activatedBook = $code->activatedIn->model;
+                $activatedBookTitle = $activatedBook?->title ?? 'buku lain';
 
-                return $this->errorResponse(110, "Maaf kode yang anda masukkan sudah aktif di buku {$activatedBook->title} [110]");
+                return $this->errorResponse(110, "Maaf kode yang anda masukkan sudah aktif di buku {$activatedBookTitle} [110]");
             }
 
             $updated = [
@@ -159,13 +160,15 @@ class BookController extends Controller
             $code->update($updated);
         }
 
-        UserBook::updateOrCreate(
-            [
-                'user_id' => $user->id,
-                'book_id' => $book->id,
-                'activation_code_id' => $code->id,
-            ]
-        );
+        if($user) {
+            UserBook::updateOrCreate(
+                [
+                    'user_id' => $user->id,
+                    'book_id' => $book->id,
+                    'activation_code_id' => $code->id,
+                ]
+            );
+        }
 
         $message = 'Kode berhasil diaktifkan. Semoga harimu menyenangkan :)';
 

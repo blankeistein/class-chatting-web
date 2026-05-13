@@ -101,27 +101,49 @@ class BookController extends Controller
                     ->where('firebase_uid', $validateData['uid'])
                     ->first();
 
-                if ($code->type !== 'public') {
-                    if (! empty($code->user_id) && $code->user_id !== $validateData['uid']) {
+                $nextTimesActivated = $code->times_activated + 1;
+
+                if ($code->type === 'public') {
+                    $code->update([
+                        'activated_at' => now(),
+                        'times_activated' => $nextTimesActivated,
+                    ]);
+                } else {
+                    if (! empty($code->user_id) && $code->user_id !== $user->firebase_uid) {
                         return $this->errorResponse(409, 109, 'Maaf kode yang anda masukkan sudah diaktifkan di akun lain [109]');
                     }
 
-                    if ($code->activate_in !== null && $code->activate_in !== $book->id) {
-                        $activatedBook = Book::query()->find($code->activate_in);
+                    if ($code->activatedIn !== null && $code->activatedIn->model->id !== $book->id) {
+                        $activatedBook = $code->activatedIn->model;
                         $activatedBookTitle = $activatedBook?->title ?? 'buku lain';
 
                         return $this->errorResponse(409, 110, "Maaf kode yang anda masukkan sudah aktif di buku {$activatedBookTitle} [110]");
                     }
+
+                    $updated = [
+                        'times_activated' => $nextTimesActivated,
+                    ];
+
+                    if (! $code->activated_in) {
+                        $activationItem = $code->items->where('model_id', $book->id)->first();
+
+                        $updated['activated_in'] = $activationItem->id;
+                        $updated['user_id'] = $validateData['uid'];
+                        $updated['activated_at'] = now();
+                    }
+
+                    $code->update($updated);
                 }
 
-                $nextTimesActivated = $code->times_activated + 1;
-
-                $code->update([
-                    'user_id' => $validateData['uid'],
-                    'activate_in' => $book->id,
-                    'activated_at' => now(),
-                    'times_activated' => $nextTimesActivated,
-                ]);
+                if($user) {
+                    UserBook::query()->updateOrCreate(
+                        [
+                            'user_id' => $user->id,
+                            'book_id' => $book->id,
+                            'activation_code_id' => $code->id,
+                        ]
+                    );
+                }
 
                 $message = 'Kode berhasil diaktifkan. Semoga harimu menyenangkan :)';
 
@@ -135,19 +157,6 @@ class BookController extends Controller
                     'code' => $validateData['code'],
                     'version' => 2,
                 ]);
-
-                if($user) {
-                    UserBook::query()->updateOrCreate(
-                        [
-                            'user_id' => $user->id,
-                            'book_id' => $book->id,
-                        ],
-                        [
-                            'activation_code_id' => $code->id,
-                        ]
-                    );
-                }
-
 
                 return $this->successResponse([
                     'message' => $message,

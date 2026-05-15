@@ -332,7 +332,7 @@ function Sidebar({ title, logo, links, isCollapsed }: { title: string, logo: str
 }
 
 function ProfileMenu({ user }: { user: User | null }) {
-  const [isReauthentication, setIsReAuthentication] = useState(false);
+  const [isReAuthentication, setIsReAuthentication] = useState(false);
   const props = usePage<AuthProps>().props;
 
   const handleLogout = async (): Promise<void> => {
@@ -365,6 +365,14 @@ function ProfileMenu({ user }: { user: User | null }) {
     })
   }
 
+  useEffect(() => {
+    if (!isReAuthentication) return;
+
+    let toasId = toast.loading("Sedang authentication akun firebase")
+
+    return () => toast.dismiss(toasId);
+  }, [isReAuthentication])
+
   return (
     <Menu placement="bottom-end">
       <Menu.Trigger
@@ -379,7 +387,7 @@ function ProfileMenu({ user }: { user: User | null }) {
           <UserCircle2Icon className="mr-2 h-4 w-4" /> Profil
         </Menu.Item>
         <Menu.Item onClick={handleReAuthentication} disabled={user !== null}>
-          {isReauthentication ? <LoaderIcon className="h-4 w-4 mr-2 animate-spin" /> : <UserRoundCog className="h-4 w-4 mr-2" />}
+          {isReAuthentication ? <LoaderIcon className="h-4 w-4 mr-2 animate-spin" /> : <UserRoundCog className="h-4 w-4 mr-2" />}
           Re Authentication
         </Menu.Item>
         <Menu.Item as="a" href="/docs/api" target="_blank" rel="noopener">

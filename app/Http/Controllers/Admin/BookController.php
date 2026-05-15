@@ -163,6 +163,26 @@ class BookController extends Controller
         return redirect()->back()->with('success', 'Buku berhasil dihapus.');
     }
 
+    public function sync(string $uuid) {
+        $book = Book::query()
+            ->where('uuid', $uuid)
+            ->first();
+
+        if (! $book) {
+            return response()->json([
+                'message' => 'Data buku database tidak ditemukan.',
+            ], 404);
+        }
+
+        return response()->json([
+            'data' => [
+                'cover' => $book->thumbnail,
+                'downloadLink' => $book->url ?? '',
+                'version' => $book->version ?? 1,
+            ],
+        ]);
+    }
+
     private function makeBookFilePath(UploadedFile $file, string $uuid): string
     {
         $extension = strtolower($file->getClientOriginalExtension());

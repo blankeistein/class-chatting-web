@@ -368,6 +368,14 @@ function ProfileMenu({ user }: { user: User | null }) {
     })
   }
 
+  useEffect(() => {
+    if (!isReAuthenticating) return;
+
+    let toasId = toast.loading("Sedang authentication akun firebase")
+
+    return () => toast.dismiss(toasId);
+  }, [isReAuthenticating])
+
   return (
     <Menu placement="bottom-end">
       <Menu.Trigger

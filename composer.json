@@ -17,6 +17,7 @@
         "kreait/laravel-firebase": "^7.1",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
+        "sentry/sentry-laravel": "^4.25",
         "tightenco/ziggy": "^2.5"
     },
     "require-dev": {

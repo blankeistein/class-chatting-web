@@ -130,7 +130,7 @@ export default function BookEditDialog({
           downloadLink: string;
           version: number;
         };
-      }>(route("admin.apps.class-chatting.book.items.sync", { uuid: editForm.id }));
+      }>(route("admin.books.items.sync", { uuid: editForm.id }));
 
       setEditForm((currentForm) => {
         if (!currentForm) {

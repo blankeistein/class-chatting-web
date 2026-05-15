@@ -50,6 +50,7 @@ Route::middleware('auth')->group(function () {
         Route::get('books/selection', [BookController::class, 'selection'])->name('books.selection');
         Route::get('books/{id}/upload', [BookController::class, 'upload'])->name('books.upload');
         Route::put('books/{id}/upload', [BookController::class, 'uploadFile'])->name('books.upload.post');
+        Route::get('books/items/{uuid}/sync', [BookController::class, 'sync'])->name('books.items.sync');
         Route::resource('books', BookController::class);
         Route::get('schools/import', [AdminSchoolController::class, 'importPage'])->name('schools.import-page');
         Route::post('schools/import', [AdminSchoolController::class, 'import'])->name('schools.import');
@@ -91,7 +92,6 @@ Route::middleware('auth')->group(function () {
 
             Route::get('book', [ClassChattingBookController::class, 'index'])->name('book');
             Route::post('book/items', [ClassChattingBookController::class, 'store'])->name('items.store');
-            Route::get('book/items/sync/{uuid}', [ClassChattingBookController::class, 'sync'])->name('items.sync');
             Route::put('book/items/{documentId}', [ClassChattingBookController::class, 'update'])->name('items.update');
             Route::put('book/items/lock/{documentId}', [ClassChattingBookController::class, 'updateLock'])->name('items.lock.update');
             Route::patch('book/items/reorder', [ClassChattingBookController::class, 'reorder'])->name('items.reorder');
@@ -109,7 +109,6 @@ Route::middleware('auth')->group(function () {
 
             Route::get('book', [AnakIndonesiaMenghafalBookController::class, 'index'])->name('book');
             Route::post('book/items', [AnakIndonesiaMenghafalBookController::class, 'store'])->name('book.items.store');
-            Route::get('book/items/sync/{uuid}', [AnakIndonesiaMenghafalBookController::class, 'sync'])->name('book.items.sync');
             Route::put('book/items/{documentId}', [AnakIndonesiaMenghafalBookController::class, 'update'])->name('book.items.update');
             Route::put('book/items/lock/{documentId}', [AnakIndonesiaMenghafalBookController::class, 'updateLock'])->name('book.items.lock.update');
             Route::patch('book/items/reorder', [AnakIndonesiaMenghafalBookController::class, 'reorder'])->name('book.items.reorder');
@@ -124,7 +123,6 @@ Route::middleware('auth')->group(function () {
 
             Route::get('book', [ClassChattingForKidsBookController::class, 'index'])->name('book');
             Route::post('book/items', [ClassChattingForKidsBookController::class, 'store'])->name('book.items.store');
-            Route::get('book/items/sync/{uuid}', [ClassChattingForKidsBookController::class, 'sync'])->name('book.items.sync');
             Route::put('book/items/{documentId}', [ClassChattingForKidsBookController::class, 'update'])->name('book.items.update');
             Route::put('book/items/lock/{documentId}', [ClassChattingForKidsBookController::class, 'updateLock'])->name('book.items.lock.update');
             Route::patch('book/items/reorder', [ClassChattingForKidsBookController::class, 'reorder'])->name('book.items.reorder');
@@ -139,7 +137,6 @@ Route::middleware('auth')->group(function () {
 
             Route::get('book', [ClassChattingLayarLebarBookController::class, 'index'])->name('book');
             Route::post('book/items', [ClassChattingLayarLebarBookController::class, 'store'])->name('book.items.store');
-            Route::get('book/items/sync/{uuid}', [ClassChattingLayarLebarBookController::class, 'sync'])->name('book.items.sync');
             Route::put('book/items/{documentId}', [ClassChattingLayarLebarBookController::class, 'update'])->name('book.items.update');
             Route::put('book/items/lock/{documentId}', [ClassChattingLayarLebarBookController::class, 'updateLock'])->name('book.items.lock.update');
             Route::patch('book/items/reorder', [ClassChattingLayarLebarBookController::class, 'reorder'])->name('book.items.reorder');

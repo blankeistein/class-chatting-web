@@ -361,6 +361,7 @@ function ProfileMenu({ user }: { user: User | null }) {
         Object.values(errors).forEach((error) => {
           toast.error(error);
         });
+        setIsReAuthentication(false);
       }
     })
   }

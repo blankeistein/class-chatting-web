@@ -8,9 +8,7 @@ use App\Models\Video;
 use Dedoc\Scramble\Attributes\BodyParameter;
 use Dedoc\Scramble\Attributes\Endpoint;
 use Dedoc\Scramble\Attributes\Group;
-use Dedoc\Scramble\Attributes\HeaderParameter;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 #[Group('Videos', 'Endpoint API untuk sinkronisasi data video dari service internal.', 30)]
 class VideoController extends Controller
@@ -18,9 +16,8 @@ class VideoController extends Controller
     #[Endpoint(
         operationId: 'videosUpdateHlsUrl',
         title: 'Update video HLS URL',
-        description: 'Dipakai service transcoding untuk mengisi `video_url` dengan URL Firebase `.m3u8` berdasarkan `slug` video yang sudah dibuat saat upload awal.'
+        description: 'Dipakai service transcoding untuk mengisi `video_url` dengan URL Firebase `.m3u8` berdasarkan `slug` video yang sudah dibuat saat upload awal. Autentikasi menggunakan Firebase ID Token dengan uid `hls-converter-service`.'
     )]
-    #[HeaderParameter('X-API-KEY', 'API key internal untuk mengamankan callback HLS.', required: true, example: 'test-private-key')]
     #[BodyParameter('slug', 'Slug video yang akan diperbarui.', required: true, example: 'abc123def45')]
     #[BodyParameter('video_url', 'URL file HLS `.m3u8` hasil transcoding.', required: true, example: 'https://firebasestorage.googleapis.com/v0/b/example-bucket/o/hls%2Fabc123def45%2Findex.m3u8?alt=media')]
     public function updateHlsUrl(UpdateVideoHlsUrlRequest $request): JsonResponse

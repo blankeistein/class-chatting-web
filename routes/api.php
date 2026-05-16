@@ -46,7 +46,7 @@ Route::prefix('v1/schools')->middleware('throttle:120,1')->group(function () {
     Route::get('/{school}', [SchoolController::class, 'show']);
 });
 
-Route::middleware(['throttle:1000,1', 'private.api'])->group(function () {
+Route::middleware(['throttle:1000,1', 'firebase.id_token'])->group(function () {
     Route::post('/video/update-hls-url', [VideoController::class, 'updateHlsUrl']);
 });
 

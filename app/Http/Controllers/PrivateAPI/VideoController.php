@@ -34,7 +34,8 @@ class VideoController extends Controller
         $search = $request->query('search');
         $video = $request->query('video');
 
-        $query = Video::query()
+        $videos = Video::query()
+            ->with('uploader:id,name')
             ->when(! empty($video), fn ($q) => $q->where('video', ''))
             ->when($search, fn ($q) => $q->where('title', 'like', "%{$search}%"))
             ->orderBy('id', 'DESC')
@@ -46,23 +47,17 @@ class VideoController extends Controller
             'page' => $page,
             'limit' => $limit,
             'search' => $search,
-            'list_video' => $query->map(function ($video) {
-                $step1 = Str::after($video->video_url, '/o/');
-                $step2 = Str::before($step1, '?');
-                $result = rawurldecode($step2);
-
-                return [
-                    'id' => $video->id,
-                    'video_id' => $video->slug,
-                    'title' => $video->title,
-                    'description' => $video->description,
-                    'author' => $video->uploader->name,
-                    'location' => '',
-                    'date_upload' => $video->created_at,
-                    'thumbnail' => $video->thumbnail,
-                    'video' => $result,
-                ];
-            }),
+            'list_video' => $videos->map(fn (Video $item) => [
+                'id' => $item->id,
+                'video_id' => $item->slug,
+                'title' => $item->title,
+                'description' => $item->description,
+                'author' => $item->uploader->name ?? '',
+                'location' => '',
+                'date_upload' => $item->created_at,
+                'thumbnail' => $item->thumbnail,
+                'video' => $this->extractVideoPath($item->video_url),
+            ]),
             'slug' => 'list',
             'status' => 'success',
         ])->header('Access-Control-Allow-Origin', '*');
@@ -95,8 +90,17 @@ class VideoController extends Controller
         $video = Video::create([
             'slug' => $videoId,
             'title' => $data['title'] ?? '',
-            'uploaded_by' => 1,
+            'description' => $data['description'] ?? null,
+            'uploaded_by' => $data['uploaded_by'] ?? 1,
+            'thumbnail' => $data['thumbnail'] ?? null,
+            'video_url' => $data['video_url'] ?? null,
+            'provider' => 'firebase',
+            'storage_path' => $data['storage_path'] ?? null,
+            'metadata' => $data['metadata'] ?? null,
+            'tags' => $data['tags'] ?? null,
         ]);
+
+        $video->load('uploader:id,name');
 
         return response()->json([
             'slug' => 'add',
@@ -105,7 +109,7 @@ class VideoController extends Controller
                 'video_id' => $video->slug,
                 'title' => $video->title,
                 'description' => $video->description,
-                'author' => $video->uploader->name,
+                'author' => $video->uploader->name ?? '',
                 'location' => 'need_update',
                 'date_upload' => $video->created_at,
                 'thumbnail' => $video->thumbnail,
@@ -124,35 +128,31 @@ class VideoController extends Controller
     #[PathParameter('video_id', 'Identifier legacy video yang dipakai endpoint private.', example: 'abc123def45')]
     public function show(Request $request, string $private_api, string $video_id): JsonResponse
     {
-        $video = Video::query()->where('slug', $video_id)->first();
+        $video = Video::query()
+            ->with('uploader:id,name')
+            ->where('slug', $video_id)
+            ->first();
 
         if (! $video) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Video not Found',
-            ], 500)->header('Access-Control-Allow-Origin', '*');
+            ], 404)->header('Access-Control-Allow-Origin', '*');
         }
 
         $location = @unserialize($video->location);
 
-        $data = $video->toArray();
-        $data['location'] = $location === false ? 'need_update' : $location;
-
-        $step1 = Str::after($video->video_url, '/o/');
-        $step2 = Str::before($step1, '?');
-        $video_url = rawurldecode($step2);
-
         return response()->json([
             'data' => [
-                'id' => $data['id'],
-                'video_id' => $data['slug'],
-                'title' => $data['title'],
-                'description' => $data['description'],
-                'author' => $video->uploader->name,
-                'location' => $data['location'],
-                'date_upload' => $data['created_at'],
-                'thumbnail' => $data['thumbnail'],
-                'video' => $video_url,
+                'id' => $video->id,
+                'video_id' => $video->slug,
+                'title' => $video->title,
+                'description' => $video->description,
+                'author' => $video->uploader->name ?? '',
+                'location' => $location === false ? 'need_update' : $location,
+                'date_upload' => $video->created_at,
+                'thumbnail' => $video->thumbnail,
+                'video' => $this->extractVideoPath($video->video_url),
             ],
             'slug' => 'detail',
             'status' => 'success',
@@ -178,26 +178,37 @@ class VideoController extends Controller
     #[BodyParameter('tags', 'Daftar tag video.', required: false, type: 'array<int, string>', example: ['kelas-4', 'tajwid'])]
     public function update(Request $request, string $private_api, string $video_id): JsonResponse
     {
-        $data = [];
-        if ($request->title) {
-            $data['title'] = $request->title;
+        $input = $this->normalizeProvider($request->json()->all());
+
+        $fillable = ['title', 'description', 'thumbnail', 'video_url', 'storage_path', 'provider', 'metadata', 'tags', 'video'];
+        $data = array_intersect_key($input, array_flip($fillable));
+
+        if (empty($data)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No valid fields to update',
+            ], 422)->header('Access-Control-Allow-Origin', '*');
         }
 
         if ($request->video) {
-            $data['video_url'] = $request->video;
+            $encoded_path = str_replace('/', '%2F', $request->video);
+            $data['video_url'] = 'https://firebasestorage.googleapis.com/v0/b/'.env('FIREBASE_STORAGE_BUCKET').'/o/'.$encoded_path.'?alt=media';
         }
 
-        if ($request->description) {
-            $data['video_url'] = $request->video;
-        }
+        unset($data['video']);
 
         $updated = Video::where('slug', $video_id)->update($data);
 
-        if ($updated === false) {
+        if ($request->video) {
+            $data['video'] = $request->video;
+            unset($data['video_url']);
+        }
+
+        if ($updated === 0) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Update Failed',
-            ], 500)->header('Access-Control-Allow-Origin', '*');
+                'message' => 'Video not found or no changes applied',
+            ], 404)->header('Access-Control-Allow-Origin', '*');
         }
 
         return response()->json([
@@ -230,6 +241,21 @@ class VideoController extends Controller
             'status' => 'error',
             'message' => 'Delete Failed',
         ], 500)->header('Access-Control-Allow-Origin', '*');
+    }
+
+    /**
+     * Extract the decoded video path from a Firebase Storage URL.
+     */
+    private function extractVideoPath(?string $videoUrl): string
+    {
+        if (empty($videoUrl)) {
+            return '';
+        }
+
+        $path = Str::after($videoUrl, '/o/');
+        $path = Str::before($path, '?');
+
+        return rawurldecode($path);
     }
 
     private function normalizeProvider(array $data, bool $setDefault = false): array

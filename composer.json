@@ -69,7 +69,14 @@
         "test": [
             "@php artisan config:clear --ansi",
             "@php artisan test"
+        ],
+        "pack": [
+            "@putenv COMPOSER_PACK_TS=true",
+            "@php scripts/pack-deploy.php"
         ]
+    },
+    "scripts-descriptions": {
+        "pack": "Pack project jadi ZIP siap upload ke cPanel"
     },
     "extra": {
         "laravel": {

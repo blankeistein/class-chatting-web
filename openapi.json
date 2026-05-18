@@ -2,7 +2,7 @@
     "openapi": "3.1.0",
     "info": {
         "title": "Class Chatting API",
-        "version": "0.0.1",
+        "version": "1.0.0",
         "description": "Dokumen OpenAPI 3.1 untuk Class Chatting.\n\nDokumentasi ini mencakup:\n- Public API di bawah prefix `/api`\n- Private API di bawah prefix `/private-api/{api_key}`\n- Firebase webhook di bawah prefix `/api/firebase`\n\nGunakan `/docs/api` untuk dokumentasi interaktif, `/docs/api.json` untuk OpenAPI JSON runtime, dan `openapi.json` untuk artefak yang dapat dikonsumsi AI, generator SDK, atau automation tooling."
     },
     "servers": [

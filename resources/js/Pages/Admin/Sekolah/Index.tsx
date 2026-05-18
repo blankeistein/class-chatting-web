@@ -58,9 +58,9 @@ type SchoolsPayload = {
 type Filters = {
   search?: string;
   per_page?: number;
-  province_id?: number;
-  regency_id?: number;
-  district_id?: number;
+  province_code?: string;
+  regency_code?: string;
+  district_code?: string;
   status?: string;
   bentuk_pendidikan?: string;
   sort_by?: string;
@@ -75,7 +75,6 @@ type Province = {
 
 type Regency = {
   id: number;
-  province_id: number;
   code: string;
   name: string;
   type: string | null;
@@ -83,7 +82,6 @@ type Regency = {
 
 type District = {
   id: number;
-  regency_id: number;
   code: string;
   name: string;
 };
@@ -94,8 +92,6 @@ type FilterOptions = {
 
 type RegionOptions = {
   provinces: Province[];
-  regencies: Regency[];
-  districts: District[];
 };
 
 type PageProps = {
@@ -106,9 +102,9 @@ export default function Index({ schools: paginatedSchools, filters, filterOption
   const { regionOptions } = usePage<PageProps>().props;
   const [schools, setSchools] = useState<School[]>(paginatedSchools.data);
   const [search, setSearch] = useState(filters?.search || "");
-  const [provinceId, setProvinceId] = useState(filters?.province_id ? String(filters.province_id) : "");
-  const [regencyId, setRegencyId] = useState(filters?.regency_id ? String(filters.regency_id) : "");
-  const [districtId, setDistrictId] = useState(filters?.district_id ? String(filters.district_id) : "");
+  const [provinceCode, setProvinceCode] = useState(filters?.province_code || "");
+  const [regencyCode, setRegencyCode] = useState(filters?.regency_code || "");
+  const [districtCode, setDistrictCode] = useState(filters?.district_code || "");
   const [status, setStatus] = useState(filters?.status || "");
   const [bentukPendidikan, setBentukPendidikan] = useState(filters?.bentuk_pendidikan || "");
   const [sort, setSort] = useState(`${filters?.sort_by || "name"}|${filters?.sort_direction || "asc"}`);
@@ -118,6 +114,10 @@ export default function Index({ schools: paginatedSchools, filters, filterOption
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [currentSchool, setCurrentSchool] = useState<School | null>(null);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [regencies, setRegencies] = useState<Regency[]>([]);
+  const [districts, setDistricts] = useState<District[]>([]);
+  const [isRegenciesLoading, setIsRegenciesLoading] = useState(false);
+  const [isDistrictsLoading, setIsDistrictsLoading] = useState(false);
 
   const deleteForm = useForm();
 
@@ -132,9 +132,42 @@ export default function Index({ schools: paginatedSchools, filters, filterOption
     }
   }, [regionOptions]);
 
-  const filteredRegencies = (regionOptions?.regencies || []).filter((item) => !provinceId || item.province_id === Number(provinceId));
-  const filteredDistricts = (regionOptions?.districts || []).filter((item) => !regencyId || item.regency_id === Number(regencyId));
-  const hasActiveFilters = search !== "" || provinceId !== "" || regencyId !== "" || districtId !== "" || status !== "" || bentukPendidikan !== "";
+  // Fetch regencies when province changes
+  React.useEffect(() => {
+    if (!provinceCode) {
+      setRegencies([]);
+      setDistricts([]);
+      return;
+    }
+
+    setIsRegenciesLoading(true);
+    fetch(`/api/v1/regions/provinces/${provinceCode}/regencies?per_page=100`)
+      .then((response) => response.json())
+      .then((json: { data: Regency[] }) => {
+        setRegencies(json.data || []);
+        setIsRegenciesLoading(false);
+      })
+      .catch(() => setIsRegenciesLoading(false));
+  }, [provinceCode]);
+
+  // Fetch districts when regency changes
+  React.useEffect(() => {
+    if (!regencyCode) {
+      setDistricts([]);
+      return;
+    }
+
+    setIsDistrictsLoading(true);
+    fetch(`/api/v1/regions/regencies/${regencyCode}/districts?per_page=100`)
+      .then((response) => response.json())
+      .then((json: { data: District[] }) => {
+        setDistricts(json.data || []);
+        setIsDistrictsLoading(false);
+      })
+      .catch(() => setIsDistrictsLoading(false));
+  }, [regencyCode]);
+
+  const hasActiveFilters = search !== "" || provinceCode !== "" || regencyCode !== "" || districtCode !== "" || status !== "" || bentukPendidikan !== "";
   const [sortBy, sortDirection] = sort.split("|");
 
   const openFilter = () => {
@@ -157,9 +190,9 @@ export default function Index({ schools: paginatedSchools, filters, filterOption
 
     router.get(route("admin.schools.index"), {
       search,
-      province_id: provinceId,
-      regency_id: regencyId,
-      district_id: districtId,
+      province_code: provinceCode,
+      regency_code: regencyCode,
+      district_code: districtCode,
       status,
       bentuk_pendidikan: bentukPendidikan,
       sort_by: sortBy,
@@ -174,9 +207,9 @@ export default function Index({ schools: paginatedSchools, filters, filterOption
 
   const resetFilters = () => {
     setSearch("");
-    setProvinceId("");
-    setRegencyId("");
-    setDistrictId("");
+    setProvinceCode("");
+    setRegencyCode("");
+    setDistrictCode("");
     setStatus("");
     setBentukPendidikan("");
     setSort("name|asc");
@@ -559,20 +592,20 @@ export default function Index({ schools: paginatedSchools, filters, filterOption
               ) : (
                 <>
                   <Select
-                    value={provinceId}
+                    value={provinceCode || "__all__"}
                     onValueChange={(value) => {
-                      setProvinceId(value || "");
-                      setRegencyId("");
-                      setDistrictId("");
+                      setProvinceCode(value === "__all__" ? "" : (value || ""));
+                      setRegencyCode("");
+                      setDistrictCode("");
                     }}
                   >
                     <Select.Trigger placeholder="Semua provinsi" >
-                      {() => regionOptions.provinces.find((item) => String(item.id) === provinceId)?.name || "Semua provinsi"}
+                      {() => regionOptions.provinces.find((item) => item.code === provinceCode)?.name || "Semua provinsi"}
                     </Select.Trigger>
                     <Select.List className="overflow-auto">
-                      <Select.Option value="">Semua provinsi</Select.Option>
+                      <Select.Option value="__all__">Semua provinsi</Select.Option>
                       {regionOptions.provinces.map((item) => (
-                        <Select.Option key={item.id} value={String(item.id)}>
+                        <Select.Option key={item.code} value={item.code}>
                           {item.code} - {item.name}
                         </Select.Option>
                       ))}
@@ -580,20 +613,20 @@ export default function Index({ schools: paginatedSchools, filters, filterOption
                   </Select>
 
                   <Select
-                    value={regencyId}
+                    value={(regencies.length === 0 && regencyCode) ? "__all__" : (regencyCode || "__all__")}
                     onValueChange={(value) => {
-                      setRegencyId(value || "");
-                      setDistrictId("");
+                      setRegencyCode(value === "__all__" ? "" : (value || ""));
+                      setDistrictCode("");
                     }}
-                    disabled={!provinceId}
+                    disabled={!provinceCode || isRegenciesLoading}
                   >
                     <Select.Trigger placeholder="Semua kabupaten/kota" >
-                      {() => filteredRegencies.find((item) => String(item.id) === regencyId)?.name || "Semua kabupaten/kota"}
+                      {() => regencies.find((item) => item.code === regencyCode)?.name || (isRegenciesLoading ? "Memuat..." : "Semua kabupaten/kota")}
                     </Select.Trigger>
                     <Select.List className="overflow-auto">
-                      <Select.Option value="">Semua kabupaten/kota</Select.Option>
-                      {filteredRegencies.map((item) => (
-                        <Select.Option key={item.id} value={String(item.id)}>
+                      <Select.Option value="__all__">Semua kabupaten/kota</Select.Option>
+                      {regencies.map((item) => (
+                        <Select.Option key={item.id} value={item.code}>
                           {item.code} - {item.name}
                         </Select.Option>
                       ))}
@@ -601,17 +634,17 @@ export default function Index({ schools: paginatedSchools, filters, filterOption
                   </Select>
 
                   <Select
-                    value={districtId}
-                    onValueChange={(value) => setDistrictId(value || "")}
-                    disabled={!regencyId}
+                    value={(districts.length === 0 && districtCode) ? "__all__" : (districtCode || "__all__")}
+                    onValueChange={(value) => setDistrictCode(value === "__all__" ? "" : (value || ""))}
+                    disabled={!regencyCode || isDistrictsLoading}
                   >
                     <Select.Trigger placeholder="Semua kecamatan" >
-                      {() => filteredDistricts.find((item) => String(item.id) === districtId)?.name || "Semua kecamatan"}
+                      {() => districts.find((item) => item.code === districtCode)?.name || (isDistrictsLoading ? "Memuat..." : "Semua kecamatan")}
                     </Select.Trigger>
                     <Select.List className="overflow-auto">
-                      <Select.Option value="">Semua kecamatan</Select.Option>
-                      {filteredDistricts.map((item) => (
-                        <Select.Option key={item.id} value={String(item.id)}>
+                      <Select.Option value="__all__">Semua kecamatan</Select.Option>
+                      {districts.map((item) => (
+                        <Select.Option key={item.id} value={item.code}>
                           {item.code} - {item.name}
                         </Select.Option>
                       ))}
@@ -620,24 +653,24 @@ export default function Index({ schools: paginatedSchools, filters, filterOption
                 </>
               )}
 
-              <Select value={status} onValueChange={(value) => setStatus(value || "")}>
+              <Select value={status || "__all__"} onValueChange={(value) => setStatus(value === "__all__" ? "" : (value || ""))}>
                 <Select.Trigger placeholder="Semua status" >
                   {() => status || "Semua status"}
                 </Select.Trigger>
                 <Select.List>
-                  <Select.Option value="">Semua status</Select.Option>
+                  <Select.Option value="__all__">Semua status</Select.Option>
                   <Select.Option value="NEGERI">NEGERI</Select.Option>
                   <Select.Option value="SWASTA">SWASTA</Select.Option>
                 </Select.List>
               </Select>
 
               <div className="md:col-span-2">
-                <Select value={bentukPendidikan} onValueChange={(value) => setBentukPendidikan(value || "")}>
+                <Select value={bentukPendidikan || "__all__"} onValueChange={(value) => setBentukPendidikan(value === "__all__" ? "" : (value || ""))}>
                   <Select.Trigger placeholder="Semua bentuk pendidikan" >
                     {() => bentukPendidikan || "Semua bentuk pendidikan"}
                   </Select.Trigger>
                   <Select.List className="overflow-auto">
-                    <Select.Option value="">Semua bentuk pendidikan</Select.Option>
+                    <Select.Option value="__all__">Semua bentuk pendidikan</Select.Option>
                     {filterOptions.bentukPendidikan.map((item) => (
                       <Select.Option key={item} value={item}>
                         {item}

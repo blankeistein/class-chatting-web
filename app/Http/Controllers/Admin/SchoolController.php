@@ -26,9 +26,9 @@ class SchoolController extends Controller
     {
         $search = trim((string) $request->input('search', ''));
         $perPage = (int) $request->input('per_page', 20);
-        $provinceId = (int) $request->input('province_id', 0);
-        $regencyId = (int) $request->input('regency_id', 0);
-        $districtId = (int) $request->input('district_id', 0);
+        $provinceCode = trim((string) $request->input('province_code', ''));
+        $regencyCode = trim((string) $request->input('regency_code', ''));
+        $districtCode = trim((string) $request->input('district_code', ''));
         $status = trim((string) $request->input('status', ''));
         $bentukPendidikan = trim((string) $request->input('bentuk_pendidikan', ''));
         $sortBy = trim((string) $request->input('sort_by', 'created_at'));
@@ -46,11 +46,15 @@ class SchoolController extends Controller
             $sortDirection = 'desc';
         }
 
+        $provinceId = $provinceCode !== '' ? Province::where('code', $provinceCode)->value('id') : null;
+        $regencyId = $regencyCode !== '' ? Regency::where('code', $regencyCode)->value('id') : null;
+        $districtId = $districtCode !== '' ? District::where('code', $districtCode)->value('id') : null;
+
         $schools = School::query()
             ->search($search)
-            ->when($provinceId > 0, fn ($query) => $query->where('province_id', $provinceId))
-            ->when($regencyId > 0, fn ($query) => $query->where('regency_id', $regencyId))
-            ->when($districtId > 0, fn ($query) => $query->where('district_id', $districtId))
+            ->when($provinceId, fn ($query) => $query->where('province_id', $provinceId))
+            ->when($regencyId, fn ($query) => $query->where('regency_id', $regencyId))
+            ->when($districtId, fn ($query) => $query->where('district_id', $districtId))
             ->when($status !== '', fn ($query) => $query->where('status', $status))
             ->when($bentukPendidikan !== '', fn ($query) => $query->where('bentuk_pendidikan', $bentukPendidikan))
             ->orderBy($sortBy, $sortDirection)
@@ -62,9 +66,9 @@ class SchoolController extends Controller
             'filters' => [
                 'search' => $search,
                 'per_page' => $perPage,
-                'province_id' => $provinceId,
-                'regency_id' => $regencyId,
-                'district_id' => $districtId,
+                'province_code' => $provinceCode,
+                'regency_code' => $regencyCode,
+                'district_code' => $districtCode,
                 'status' => $status,
                 'bentuk_pendidikan' => $bentukPendidikan,
                 'sort_by' => $sortBy,
@@ -476,14 +480,6 @@ class SchoolController extends Controller
             'provinces' => Province::query()
                 ->orderBy('code')
                 ->get(['id', 'code', 'name'])
-                ->toArray(),
-            'regencies' => Regency::query()
-                ->orderBy('code')
-                ->get(['id', 'province_id', 'code', 'name', 'type'])
-                ->toArray(),
-            'districts' => District::query()
-                ->orderBy('code')
-                ->get(['id', 'regency_id', 'code', 'name'])
                 ->toArray(),
         ];
     }

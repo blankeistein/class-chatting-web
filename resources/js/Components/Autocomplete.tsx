@@ -126,11 +126,10 @@ export default function Autocomplete({
     <div ref={containerRef} className={cn("relative w-full", className)}>
       <div
         className={cn(
-          "flex items-center gap-1 w-full rounded-lg border bg-white px-3 py-2 text-sm transition-colors",
-          "dark:bg-slate-900 dark:text-white",
+          "flex items-center gap-1 w-full rounded-lg border bg-background px-3 py-2 text-sm transition-colors text-foreground",
           isOpen
-            ? "border-slate-900 ring-1 ring-slate-900 dark:border-white dark:ring-white"
-            : "border-slate-200 dark:border-slate-700",
+            ? "border-primary ring-primary/10 dark:border-white dark:ring-primary/10"
+            : "border-surface",
           disabled && "cursor-not-allowed opacity-50",
           !disabled && "cursor-text"
         )}

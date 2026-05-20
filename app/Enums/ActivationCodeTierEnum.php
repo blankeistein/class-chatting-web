@@ -15,6 +15,14 @@ enum ActivationCodeTierEnum: int
         };
     }
 
+    public function key(): string
+    {
+        return match ($this) {
+            self::REGULAR => 'regular',
+            self::PREMIUM => 'premium',
+        };
+    }
+
     public static function labels(): array
     {
         return [

@@ -219,7 +219,7 @@ $successLaravel = createZip($zipLaravel, function (ZipArchive $zip) use (
 
         // Isi public/ (kecuali public/build) masuk zip public_html, bukan zip laravel
         // public/build tetap masuk zip laravel
-        if (! $skip && str_starts_with($relPath, 'public/') && ! str_starts_with($relPath, 'public/build')) {
+        if (! $skip && str_starts_with($relPath, 'public/') && ! str_starts_with($relPath, 'public/build/manifest.json')) {
             $skip = true;
         }
 
@@ -284,11 +284,6 @@ $successPublicHtml = createZip($zipPublicHtml, function (ZipArchive $zip) use (
 
     foreach ($iterator as $file) {
         $relPath = str_replace('\\', '/', substr($file->getRealPath(), strlen($publicPath) + 1));
-
-        // Skip folder build/ — tetap di laravel/public/build
-        if ($relPath === 'build' || str_starts_with($relPath, 'build/')) {
-            continue;
-        }
 
         if ($file->isFile()) {
             // Simpan langsung ke root (tanpa prefix public/)

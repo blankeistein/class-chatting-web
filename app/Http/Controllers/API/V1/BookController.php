@@ -217,7 +217,7 @@ class BookController extends Controller
             return response()->json([
                 'status' => 'success',
                 'level' => [
-                    'slug' => $activationCode->tier->value,
+                    'slug' => $activationCode->tier->key(),
                     'name' => $activationCode->tier->label(),
                 ],
                 'version' => 1,

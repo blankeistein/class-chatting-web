@@ -4,6 +4,7 @@ import RegionTablePage from "./RegionTablePage";
 import { Button, Dialog, IconButton, Input, Select, Typography } from "@material-tailwind/react";
 import { router, useForm } from "@inertiajs/react";
 import { PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import Autocomplete from "@/Components/Autocomplete";
 
 type Village = {
   id: number;
@@ -29,14 +30,14 @@ export default function Villages({ villages, filters, filterOptions }: { village
   const [deletingVillage, setDeletingVillage] = React.useState<Village | null>(null);
   const [provinceId, setProvinceId] = React.useState(filters?.province_id ? String(filters.province_id) : "");
   const [regencyId, setRegencyId] = React.useState(filters?.regency_id ? String(filters.regency_id) : "");
-  const form = useForm({
+  const form = useForm<{ district_id: number, code: string, name: string }>({
     district_id: filters?.district_id || 0,
     code: "",
     name: "",
   });
   const [editProvinceId, setEditProvinceId] = React.useState("");
   const [editRegencyId, setEditRegencyId] = React.useState("");
-  const editForm = useForm({
+  const editForm = useForm<{ district_id: number, code: string, name: string, _method: string }>({
     district_id: 0,
     code: "",
     name: "",
@@ -171,35 +172,46 @@ export default function Villages({ villages, filters, filterOptions }: { village
 
       <Dialog open={isCreateOpen} onOpenChange={closeDialog} size="sm">
         <Dialog.Overlay>
-          <Dialog.Content>
+          <Dialog.Content className="overflow-visible">
             <Typography type="h6">Tambah Desa</Typography>
             <div className="mt-5 space-y-4">
               <div>
                 <Typography type="small" className="mb-1 font-semibold dark:text-white">Provinsi</Typography>
-                <Select value={provinceId || undefined} onValueChange={(value) => { setProvinceId(value || ""); setRegencyId(""); form.setData("district_id", 0); }}>
-                  <Select.Trigger placeholder="Pilih provinsi" />
-                  <Select.List>
-                    {(filterOptions?.provinces || []).map((province: any) => <Select.Option key={province.id} value={String(province.id)}>{province.name}</Select.Option>)}
-                  </Select.List>
-                </Select>
+                <Autocomplete
+                  options={(filterOptions?.provinces || []).map((province: any) => ({
+                    value: String(province.id),
+                    label: province.name,
+                  }))}
+                  value={provinceId}
+                  onChange={(value) => { setProvinceId(value); setRegencyId(""); form.setData("district_id", 0); }}
+                  placeholder="Cari provinsi..."
+                />
               </div>
               <div>
                 <Typography type="small" className="mb-1 font-semibold dark:text-white">Kabupaten/Kota</Typography>
-                <Select value={regencyId || undefined} onValueChange={(value) => { setRegencyId(value || ""); form.setData("district_id", 0); }} disabled={!provinceId}>
-                  <Select.Trigger placeholder="Pilih kabupaten/kota" />
-                  <Select.List>
-                    {filteredRegencies.map((regency: any) => <Select.Option key={regency.id} value={String(regency.id)}>{regency.name}</Select.Option>)}
-                  </Select.List>
-                </Select>
+                <Autocomplete
+                  options={filteredRegencies.map((regency: any) => ({
+                    value: String(regency.id),
+                    label: regency.name,
+                  }))}
+                  value={regencyId}
+                  onChange={(value) => { setRegencyId(value); form.setData("district_id", 0); }}
+                  placeholder="Cari kabupaten/kota..."
+                  disabled={!provinceId}
+                />
               </div>
               <div>
                 <Typography type="small" className="mb-1 font-semibold dark:text-white">Kecamatan</Typography>
-                <Select value={form.data.district_id ? String(form.data.district_id) : undefined} onValueChange={(value) => form.setData("district_id", Number(value) || 0)} disabled={!regencyId}>
-                  <Select.Trigger placeholder="Pilih kecamatan" />
-                  <Select.List>
-                    {filteredDistricts.map((district: any) => <Select.Option key={district.id} value={String(district.id)}>{district.name}</Select.Option>)}
-                  </Select.List>
-                </Select>
+                <Autocomplete
+                  options={filteredDistricts.map((district: any) => ({
+                    value: String(district.id),
+                    label: district.name,
+                  }))}
+                  value={form.data.district_id ? String(form.data.district_id) : ""}
+                  onChange={(value) => form.setData("district_id", Number(value) || 0)}
+                  placeholder="Cari kecamatan..."
+                  disabled={!regencyId}
+                />
                 {form.errors.district_id && <Typography type="small" color="error" className="mt-1 block">{form.errors.district_id}</Typography>}
               </div>
               <div>
@@ -228,30 +240,41 @@ export default function Villages({ villages, filters, filterOptions }: { village
             <div className="mt-5 space-y-4">
               <div>
                 <Typography type="small" className="mb-1 font-semibold dark:text-white">Provinsi</Typography>
-                <Select value={editProvinceId || undefined} onValueChange={(value) => { setEditProvinceId(value || ""); setEditRegencyId(""); editForm.setData("district_id", 0); }}>
-                  <Select.Trigger placeholder="Pilih provinsi" />
-                  <Select.List>
-                    {(filterOptions?.provinces || []).map((province: any) => <Select.Option key={province.id} value={String(province.id)}>{province.name}</Select.Option>)}
-                  </Select.List>
-                </Select>
+                <Autocomplete
+                  options={(filterOptions?.provinces || []).map((province: any) => ({
+                    value: String(province.id),
+                    label: province.name,
+                  }))}
+                  value={editProvinceId}
+                  onChange={(value) => { setEditProvinceId(value); setEditRegencyId(""); editForm.setData("district_id", 0); }}
+                  placeholder="Cari provinsi..."
+                />
               </div>
               <div>
                 <Typography type="small" className="mb-1 font-semibold dark:text-white">Kabupaten/Kota</Typography>
-                <Select value={editRegencyId || undefined} onValueChange={(value) => { setEditRegencyId(value || ""); editForm.setData("district_id", 0); }} disabled={!editProvinceId}>
-                  <Select.Trigger placeholder="Pilih kabupaten/kota" />
-                  <Select.List>
-                    {editFilteredRegencies.map((regency: any) => <Select.Option key={regency.id} value={String(regency.id)}>{regency.name}</Select.Option>)}
-                  </Select.List>
-                </Select>
+                <Autocomplete
+                  options={editFilteredRegencies.map((regency: any) => ({
+                    value: String(regency.id),
+                    label: regency.name,
+                  }))}
+                  value={editRegencyId}
+                  onChange={(value) => { setEditRegencyId(value); editForm.setData("district_id", 0); }}
+                  placeholder="Cari kabupaten/kota..."
+                  disabled={!editProvinceId}
+                />
               </div>
               <div>
                 <Typography type="small" className="mb-1 font-semibold dark:text-white">Kecamatan</Typography>
-                <Select value={editForm.data.district_id ? String(editForm.data.district_id) : undefined} onValueChange={(value) => editForm.setData("district_id", Number(value) || 0)} disabled={!editRegencyId}>
-                  <Select.Trigger placeholder="Pilih kecamatan" />
-                  <Select.List>
-                    {editFilteredDistricts.map((district: any) => <Select.Option key={district.id} value={String(district.id)}>{district.name}</Select.Option>)}
-                  </Select.List>
-                </Select>
+                <Autocomplete
+                  options={editFilteredDistricts.map((district: any) => ({
+                    value: String(district.id),
+                    label: district.name,
+                  }))}
+                  value={editForm.data.district_id ? String(editForm.data.district_id) : ""}
+                  onChange={(value) => editForm.setData("district_id", Number(value) || 0)}
+                  placeholder="Cari kecamatan..."
+                  disabled={!editRegencyId}
+                />
               </div>
               <div>
                 <Typography type="small" className="mb-1 font-semibold dark:text-white">Kode Desa</Typography>

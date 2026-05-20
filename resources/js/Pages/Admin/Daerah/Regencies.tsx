@@ -4,6 +4,7 @@ import RegionTablePage from "./RegionTablePage";
 import { Button, Dialog, IconButton, Input, Select, Typography } from "@material-tailwind/react";
 import { router, useForm } from "@inertiajs/react";
 import { PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import Autocomplete from "@/Components/Autocomplete";
 
 type Regency = {
   id: number;
@@ -20,13 +21,13 @@ export default function Regencies({ regencies, filters, filterOptions }: { regen
   const [isCreateOpen, setIsCreateOpen] = React.useState(false);
   const [editingRegency, setEditingRegency] = React.useState<Regency | null>(null);
   const [deletingRegency, setDeletingRegency] = React.useState<Regency | null>(null);
-  const form = useForm({
+  const form = useForm<{ province_id: number, code: string, name: string, type: string }>({
     province_id: filters?.province_id || 0,
     code: "",
     name: "",
     type: "kabupaten",
   });
-  const editForm = useForm({
+  const editForm = useForm<{ province_id: number, code: string, name: string, type: string, _method: string }>({
     province_id: 0,
     code: "",
     name: "",
@@ -142,17 +143,20 @@ export default function Regencies({ regencies, filters, filterOptions }: { regen
 
       <Dialog open={isCreateOpen} onOpenChange={closeDialog} size="sm">
         <Dialog.Overlay>
-          <Dialog.Content>
+          <Dialog.Content className="overflow-visible">
             <Typography type="h6">Tambah Kabupaten/Kota</Typography>
             <div className="mt-5 space-y-4">
               <div>
                 <Typography type="small" className="mb-1 font-semibold dark:text-white">Provinsi Induk</Typography>
-                <Select value={form.data.province_id ? String(form.data.province_id) : undefined} onValueChange={(value) => form.setData("province_id", Number(value) || 0)}>
-                  <Select.Trigger placeholder="Pilih provinsi" />
-                  <Select.List>
-                    {(filterOptions?.provinces || []).map((province: any) => <Select.Option key={province.id} value={String(province.id)}>{province.name}</Select.Option>)}
-                  </Select.List>
-                </Select>
+                <Autocomplete
+                  options={(filterOptions?.provinces || []).map((province: any) => ({
+                    value: String(province.id),
+                    label: province.name,
+                  }))}
+                  value={form.data.province_id ? String(form.data.province_id) : ""}
+                  onChange={(value) => form.setData("province_id", Number(value) || 0)}
+                  placeholder="Cari provinsi..."
+                />
                 {form.errors.province_id && <Typography type="small" color="error" className="mt-1 block">{form.errors.province_id}</Typography>}
               </div>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -194,12 +198,15 @@ export default function Regencies({ regencies, filters, filterOptions }: { regen
             <div className="mt-5 space-y-4">
               <div>
                 <Typography type="small" className="mb-1 font-semibold dark:text-white">Provinsi Induk</Typography>
-                <Select value={editForm.data.province_id ? String(editForm.data.province_id) : undefined} onValueChange={(value) => editForm.setData("province_id", Number(value) || 0)}>
-                  <Select.Trigger placeholder="Pilih provinsi" />
-                  <Select.List>
-                    {(filterOptions?.provinces || []).map((province: any) => <Select.Option key={province.id} value={String(province.id)}>{province.name}</Select.Option>)}
-                  </Select.List>
-                </Select>
+                <Autocomplete
+                  options={(filterOptions?.provinces || []).map((province: any) => ({
+                    value: String(province.id),
+                    label: province.name,
+                  }))}
+                  value={editForm.data.province_id ? String(editForm.data.province_id) : ""}
+                  onChange={(value) => editForm.setData("province_id", Number(value) || 0)}
+                  placeholder="Cari provinsi..."
+                />
               </div>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>

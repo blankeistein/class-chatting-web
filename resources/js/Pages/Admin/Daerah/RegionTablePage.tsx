@@ -3,6 +3,7 @@ import { Button, Card, IconButton, Input, Select, Typography } from "@material-t
 import { Head, router } from "@inertiajs/react";
 import { PageHeader } from "@/Components/PageHeader";
 import Pagination from "@/Components/Pagination";
+import Autocomplete from "@/Components/Autocomplete";
 import { SearchIcon } from "lucide-react";
 
 type Filters = {
@@ -100,7 +101,7 @@ export default function RegionTablePage({
       <div className="space-y-6 p-4">
         <PageHeader title={title} description={description} actions={actions} />
 
-        <Card className="border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <Card className="overflow-visible border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <Card.Body className="space-y-4 p-4">
             <div className="flex flex-col gap-4 md:flex-row md:items-end">
               <div className="w-full md:flex-1 space-y-1">
@@ -160,24 +161,20 @@ export default function RegionTablePage({
                     <Typography as="label" htmlFor="province-filter" type="small" color="default" className="font-semibold">
                       Provinsi
                     </Typography>
-                    <Select
+                    <Autocomplete
+                      id="province-filter"
+                      options={filterOptions.provinces.map((province) => ({
+                        value: String(province.id),
+                        label: province.name,
+                      }))}
                       value={provinceId}
-                      onValueChange={(value) => {
-                        setProvinceId(value || "");
+                      onChange={(value) => {
+                        setProvinceId(value);
                         setRegencyId("");
                         setDistrictId("");
                       }}
-                    >
-                      <Select.Trigger id="province-filter" placeholder="Semua provinsi" />
-                      <Select.List>
-                        <Select.Option value="">Semua provinsi</Select.Option>
-                        {filterOptions.provinces.map((province) => (
-                          <Select.Option key={province.id} value={String(province.id)}>
-                            {province.name}
-                          </Select.Option>
-                        ))}
-                      </Select.List>
-                    </Select>
+                      placeholder="Cari provinsi..."
+                    />
                   </div>
                 )}
 
@@ -186,24 +183,20 @@ export default function RegionTablePage({
                     <Typography as="label" htmlFor="regency-filter" type="small" color="default" className="font-semibold">
                       Kabupaten
                     </Typography>
-                    <Select
+                    <Autocomplete
+                      id="regency-filter"
+                      options={filteredRegencies.map((regency) => ({
+                        value: String(regency.id),
+                        label: regency.name,
+                      }))}
                       value={regencyId}
-                      onValueChange={(value) => {
-                        setRegencyId(value || "");
+                      onChange={(value) => {
+                        setRegencyId(value);
                         setDistrictId("");
                       }}
+                      placeholder="Cari kabupaten..."
                       disabled={!!filterOptions.provinces && !provinceId}
-                    >
-                      <Select.Trigger id="regency-filter" placeholder="Semua kabupaten" />
-                      <Select.List>
-                        <Select.Option value="">Semua kabupaten</Select.Option>
-                        {filteredRegencies.map((regency) => (
-                          <Select.Option key={regency.id} value={String(regency.id)}>
-                            {regency.name}
-                          </Select.Option>
-                        ))}
-                      </Select.List>
-                    </Select>
+                    />
                   </div>
                 )}
 
@@ -212,21 +205,17 @@ export default function RegionTablePage({
                     <Typography as="label" htmlFor="district-filter" type="small" color="default" className="font-semibold">
                       Kecamatan
                     </Typography>
-                    <Select
+                    <Autocomplete
+                      id="district-filter"
+                      options={filteredDistricts.map((district) => ({
+                        value: String(district.id),
+                        label: district.name,
+                      }))}
                       value={districtId}
-                      onValueChange={(value) => setDistrictId(value || "")}
+                      onChange={(value) => setDistrictId(value)}
+                      placeholder="Cari kecamatan..."
                       disabled={!regencyId}
-                    >
-                      <Select.Trigger id="district-filter" placeholder="Semua kecamatan" />
-                      <Select.List>
-                        <Select.Option value="">Semua kecamatan</Select.Option>
-                        {filteredDistricts.map((district) => (
-                          <Select.Option key={district.id} value={String(district.id)}>
-                            {district.name}
-                          </Select.Option>
-                        ))}
-                      </Select.List>
-                    </Select>
+                    />
                   </div>
                 )}
               </div>

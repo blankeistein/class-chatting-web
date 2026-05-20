@@ -4,6 +4,7 @@ import RegionTablePage from "./RegionTablePage";
 import { Button, Dialog, IconButton, Input, Select, Typography } from "@material-tailwind/react";
 import { router, useForm } from "@inertiajs/react";
 import { PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import Autocomplete from "@/Components/Autocomplete";
 
 type District = {
   id: number;
@@ -24,13 +25,13 @@ export default function Districts({ districts, filters, filterOptions }: { distr
   const [editingDistrict, setEditingDistrict] = React.useState<District | null>(null);
   const [deletingDistrict, setDeletingDistrict] = React.useState<District | null>(null);
   const [provinceId, setProvinceId] = React.useState(filters?.province_id ? String(filters.province_id) : "");
-  const form = useForm({
+  const form = useForm<{ regency_id: number; code: string; name: string }>({
     regency_id: filters?.regency_id || 0,
     code: "",
     name: "",
   });
   const [editProvinceId, setEditProvinceId] = React.useState("");
-  const editForm = useForm({
+  const editForm = useForm<{ regency_id: number; code: string; name: string; _method: string }>({
     regency_id: 0,
     code: "",
     name: "",
@@ -155,26 +156,33 @@ export default function Districts({ districts, filters, filterOptions }: { distr
 
       <Dialog open={isCreateOpen} onOpenChange={closeDialog} size="sm">
         <Dialog.Overlay>
-          <Dialog.Content>
+          <Dialog.Content className="overflow-visible">
             <Typography type="h6">Tambah Kecamatan</Typography>
             <div className="mt-5 space-y-4">
               <div>
                 <Typography type="small" className="mb-1 font-semibold dark:text-white">Provinsi</Typography>
-                <Select value={provinceId || undefined} onValueChange={(value) => { setProvinceId(value || ""); form.setData("regency_id", 0); }}>
-                  <Select.Trigger placeholder="Pilih provinsi" />
-                  <Select.List>
-                    {(filterOptions?.provinces || []).map((province: any) => <Select.Option key={province.id} value={String(province.id)}>{province.name}</Select.Option>)}
-                  </Select.List>
-                </Select>
+                <Autocomplete
+                  options={(filterOptions?.provinces || []).map((province: any) => ({
+                    value: String(province.id),
+                    label: province.name,
+                  }))}
+                  value={provinceId}
+                  onChange={(value) => { setProvinceId(value); form.setData("regency_id", 0); }}
+                  placeholder="Cari provinsi..."
+                />
               </div>
               <div>
                 <Typography type="small" className="mb-1 font-semibold dark:text-white">Kabupaten/Kota Induk</Typography>
-                <Select value={form.data.regency_id ? String(form.data.regency_id) : undefined} onValueChange={(value) => form.setData("regency_id", Number(value) || 0)} disabled={!provinceId}>
-                  <Select.Trigger placeholder="Pilih kabupaten/kota" />
-                  <Select.List>
-                    {filteredRegencies.map((regency: any) => <Select.Option key={regency.id} value={String(regency.id)}>{regency.name}</Select.Option>)}
-                  </Select.List>
-                </Select>
+                <Autocomplete
+                  options={filteredRegencies.map((regency: any) => ({
+                    value: String(regency.id),
+                    label: regency.name,
+                  }))}
+                  value={form.data.regency_id ? String(form.data.regency_id) : ""}
+                  onChange={(value) => form.setData("regency_id", Number(value) || 0)}
+                  placeholder="Cari kabupaten/kota..."
+                  disabled={!provinceId}
+                />
                 {form.errors.regency_id && <Typography type="small" color="error" className="mt-1 block">{form.errors.regency_id}</Typography>}
               </div>
               <div>

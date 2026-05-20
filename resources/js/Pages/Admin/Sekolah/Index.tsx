@@ -10,6 +10,7 @@ import {
   Typography,
 } from "@material-tailwind/react";
 import AdminLayout from "@/Layouts/AdminLayout";
+import Autocomplete from "@/Components/Autocomplete";
 import Checkbox from "@/Components/Checkbox";
 import { Head, Link, router, useForm, usePage } from "@inertiajs/react";
 import {
@@ -288,7 +289,14 @@ export default function Index({ schools: paginatedSchools, filters, filterOption
     window.location.href = route("admin.schools.bulk-export", { ids: selectedIds.join(",") });
   };
 
+  const isInitialMount = React.useRef(true);
+
   useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
     handleFilter();
   }, [sort, perPage]);
 
@@ -591,65 +599,46 @@ export default function Index({ schools: paginatedSchools, filters, filterOption
                 </div>
               ) : (
                 <>
-                  <Select
-                    value={provinceCode || "__all__"}
-                    onValueChange={(value) => {
-                      setProvinceCode(value === "__all__" ? "" : (value || ""));
+                  <Autocomplete
+                    options={regionOptions.provinces.map((item) => ({
+                      value: item.code,
+                      label: `${item.code} - ${item.name}`,
+                    }))}
+                    value={provinceCode}
+                    onChange={(value) => {
+                      setProvinceCode(value);
                       setRegencyCode("");
                       setDistrictCode("");
                     }}
-                  >
-                    <Select.Trigger placeholder="Semua provinsi" >
-                      {() => regionOptions.provinces.find((item) => item.code === provinceCode)?.name || "Semua provinsi"}
-                    </Select.Trigger>
-                    <Select.List className="overflow-auto">
-                      <Select.Option value="__all__">Semua provinsi</Select.Option>
-                      {regionOptions.provinces.map((item) => (
-                        <Select.Option key={item.code} value={item.code}>
-                          {item.code} - {item.name}
-                        </Select.Option>
-                      ))}
-                    </Select.List>
-                  </Select>
+                    placeholder="Cari provinsi..."
+                  />
 
-                  <Select
-                    value={(regencies.length === 0 && regencyCode) ? "__all__" : (regencyCode || "__all__")}
-                    onValueChange={(value) => {
-                      setRegencyCode(value === "__all__" ? "" : (value || ""));
+                  <Autocomplete
+                    options={regencies.map((item) => ({
+                      value: item.code,
+                      label: `${item.code} - ${item.name}`,
+                    }))}
+                    value={regencyCode}
+                    onChange={(value) => {
+                      setRegencyCode(value);
                       setDistrictCode("");
                     }}
-                    disabled={!provinceCode || isRegenciesLoading}
-                  >
-                    <Select.Trigger placeholder="Semua kabupaten/kota" >
-                      {() => regencies.find((item) => item.code === regencyCode)?.name || (isRegenciesLoading ? "Memuat..." : "Semua kabupaten/kota")}
-                    </Select.Trigger>
-                    <Select.List className="overflow-auto">
-                      <Select.Option value="__all__">Semua kabupaten/kota</Select.Option>
-                      {regencies.map((item) => (
-                        <Select.Option key={item.id} value={item.code}>
-                          {item.code} - {item.name}
-                        </Select.Option>
-                      ))}
-                    </Select.List>
-                  </Select>
+                    placeholder="Cari kabupaten/kota..."
+                    disabled={!provinceCode}
+                    loading={isRegenciesLoading}
+                  />
 
-                  <Select
-                    value={(districts.length === 0 && districtCode) ? "__all__" : (districtCode || "__all__")}
-                    onValueChange={(value) => setDistrictCode(value === "__all__" ? "" : (value || ""))}
-                    disabled={!regencyCode || isDistrictsLoading}
-                  >
-                    <Select.Trigger placeholder="Semua kecamatan" >
-                      {() => districts.find((item) => item.code === districtCode)?.name || (isDistrictsLoading ? "Memuat..." : "Semua kecamatan")}
-                    </Select.Trigger>
-                    <Select.List className="overflow-auto">
-                      <Select.Option value="__all__">Semua kecamatan</Select.Option>
-                      {districts.map((item) => (
-                        <Select.Option key={item.id} value={item.code}>
-                          {item.code} - {item.name}
-                        </Select.Option>
-                      ))}
-                    </Select.List>
-                  </Select>
+                  <Autocomplete
+                    options={districts.map((item) => ({
+                      value: item.code,
+                      label: `${item.code} - ${item.name}`,
+                    }))}
+                    value={districtCode}
+                    onChange={(value) => setDistrictCode(value)}
+                    placeholder="Cari kecamatan..."
+                    disabled={!regencyCode}
+                    loading={isDistrictsLoading}
+                  />
                 </>
               )}
 

@@ -3,8 +3,18 @@
 /**
  * pack-deploy.php
  * Pack Laravel project jadi ZIP siap upload ke cPanel
- * Jalankan via: composer run pack
- * Atau langsung: php scripts/pack-deploy.php
+ * Menghasilkan DUA file ZIP terpisah:
+ *   - {project}_laravel_{timestamp}.zip  → extract ke laravel/ di server
+ *   - {project}_public_html_{timestamp}.zip → extract ke public_html/ di server
+ *
+ * Usage:
+ *   php scripts/pack-deploy.php [options]
+ *
+ * Options:
+ *   --include-vendor     Sertakan folder vendor/ dalam ZIP laravel
+ *   --skip-build         Lewati pengecekan npm build
+ *   --force              Lanjut meski ada warning
+ *   --help               Tampilkan bantuan
  */
 
 // --- Helper output ---
@@ -20,11 +30,55 @@ function err(string $msg): void
 {
     echo "\033[31m[ERROR] $msg\033[0m\n";
 }
-function ask(string $question): string
+function ok(string $msg): void
 {
-    echo "\033[33m$question\033[0m ";
+    echo "\033[32m[OK]    $msg\033[0m\n";
+}
 
-    return strtolower(trim(fgets(STDIN)));
+function createZip(string $outputFile, callable $filler): bool
+{
+    $zip = new ZipArchive;
+    if ($zip->open($outputFile, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+        err("Tidak bisa membuat file ZIP: $outputFile");
+
+        return false;
+    }
+    $filler($zip);
+    $zip->close();
+
+    return file_exists($outputFile);
+}
+
+function printZipResult(string $label, string $outputFile, string $timestamp): void
+{
+    $sizeMB = round(filesize($outputFile) / 1024 / 1024, 2);
+    $md5 = md5_file($outputFile);
+    $name = basename($outputFile);
+
+    echo "  \033[32m[$label]\033[0m\n";
+    echo "  File    : \033[32m".realpath($outputFile)."\033[0m\n";
+    echo "  Ukuran  : \033[32m{$sizeMB} MB\033[0m\n";
+    echo "  MD5     : \033[90m{$md5}\033[0m\n";
+    echo "  Verif   : \033[90mmd5sum $name\033[0m\n\n";
+}
+
+// --- Parse arguments ---
+$args = array_slice($argv, 1);
+$includeVendor = in_array('--include-vendor', $args);
+$skipBuild = in_array('--skip-build', $args);
+$force = in_array('--force', $args);
+
+if (in_array('--help', $args)) {
+    echo "\nUsage: php scripts/pack-deploy.php [options]\n\n";
+    echo "Options:\n";
+    echo "  --include-vendor   Sertakan folder vendor/ dalam ZIP laravel\n";
+    echo "  --skip-build       Lewati pengecekan npm build\n";
+    echo "  --force            Lanjut meski ada warning\n";
+    echo "  --help             Tampilkan bantuan ini\n\n";
+    echo "Contoh:\n";
+    echo "  php scripts/pack-deploy.php\n";
+    echo "  php scripts/pack-deploy.php --include-vendor\n\n";
+    exit(0);
 }
 
 // --- Cek root Laravel ---
@@ -41,38 +95,45 @@ if (! class_exists('ZipArchive')) {
 $projectName = basename(getcwd());
 $timestamp = date('Ymd_His');
 $outputDir = 'scripts/dist';
-$outputFile = "$outputDir/{$projectName}_{$timestamp}.zip";
 $source = getcwd();
+
+$zipLaravel = "$outputDir/{$projectName}_laravel_{$timestamp}.zip";
+$zipPublicHtml = "$outputDir/{$projectName}_public_html_{$timestamp}.zip";
 
 echo "\n";
 echo "\033[34m======================================\033[0m\n";
 echo "\033[34m      Laravel Deploy Packer           \033[0m\n";
 echo "\033[34m======================================\033[0m\n\n";
 
+info('Output: dua ZIP terpisah (laravel + public_html)');
+info('Vendor: '.($includeVendor ? 'disertakan' : 'tidak disertakan'));
+echo "\n";
+
 // --- Cek npm build ---
-if (! is_dir('public/build')) {
-    warn('Folder public/build tidak ditemukan.');
-    if (ask("  Jalankan 'npm run build' sekarang? (y/n)") === 'y') {
-        info('Menjalankan npm run build...');
-        passthru('npm run build', $code);
-        if ($code !== 0) {
-            err('npm run build gagal.');
+if (! $skipBuild) {
+    if (! is_dir('public/build')) {
+        err('Folder public/build tidak ditemukan. Jalankan: npm run build');
+        err('Atau gunakan --skip-build untuk melewati pengecekan ini.');
+        exit(1);
+    }
+
+    if (! file_exists('public/build/manifest.json') || filesize('public/build/manifest.json') === 0) {
+        warn('public/build/manifest.json tidak ditemukan atau kosong.');
+        if (! $force) {
+            err('Gunakan --force untuk tetap lanjut.');
             exit(1);
         }
+        warn('--force aktif, melanjutkan...');
+    } else {
+        ok('public/build/manifest.json ditemukan.');
     }
 }
 
 // --- Cek vendor ---
-if (! is_dir('vendor')) {
-    warn('Folder vendor tidak ditemukan.');
-    if (ask("  Jalankan 'composer install' sekarang? (y/n)") === 'y') {
-        info('Menjalankan composer install --no-dev...');
-        passthru('composer install --no-dev --optimize-autoloader', $code);
-        if ($code !== 0) {
-            err('composer install gagal.');
-            exit(1);
-        }
-    }
+if ($includeVendor && ! is_dir('vendor')) {
+    err('--include-vendor aktif tapi folder vendor/ tidak ditemukan.');
+    err('Jalankan dulu: composer install --no-dev --optimize-autoloader');
+    exit(1);
 }
 
 // --- Buat folder output ---
@@ -80,11 +141,14 @@ if (! is_dir($outputDir)) {
     mkdir($outputDir, 0755, true);
 }
 
-// --- Daftar exclude ---
+// ============================================================
+// ZIP 1: laravel/ — semua kode Laravel termasuk public/build
+// ============================================================
+info("Membuat ZIP laravel: $zipLaravel");
+
 $excludeDirs = [
     '.git',
     'node_modules',
-    'vendor',
     '.agents',
     '.codex',
     '.kiro',
@@ -95,16 +159,27 @@ $excludeDirs = [
     'storage/framework/views',
     'storage/debugbar',
     'tests',
-    'scripts/dist',
     '.idea',
     '.vscode',
+    'bootstrap/cache',
+    // public/index.php dan .htaccess masuk zip public_html, bukan di sini
+    // tapi public/build tetap masuk zip laravel
 ];
+
+if (! $includeVendor) {
+    $excludeDirs[] = 'vendor';
+}
+
+// Semua isi public/ kecuali build/ → masuk zip public_html, exclude dari zip laravel
+// build/ tetap di laravel/public/build/
+$publicDir = 'public';
 
 $excludeFiles = [
     '.env',
     '.env.local',
     '.env.production',
     '.env.staging',
+    '.env.example',
     '.phpunit.result.cache',
     'phpunit.xml',
     'docker-compose.yml',
@@ -117,97 +192,143 @@ $excludeFiles = [
 
 $excludeExtensions = ['log', 'zip'];
 
-// --- Buka ZIP langsung ---
-info("Membuat ZIP: $outputFile");
+$laravelAdded = 0;
+$laravelSkipped = 0;
 
-$zip = new ZipArchive;
-if ($zip->open($outputFile, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
-    err("Tidak bisa membuat file ZIP: $outputFile");
-    exit(1);
-}
+$successLaravel = createZip($zipLaravel, function (ZipArchive $zip) use (
+    $source, $excludeDirs, $excludeFiles, $excludeExtensions,
+    &$laravelAdded, &$laravelSkipped
+) {
+    $iterator = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($source, RecursiveDirectoryIterator::SKIP_DOTS),
+        RecursiveIteratorIterator::LEAVES_ONLY
+    );
 
-$iterator = new RecursiveIteratorIterator(
-    new RecursiveDirectoryIterator($source, RecursiveDirectoryIterator::SKIP_DOTS),
-    RecursiveIteratorIterator::LEAVES_ONLY
-);
+    foreach ($iterator as $file) {
+        $relPath = str_replace('\\', '/', substr($file->getRealPath(), strlen($source) + 1));
 
-$addedCount = 0;
-$skippedCount = 0;
+        $skip = false;
 
-foreach ($iterator as $file) {
-    // Normalisasi ke forward slash
-    $relPath = str_replace('\\', '/', substr($file->getRealPath(), strlen($source) + 1));
+        // Exclude dirs
+        foreach ($excludeDirs as $ex) {
+            if ($relPath === $ex || str_starts_with($relPath, $ex.'/')) {
+                $skip = true;
+                break;
+            }
+        }
 
-    $skip = false;
-
-    // Cek exclude dir
-    foreach ($excludeDirs as $ex) {
-        if ($relPath === $ex || str_starts_with($relPath, $ex.'/')) {
+        // Isi public/ (kecuali public/build) masuk zip public_html, bukan zip laravel
+        // public/build tetap masuk zip laravel
+        if (! $skip && str_starts_with($relPath, 'public/') && ! str_starts_with($relPath, 'public/build')) {
             $skip = true;
-            break;
+        }
+
+        // Exclude files & ekstensi
+        if (! $skip && $file->isFile()) {
+            if (in_array(basename($relPath), $excludeFiles)) {
+                $skip = true;
+            } elseif (in_array($file->getExtension(), $excludeExtensions)) {
+                $skip = true;
+            }
+        }
+
+        if ($skip) {
+            $laravelSkipped++;
+
+            continue;
+        }
+
+        if ($file->isFile()) {
+            $zip->addFile($file->getRealPath(), $relPath);
+            $laravelAdded++;
         }
     }
 
-    // Cek exclude file & ekstensi
-    if (! $skip && $file->isFile()) {
-        if (in_array(basename($relPath), $excludeFiles)) {
-            $skip = true;
-        } elseif (in_array($file->getExtension(), $excludeExtensions)) {
-            $skip = true;
+    // Folder kosong yang dibutuhkan Laravel
+    foreach ([
+        'storage/framework/cache/data',
+        'storage/framework/sessions',
+        'storage/framework/views',
+        'storage/logs',
+        'bootstrap/cache',
+    ] as $dir) {
+        if ($zip->locateName($dir.'/') === false) {
+            $zip->addEmptyDir($dir);
         }
     }
+});
 
-    if ($skip) {
-        $skippedCount++;
-
-        continue;
-    }
-
-    if ($file->isFile()) {
-        $zip->addFile($file->getRealPath(), $relPath);
-        $addedCount++;
-    }
-}
-
-// --- Tambah folder storage yang kosong via addEmptyDir ---
-$emptyDirs = [
-    'storage/framework/cache/data',
-    'storage/framework/sessions',
-    'storage/framework/views',
-    'storage/logs',
-    'bootstrap/cache',
-];
-
-foreach ($emptyDirs as $dir) {
-    if ($zip->locateName($dir.'/') === false) {
-        $zip->addEmptyDir($dir);
-    }
-}
-
-$zip->close();
-
-// --- Hasil ---
-if (file_exists($outputFile)) {
-    $sizeMB = round(filesize($outputFile) / 1024 / 1024, 2);
-
-    echo "\n";
-    echo "\033[32m======================================\033[0m\n";
-    echo "\033[32m  [OK] ZIP berhasil dibuat!           \033[0m\n";
-    echo "\033[32m======================================\033[0m\n\n";
-    echo "  File    : \033[32m".realpath($outputFile)."\033[0m\n";
-    echo "  Ukuran  : \033[32m{$sizeMB} MB\033[0m\n";
-    echo "  Ditambah: \033[32m{$addedCount} file\033[0m\n";
-    echo "  Di-skip : \033[33m{$skippedCount} file\033[0m\n\n";
-    echo "\033[33m[NEXT STEPS]\033[0m\n";
-    echo "  1. Upload ZIP ke cPanel File Manager\n";
-    echo "  2. Extract ke folder laravel/ (bukan public_html)\n";
-    echo "  3. Buat .env dari .env.example di server (hanya pertama kali)\n";
-    echo "  4. Terminal cPanel: composer install --no-dev\n";
-    echo "  5. Terminal cPanel: php artisan migrate --force\n";
-    echo "  6. Terminal cPanel: php artisan config:cache\n\n";
-    echo "\033[36m[PERTAMA KALI DEPLOY]\033[0m\n";
-    echo "  Tambahkan: php artisan key:generate (hanya jika .env baru)\n\n";
+if ($successLaravel) {
+    ok("ZIP laravel selesai — $laravelAdded file ditambah, $laravelSkipped di-skip.");
 } else {
-    err('Gagal membuat ZIP.');
+    err('Gagal membuat ZIP laravel.');
     exit(1);
 }
+
+// ============================================================
+// ZIP 2: public_html/ — hanya index.php dan .htaccess
+// ============================================================
+info("Membuat ZIP public_html: $zipPublicHtml");
+
+$publicHtmlAdded = 0;
+
+$successPublicHtml = createZip($zipPublicHtml, function (ZipArchive $zip) use (
+    $source, &$publicHtmlAdded
+) {
+    // Semua isi public/ kecuali public/build/
+    $publicPath = $source.'/public';
+    $iterator = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($publicPath, RecursiveDirectoryIterator::SKIP_DOTS),
+        RecursiveIteratorIterator::LEAVES_ONLY
+    );
+
+    foreach ($iterator as $file) {
+        $relPath = str_replace('\\', '/', substr($file->getRealPath(), strlen($publicPath) + 1));
+
+        // Skip folder build/ — tetap di laravel/public/build
+        if ($relPath === 'build' || str_starts_with($relPath, 'build/')) {
+            continue;
+        }
+
+        if ($file->isFile()) {
+            // Simpan langsung ke root (tanpa prefix public/)
+            // misal: public/index.php → index.php
+            //        public/favicon.ico → favicon.ico
+            $zip->addFile($file->getRealPath(), $relPath);
+            $publicHtmlAdded++;
+        }
+    }
+});
+
+if ($successPublicHtml) {
+    ok("ZIP public_html selesai — $publicHtmlAdded file ditambah.");
+} else {
+    err('Gagal membuat ZIP public_html.');
+    exit(1);
+}
+
+// ============================================================
+// Hasil akhir
+// ============================================================
+echo "\n";
+echo "\033[32m======================================\033[0m\n";
+echo "\033[32m  [OK] Semua ZIP berhasil dibuat!     \033[0m\n";
+echo "\033[32m======================================\033[0m\n\n";
+
+printZipResult('laravel', $zipLaravel, $timestamp);
+printZipResult('public_html', $zipPublicHtml, $timestamp);
+
+echo "\033[33m[NEXT STEPS]\033[0m\n";
+echo "  1. Upload {$projectName}_laravel_{$timestamp}.zip  → extract ke laravel/\n";
+echo "  2. Upload {$projectName}_public_html_{$timestamp}.zip → extract ke public_html/\n";
+echo "  3. Edit public_html/index.php — sesuaikan path ke laravel/\n";
+echo "  4. Buat .env di laravel/ (hanya pertama kali)\n";
+
+if (! $includeVendor) {
+    echo "  5. Terminal cPanel: cd laravel && rm -rf vendor && composer install --no-dev --optimize-autoloader\n";
+} else {
+    echo "  5. vendor/ sudah di-include, skip composer install\n";
+}
+
+echo "  6. Terminal cPanel: cd laravel && php artisan migrate --force\n";
+echo "  7. Terminal cPanel: cd laravel && php artisan optimize\n\n";

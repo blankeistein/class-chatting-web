@@ -73,6 +73,10 @@
         "pack": [
             "@putenv COMPOSER_PACK_TS=true",
             "@php scripts/pack-deploy.php"
+        ],
+        "pack:vendor": [
+            "@putenv COMPOSER_PACK_TS=true",
+            "@php scripts/pack-deploy.php --include-vendor"
         ]
     },
     "scripts-descriptions": {

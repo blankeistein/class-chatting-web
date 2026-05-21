@@ -37,7 +37,12 @@ return [
 
     'firebase' => [
         'webhook_secret' => env('FIREBASE_WEBHOOK_SECRET'),
+        'project_id' => env('FIREBASE_PROJECT_ID'),
         'storage_bucket' => env('FIREBASE_STORAGE_BUCKET'),
+    ],
+
+    'nocaptcha' => [
+        'sitekey' => env('NOCAPTCHA_SITEKEY'),
     ],
 
     'private_api' => [

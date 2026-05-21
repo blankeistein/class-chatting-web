@@ -343,7 +343,7 @@ class VideoController extends Controller
 
     private function buildFirebaseUrl(string $path): string
     {
-        $bucketName = env('FIREBASE_STORAGE_BUCKET');
+        $bucketName = config('services.firebase.storage_bucket');
 
         return "https://firebasestorage.googleapis.com/v0/b/{$bucketName}/o/".urlencode($path).'?alt=media';
     }
@@ -354,7 +354,7 @@ class VideoController extends Controller
             return null;
         }
 
-        $prefix = 'https://firebasestorage.googleapis.com/v0/b/'.env('FIREBASE_STORAGE_BUCKET').'/o/';
+        $prefix = 'https://firebasestorage.googleapis.com/v0/b/'.config('services.firebase.storage_bucket').'/o/';
 
         if (! str_contains($url, $prefix)) {
             return null;

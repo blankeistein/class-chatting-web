@@ -240,6 +240,12 @@ $successLaravel = createZip($zipLaravel, function (ZipArchive $zip) use (
 
         if ($file->isFile()) {
             $zip->addFile($file->getRealPath(), $relPath);
+
+            // Set chmod 600 untuk file di storage/app/private
+            if (str_starts_with($relPath, 'storage/app/private/')) {
+                $zip->setExternalAttributesName($relPath, ZipArchive::OPSYS_UNIX, 0100600 << 16);
+            }
+
             $laravelAdded++;
         }
     }
@@ -325,5 +331,6 @@ if (! $includeVendor) {
     echo "  5. vendor/ sudah di-include, skip composer install\n";
 }
 
-echo "  6. Terminal cPanel: cd laravel && php artisan migrate --force\n";
-echo "  7. Terminal cPanel: cd laravel && php artisan optimize\n\n";
+echo "  6. Terminal cPanel: cd laravel && chmod 600 storage/app/private/*\n";
+echo "  7. Terminal cPanel: cd laravel && php artisan migrate --force\n";
+echo "  8. Terminal cPanel: cd laravel && php artisan optimize\n\n";

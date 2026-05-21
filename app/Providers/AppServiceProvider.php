@@ -39,7 +39,7 @@ class AppServiceProvider extends ServiceProvider
                 throw new RuntimeException('Isi file kredensial Firebase tidak valid.');
             }
 
-            $projectId = Arr::get($credentials, 'project_id', env('FIREBASE_PROJECT_ID'));
+            $projectId = Arr::get($credentials, 'project_id', config('services.firebase.project_id'));
 
             if (! is_string($projectId) || $projectId === '') {
                 throw new RuntimeException('Project ID Firebase tidak valid.');

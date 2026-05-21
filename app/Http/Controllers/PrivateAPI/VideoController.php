@@ -192,7 +192,7 @@ class VideoController extends Controller
 
         if ($request->video) {
             $encoded_path = str_replace('/', '%2F', $request->video);
-            $data['video_url'] = 'https://firebasestorage.googleapis.com/v0/b/'.env('FIREBASE_STORAGE_BUCKET').'/o/'.$encoded_path.'?alt=media';
+            $data['video_url'] = 'https://firebasestorage.googleapis.com/v0/b/'.config('services.firebase.storage_bucket').'/o/'.$encoded_path.'?alt=media';
         }
 
         unset($data['video']);

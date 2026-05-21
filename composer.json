@@ -71,10 +71,12 @@
             "@php artisan test"
         ],
         "pack": [
+            "npm run build",
             "@putenv COMPOSER_PACK_TS=true",
             "@php scripts/pack-deploy.php"
         ],
         "pack:vendor": [
+            "npm run build",
             "@putenv COMPOSER_PACK_TS=true",
             "@php scripts/pack-deploy.php --include-vendor"
         ]

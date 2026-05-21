@@ -13,7 +13,7 @@ import {
   Tooltip,
   Typography,
 } from "@material-tailwind/react";
-import { ArchiveIcon, BellIcon, BookIcon, Building2Icon, ChevronDownIcon, GithubIcon, Grid3X3, Grip, LayoutDashboardIcon, LayoutGrid, LogOutIcon, MailIcon, MapPinnedIcon, MenuIcon, MoonIcon, PiIcon, PinIcon, ScrollTextIcon, Settings2Icon, SunIcon, TicketIcon, Trash2Icon, UserCircle2Icon, UserRoundCog, VideoIcon, XIcon } from "lucide-react";
+import { ArchiveIcon, BellIcon, BookIcon, Building2Icon, ChevronDownIcon, GithubIcon, Grid3X3, Grip, LayoutDashboardIcon, LayoutGrid, LogOutIcon, MailIcon, MapPinnedIcon, MenuIcon, MoonIcon, PiIcon, PinIcon, ScrollTextIcon, Settings2Icon, SettingsIcon, SunIcon, TicketIcon, Trash2Icon, UserCircle2Icon, UserRoundCog, VideoIcon, XIcon } from "lucide-react";
 import { useTheme } from "../Contexts/ThemeContext";
 import { Link, router, usePage } from "@inertiajs/react";
 import { route } from "ziggy-js";
@@ -99,9 +99,21 @@ const Links: LinkType[] = [
   },
   {
     icon: UserCircle2Icon,
-    title: "User",
+    title: "Pengguna",
     routeName: "admin.users.index",
   },
+  {
+    icon: SettingsIcon,
+    title: "Pengaturan",
+    children: [
+      {
+        title: "Email",
+        icon: MapPinnedIcon,
+        routeName: "admin.email-config.index",
+      },
+    ],
+  },
+
 ];
 
 type AppLinkType = {

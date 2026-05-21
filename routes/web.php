@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\Apps\ClassChattingForKids\BookController as Class
 use App\Http\Controllers\Admin\Apps\ClassChattingLayarLebar\BookController as ClassChattingLayarLebarBookController;
 use App\Http\Controllers\Admin\BookController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\EmailConfigController;
 use App\Http\Controllers\Admin\RegionController as AdminRegionController;
 use App\Http\Controllers\Admin\SchoolController as AdminSchoolController;
 use App\Http\Controllers\Admin\UserController;
@@ -80,6 +81,10 @@ Route::middleware('auth')->group(function () {
         Route::delete('users/bulk-delete', [UserController::class, 'bulkDelete'])->name('users.bulk-delete');
         Route::get('users/{user}/books', [UserController::class, 'books'])->name('users.books');
         Route::resource('users', UserController::class);
+
+        Route::get('email-config', [EmailConfigController::class, 'index'])->name('email-config.index');
+        Route::post('email-config/check-connection', [EmailConfigController::class, 'checkConnection'])->name('email-config.check-connection');
+        Route::post('email-config/send-test', [EmailConfigController::class, 'sendTestEmail'])->name('email-config.send-test');
 
         Route::get('apps', function () {
             return redirect()->route('admin.apps.class-chatting');

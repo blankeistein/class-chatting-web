@@ -11,6 +11,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -156,7 +157,8 @@ class VideoController extends Controller
     {
         $request->validate([
             'provider' => 'required|string|in:file,youtube',
-            'video' => 'required_if:provider,file|nullable|file|mimetypes:video/mp4,video/quicktime,video/x-msvideo|max:102400',
+            'storage_path' => 'required_if:provider,file|nullable|string|max:1024',
+            'file_size' => 'nullable|integer|min:0',
             'yt_url' => [
                 'required_if:provider,youtube',
                 'nullable',
@@ -164,48 +166,37 @@ class VideoController extends Controller
                 'max:2048',
             ],
         ], [
-            'video.required_if' => 'File video wajib diunggah.',
-            'video.mimetypes' => 'Format video harus mp4, mov, atau avi.',
-            'video.max' => 'Ukuran video maksimal 100MB.',
+            'storage_path.required_if' => 'Video harus diupload terlebih dahulu.',
             'yt_url.required_if' => 'URL Youtube wajib diisi.',
         ]);
 
         if ($request->input('provider') === 'youtube') {
-            if ($video->provider === VideoProviderEnum::Firebase) {
-                $this->deleteFirebaseObject($video->storage_path);
-                $this->deleteFirebaseDirectory($this->makeHlsDirectory($video->slug));
-            }
-
             $video->update([
                 'video_url' => trim($request->input('yt_url')),
                 'storage_path' => null,
                 'provider' => VideoProviderEnum::Youtube,
+                'metadata' => null,
             ]);
 
             return redirect()->back()->with('success', 'URL Youtube berhasil disimpan.');
         }
 
-        if ($request->hasFile('video')) {
-            $videoFile = $request->file('video');
-            $storagePath = $this->makeStoragePath($videoFile, $video->slug);
+        $storagePath = $request->input('storage_path');
 
-            $this->uploadFileToFirebase($videoFile, $storagePath);
+        $video->update([
+            'video_url' => null,
+            'storage_path' => $storagePath,
+            'provider' => VideoProviderEnum::Firebase,
+            'metadata' => [
+                'file_size' => $request->input('file_size'),
+                'uploaded_by' => Auth::user()?->name,
+                'uploaded_at' => now()->toISOString(),
+            ],
+        ]);
 
-            if ($video->provider === VideoProviderEnum::Firebase) {
-                $this->deleteFirebaseObject($video->storage_path);
-                $this->deleteFirebaseDirectory($this->makeHlsDirectory($video->slug));
-            }
+        $this->dispatchHlsConversion($video, $storagePath);
 
-            $video->update([
-                'video_url' => null,
-                'storage_path' => $storagePath,
-                'provider' => VideoProviderEnum::Firebase,
-            ]);
-
-            return redirect()->back()->with('success', 'Video berhasil diupload.');
-        }
-
-        return redirect()->back()->with('error', 'Tidak ada file video yang dikirim.');
+        return redirect()->back()->with('success', 'Video berhasil disimpan.');
     }
 
     /**
@@ -214,27 +205,59 @@ class VideoController extends Controller
     public function uploadThumbnail(Request $request, Video $video): RedirectResponse
     {
         $request->validate([
-            'thumbnail' => 'required|image|max:5120',
+            'thumbnail_url' => 'required|string|url|max:2048',
         ], [
-            'thumbnail.required' => 'File thumbnail wajib diunggah.',
-            'thumbnail.image' => 'Thumbnail harus berupa gambar.',
-            'thumbnail.max' => 'Ukuran thumbnail maksimal 5MB.',
+            'thumbnail_url.required' => 'URL thumbnail wajib diisi.',
+            'thumbnail_url.url' => 'URL thumbnail tidak valid.',
         ]);
 
-        $thumbnailFile = $request->file('thumbnail');
-        $thumbnailPath = $this->makeThumbnailPath($video->slug);
-        $temporaryWebpPath = $this->convertImageToWebpTemporaryPath($thumbnailFile, 70);
-
-        $this->uploadLocalFileToFirebase($temporaryWebpPath, $thumbnailPath);
-        @unlink($temporaryWebpPath);
-
-        $this->deleteFirebaseObject($this->extractFirebasePath($video->thumbnail));
-
         $video->update([
-            'thumbnail' => $this->buildFirebaseUrl($thumbnailPath),
+            'thumbnail' => $request->input('thumbnail_url'),
         ]);
 
         return redirect()->back()->with('success', 'Thumbnail berhasil diperbarui.');
+    }
+
+    /**
+     * Dispatch HLS conversion to the external service.
+     */
+    private function dispatchHlsConversion(Video $video, string $storagePath): void
+    {
+        $hlsServiceUrl = config('services.hls.url');
+
+        if (! $hlsServiceUrl) {
+            Log::warning('HLS_SERVICE_URL is not configured. Skipping HLS conversion.');
+
+            return;
+        }
+
+        try {
+            $firebaseAuth = Firebase::auth();
+            $customToken = $firebaseAuth->createCustomToken(Auth::user()->firebase_uid);
+            $signInResult = $firebaseAuth->signInWithCustomToken($customToken->toString());
+            $idToken = $signInResult->idToken();
+
+            $bucket = config('services.firebase.storage_bucket');
+
+            $response = Http::withToken($idToken)
+                ->post("{$hlsServiceUrl}/convert", [
+                    'sourceUrl' => "gs://{$bucket}/{$storagePath}",
+                    'outputBucket' => $bucket,
+                    'slug' => $video->slug,
+                ]);
+
+            if ($response->failed()) {
+                Log::error('HLS conversion request failed', [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                    'slug' => $video->slug,
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('HLS conversion dispatch failed: '.$e->getMessage(), [
+                'slug' => $video->slug,
+            ]);
+        }
     }
 
     /**

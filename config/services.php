@@ -41,6 +41,10 @@ return [
         'storage_bucket' => env('FIREBASE_STORAGE_BUCKET'),
     ],
 
+    'hls' => [
+        'url' => env('HLS_SERVICE_URL'),
+    ],
+
     'nocaptcha' => [
         'sitekey' => env('NOCAPTCHA_SITEKEY'),
     ],

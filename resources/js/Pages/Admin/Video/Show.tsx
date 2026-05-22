@@ -1,6 +1,6 @@
 import React from "react";
-import { Head, router } from "@inertiajs/react";
-import { Button, Card, Chip, IconButton, Tabs, Typography } from "@material-tailwind/react";
+import { Head, Link, router } from "@inertiajs/react";
+import { Button, Card, Chip, IconButton, Menu, Tabs, Typography } from "@material-tailwind/react";
 import AdminLayout from "@/Layouts/AdminLayout";
 import {
   ArrowLeftIcon,
@@ -17,6 +17,7 @@ import {
   UserIcon,
   VideoIcon,
   Clock3Icon,
+  MoreVerticalIcon,
 } from "lucide-react";
 import { doc, onSnapshot } from "firebase/firestore";
 import { getFirebaseFirestore } from "@/lib/firebase";
@@ -32,6 +33,11 @@ interface Video {
   video_url: string | null;
   thumbnail: string | null;
   tags?: string[];
+  metadata?: {
+    file_size?: number | null;
+    uploaded_by?: string | null;
+    uploaded_at?: string | null;
+  } | null;
   created_at: string;
   updated_at: string;
   uploader?: {
@@ -103,6 +109,14 @@ const formatStatus = (status: string): string => {
     default:
       return status;
   }
+};
+
+const formatFileSize = (bytes: number | null | undefined): string => {
+  if (!bytes) return "-";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
 };
 
 const getStatusMeta = (status: string): {
@@ -237,50 +251,82 @@ export default function Show({ video }: { video: Video }) {
         <PageHeader
           title="Detail Video"
           description="Lihat informasi lengkap dan putar video."
+          className="!flex-row !items-center"
           actions={
             <>
-              {isFirebaseVideo && (
+              <div className="sm:block md:hidden">
+                <Menu placement="bottom-end">
+                  <Menu.Trigger as={IconButton}>
+                    <MoreVerticalIcon className="w-4 h-4" />
+                  </Menu.Trigger>
+                  <Menu.Content>
+                    {
+                      isFirebaseVideo &&
+                      <Menu.Item onClick={handleSyncHls} disabled={isSyncingHls}>
+                        <RefreshCcwIcon className={`h-4 w-4 mr-2 ${isSyncingHls ? "animate-spin" : ""}`} />
+                        {isSyncingHls ? "Memeriksa..." : "Sync HLS"}
+                      </Menu.Item>
+                    }
+                    <Menu.Item as="a" href={video.video_url || "#"} target="_blank">
+                      <ExternalLinkIcon className="h-4 w-4 mr-2" />
+                      {video.video_url ? (isYoutubeVideo ? "Buka YouTube" : "Buka File") : "Menunggu HLS"}
+
+                    </Menu.Item>
+                    <Menu.Item as={Link} href={route("admin.videos.edit", video.slug)}>
+                      <EditIcon className="w-4 h-4 mr-2" />
+                      Edit
+                    </Menu.Item>
+                    <Menu.Item className="text-error" onClick={handleDelete}>
+                      <Trash2Icon className="w-4 h-4 mr-2" />
+                      Hapus
+                    </Menu.Item>
+                  </Menu.Content>
+                </Menu>
+              </div>
+              <div className="hidden md:flex gap-2 items-center ">
+                {isFirebaseVideo && (
+                  <Button
+                    variant="ghost"
+                    color="warning"
+                    size="sm"
+                    className="flex items-center gap-2"
+                    onClick={handleSyncHls}
+                    disabled={isSyncingHls}
+                  >
+                    <RefreshCcwIcon className={`h-4 w-4 ${isSyncingHls ? "animate-spin" : ""}`} />
+                    {isSyncingHls ? "Memeriksa..." : "Sync HLS"}
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
-                  color="warning"
+                  color="secondary"
                   size="sm"
                   className="flex items-center gap-2"
-                  onClick={handleSyncHls}
-                  disabled={isSyncingHls}
+                  onClick={() => video.video_url && window.open(video.video_url, "_blank")}
+                  disabled={!video.video_url}
                 >
-                  <RefreshCcwIcon className={`h-4 w-4 ${isSyncingHls ? "animate-spin" : ""}`} />
-                  {isSyncingHls ? "Memeriksa..." : "Sync HLS"}
+                  <ExternalLinkIcon className="h-4 w-4" />
+                  {video.video_url ? (isYoutubeVideo ? "Buka YouTube" : "Buka File") : "Menunggu HLS"}
                 </Button>
-              )}
-              <Button
-                variant="ghost"
-                color="secondary"
-                size="sm"
-                className="flex items-center gap-2"
-                onClick={() => video.video_url && window.open(video.video_url, "_blank")}
-                disabled={!video.video_url}
-              >
-                <ExternalLinkIcon className="h-4 w-4" />
-                {video.video_url ? (isYoutubeVideo ? "Buka YouTube" : "Buka File") : "Menunggu HLS"}
-              </Button>
-              <Button
-                size="sm"
-                color="secondary"
-                className="flex items-center gap-2"
-                onClick={() => router.get(route("admin.videos.edit", video.slug))}
-              >
-                <EditIcon className="h-4 w-4" />
-                Edit Video
-              </Button>
-              <Button
-                size="sm"
-                color="error"
-                className="flex items-center gap-2"
-                onClick={handleDelete}
-              >
-                <Trash2Icon className="h-4 w-4" />
-                Hapus
-              </Button>
+                <Button
+                  size="sm"
+                  color="secondary"
+                  className="flex items-center gap-2"
+                  onClick={() => router.get(route("admin.videos.edit", video.slug))}
+                >
+                  <EditIcon className="h-4 w-4" />
+                  Edit Video
+                </Button>
+                <Button
+                  size="sm"
+                  color="error"
+                  className="flex items-center gap-2"
+                  onClick={handleDelete}
+                >
+                  <Trash2Icon className="h-4 w-4" />
+                  Hapus
+                </Button>
+              </div>
             </>
           }
           backAction={<IconButton
@@ -457,6 +503,36 @@ export default function Show({ video }: { video: Video }) {
             </div>
           </Tabs.Panel>
           <Tabs.Panel value="status">
+            {isFirebaseVideo && video.metadata && (
+              <Card className="mb-6 border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                <Card.Body className="p-5">
+                  <Typography variant="small" className="mb-4 font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                    Detail Upload
+                  </Typography>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                    <div className="rounded-xl bg-slate-50 p-3 dark:bg-slate-800/50">
+                      <Typography className="text-xs text-slate-500 dark:text-slate-400">Ukuran File</Typography>
+                      <Typography className="mt-1 font-medium text-slate-700 dark:text-slate-200">
+                        {formatFileSize(video.metadata.file_size)}
+                      </Typography>
+                    </div>
+                    <div className="rounded-xl bg-slate-50 p-3 dark:bg-slate-800/50">
+                      <Typography className="text-xs text-slate-500 dark:text-slate-400">Diupload Oleh</Typography>
+                      <Typography className="mt-1 font-medium text-slate-700 dark:text-slate-200">
+                        {video.metadata.uploaded_by || "-"}
+                      </Typography>
+                    </div>
+                    <div className="rounded-xl bg-slate-50 p-3 dark:bg-slate-800/50">
+                      <Typography className="text-xs text-slate-500 dark:text-slate-400">Waktu Upload</Typography>
+                      <Typography className="mt-1 font-medium text-slate-700 dark:text-slate-200">
+                        {formatDateTime(video.metadata.uploaded_at ?? null)}
+                      </Typography>
+                    </div>
+                  </div>
+                </Card.Body>
+              </Card>
+            )}
+
             {!isFirebaseVideo ? (
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400">
                 {providerStatusMessage}

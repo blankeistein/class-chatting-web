@@ -29,6 +29,8 @@ import {
 import { toast, Toaster } from "react-hot-toast";
 import { resolveYoutubeId } from "./Create";
 import { PageHeader } from "@/Components/PageHeader";
+import { getFirebaseStorage } from "@/lib/firebase";
+import { deleteObject, listAll, ref, uploadBytesResumable, UploadTask } from "firebase/storage";
 
 interface Video {
   id: number;
@@ -70,14 +72,22 @@ export default function Edit({ video }: { video: Video }) {
   const initialProvider = video.provider === "firebase" ? "file" : video.provider === "youtube" ? "youtube" : "file";
   const videoForm = useForm({
     provider: initialProvider as "file" | "youtube",
-    video: null as File | null,
+    storage_path: null as string | null,
     yt_url: video.provider === "youtube" ? (video.video_url ?? "") : "",
     _method: "patch" as const,
   });
 
+  // Firebase upload state
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadComplete, setUploadComplete] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const uploadTaskRef = useRef<UploadTask | null>(null);
+
   // Thumbnail form
   const thumbForm = useForm({
-    thumbnail: null as File | null,
+    thumbnail_url: null as string | null,
     _method: "patch" as const,
   });
 
@@ -89,30 +99,36 @@ export default function Edit({ video }: { video: Video }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Thumbnail preview
+  const [thumbFile, setThumbFile] = useState<File | null>(null);
   const [thumbPreviewUrl, setThumbPreviewUrl] = useState<string | null>(video.thumbnail);
   const [isThumbDragging, setIsThumbDragging] = useState(false);
+  const [isThumbUploading, setIsThumbUploading] = useState(false);
+  const [thumbUploadProgress, setThumbUploadProgress] = useState(0);
+  const [thumbUploadComplete, setThumbUploadComplete] = useState(false);
+  const [thumbUploadError, setThumbUploadError] = useState<string | null>(null);
   const [isCaptureModalOpen, setIsCaptureModalOpen] = useState(false);
   const thumbInputRef = useRef<HTMLInputElement>(null);
+  const thumbUploadTaskRef = useRef<UploadTask | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   React.useEffect(() => {
-    if (!videoForm.data.video) {
+    if (!videoFile) {
       setVideoPreviewUrl(null);
       return;
     }
-    const url = URL.createObjectURL(videoForm.data.video);
+    const url = URL.createObjectURL(videoFile);
     setVideoPreviewUrl(url);
     return () => URL.revokeObjectURL(url);
-  }, [videoForm.data.video]);
+  }, [videoFile]);
 
   React.useEffect(() => {
-    if (thumbForm.data.thumbnail) {
-      const url = URL.createObjectURL(thumbForm.data.thumbnail);
+    if (thumbFile) {
+      const url = URL.createObjectURL(thumbFile);
       setThumbPreviewUrl(url);
       return () => URL.revokeObjectURL(url);
     }
     setThumbPreviewUrl(video.thumbnail);
-  }, [thumbForm.data.thumbnail, video.thumbnail]);
+  }, [thumbFile, video.thumbnail]);
 
   const activeVideoUrl = videoForm.data.provider === "file"
     ? videoPreviewUrl || (video.provider === "firebase" ? video.video_url : null)
@@ -121,6 +137,7 @@ export default function Edit({ video }: { video: Video }) {
     ? resolveYoutubeId(videoForm.data.yt_url || video.video_url || "")
     : null;
   const canCaptureFrame = videoForm.data.provider === "file" && Boolean(activeVideoUrl);
+  const hasExistingVideo = Boolean(video.storage_path || video.video_url);
 
   // --- Info handlers ---
   const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -153,17 +170,152 @@ export default function Edit({ video }: { video: Video }) {
     e.preventDefault();
     setIsVideoDragging(false);
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      videoForm.setData("video", e.dataTransfer.files[0]);
+      handleVideoFileSelected(e.dataTransfer.files[0]);
     }
   };
 
-  const handleVideoSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    videoForm.post(route("admin.videos.upload-video", video.slug), {
-      forceFormData: true,
-      onSuccess: () => toast.success("Video berhasil diupload."),
-      onError: () => toast.error("Gagal mengupload video."),
+  const generateStoragePath = (file: File): string => {
+    const extension = file.name.split(".").pop() || "mp4";
+    const originalName = file.name.replace(/\.[^/.]+$/, "").replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+    // const uniqueId = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    return `videos/${video.slug}/${originalName}.${extension}`;
+  };
+
+  const handleVideoFileSelected = (file: File | null) => {
+    // Cancel ongoing upload
+    if (uploadTaskRef.current) {
+      uploadTaskRef.current.cancel();
+      uploadTaskRef.current = null;
+    }
+    setIsUploading(false);
+    setUploadProgress(0);
+    setUploadComplete(false);
+    setUploadError(null);
+    videoForm.setData("storage_path", null);
+    setVideoFile(file);
+  };
+
+  const deleteFirebaseFile = async (path: string | null): Promise<void> => {
+    if (!path) return;
+    const storage = getFirebaseStorage();
+    if (!storage) return;
+    try {
+      const fileRef = ref(storage, path);
+      await deleteObject(fileRef);
+    } catch {
+      // File might not exist, ignore
+    }
+  };
+
+  const deleteFirebaseDirectory = async (prefix: string): Promise<void> => {
+    const storage = getFirebaseStorage();
+    if (!storage) return;
+    try {
+      const dirRef = ref(storage, prefix);
+      const result = await listAll(dirRef);
+      await Promise.all(result.items.map((item) => deleteObject(item)));
+      // Recursively delete subdirectories
+      await Promise.all(result.prefixes.map((subDir) => deleteFirebaseDirectory(subDir.fullPath)));
+    } catch {
+      // Directory might not exist, ignore
+    }
+  };
+
+  const startFirebaseUpload = async (): Promise<string> => {
+    if (!videoFile) {
+      toast.error("Pilih file video terlebih dahulu.");
+      return Promise.reject();
+    }
+
+    const storage = getFirebaseStorage();
+    if (!storage) {
+      toast.error("Firebase Storage belum dikonfigurasi.");
+      setUploadError("Firebase Storage belum dikonfigurasi. Pastikan environment variable VITE_FIREBASE_* sudah diisi.");
+      return Promise.reject();
+    }
+
+    setIsUploading(true);
+    setUploadProgress(0);
+    setUploadComplete(false);
+    setUploadError(null);
+
+    // Delete old video file and HLS directory from Firebase if exists
+    if (video.storage_path) {
+      await deleteFirebaseFile(video.storage_path);
+    }
+    await deleteFirebaseDirectory(`hls/${video.slug}`);
+
+    const storagePath = generateStoragePath(videoFile);
+    const storageRef = ref(storage, storagePath);
+    const uploadTask = uploadBytesResumable(storageRef, videoFile);
+    uploadTaskRef.current = uploadTask;
+
+    return new Promise((resolve, reject) => {
+      uploadTask.on(
+        "state_changed",
+        (snapshot) => {
+          const percent = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+          setUploadProgress(percent);
+        },
+        (error) => {
+          setIsUploading(false);
+          setUploadError(error.message);
+          toast.error("Upload gagal: " + error.message);
+          uploadTaskRef.current = null;
+          reject(error);
+        },
+        () => {
+          setIsUploading(false);
+          setUploadComplete(true);
+          toast.success("Video berhasil diupload ke Firebase.");
+          uploadTaskRef.current = null;
+          resolve(storagePath);
+        },
+      );
     });
+  };
+
+  const cancelFirebaseUpload = () => {
+    if (uploadTaskRef.current) {
+      uploadTaskRef.current.cancel();
+      uploadTaskRef.current = null;
+    }
+    setIsUploading(false);
+    setUploadProgress(0);
+    setUploadComplete(false);
+    setUploadError(null);
+    videoForm.setData("storage_path", null);
+  };
+
+  const handleVideoSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (videoForm.data.provider === "youtube") {
+      videoForm.post(route("admin.videos.upload-video", video.slug), {
+        onSuccess: () => toast.success("URL Youtube berhasil disimpan."),
+        onError: () => toast.error("Gagal menyimpan URL Youtube."),
+      });
+      return;
+    }
+
+    try {
+      const storagePath = await startFirebaseUpload();
+
+      router.patch(route("admin.videos.upload-video", video.slug), {
+        provider: "file",
+        storage_path: storagePath,
+        file_size: videoFile?.size || 0,
+      }, {
+        onSuccess: () => {
+          toast.success("Video berhasil disimpan.");
+          setVideoFile(null);
+          setUploadComplete(false);
+        },
+        onError: () => toast.error("Gagal menyimpan data video."),
+      });
+    } catch {
+      // Error already handled in startFirebaseUpload
+    }
   };
 
   // --- Thumbnail handlers ---
@@ -173,12 +325,107 @@ export default function Edit({ video }: { video: Video }) {
     e.preventDefault();
     setIsThumbDragging(false);
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      thumbForm.setData("thumbnail", e.dataTransfer.files[0]);
+      setThumbFile(e.dataTransfer.files[0]);
+      setThumbUploadComplete(false);
+      setThumbUploadError(null);
+      thumbForm.setData("thumbnail_url", null);
     }
   };
 
+  const extractFirebasePath = (url: string | null): string | null => {
+    if (!url) return null;
+    const match = url.match(/\/o\/(.+?)(\?|$)/);
+    if (!match) return null;
+    return decodeURIComponent(match[1]);
+  };
+
+  const generateThumbnailPath = (): string => {
+    // const uniqueId = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    return `videos/${video.slug}/thumbnail.webp`;
+  };
+
+  const startThumbUpload = async (): Promise<string> => {
+    if (!thumbFile) {
+      toast.error("Pilih file thumbnail terlebih dahulu.");
+      return Promise.reject();
+    }
+
+    const storage = getFirebaseStorage();
+    if (!storage) {
+      toast.error("Firebase Storage belum dikonfigurasi.");
+      setThumbUploadError("Firebase Storage belum dikonfigurasi.");
+      return Promise.reject();
+    }
+
+    setIsThumbUploading(true);
+    setThumbUploadProgress(0);
+    setThumbUploadComplete(false);
+    setThumbUploadError(null);
+
+    // Delete old thumbnail from Firebase if exists
+    const oldPath = extractFirebasePath(video.thumbnail);
+    if (oldPath) {
+      await deleteFirebaseFile(oldPath);
+    }
+
+    // Convert to WebP via canvas before upload
+    const webpBlob = await convertToWebp(thumbFile);
+    const thumbPath = generateThumbnailPath();
+    const storageRef = ref(storage, thumbPath);
+    const uploadTask = uploadBytesResumable(storageRef, webpBlob);
+    thumbUploadTaskRef.current = uploadTask;
+
+    return new Promise((res, rej) => {
+      uploadTask.on(
+        "state_changed",
+        (snapshot) => {
+          const percent = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+          setThumbUploadProgress(percent);
+        },
+        (error) => {
+          setIsThumbUploading(false);
+          setThumbUploadError(error.message);
+          toast.error("Upload thumbnail gagal: " + error.message);
+          thumbUploadTaskRef.current = null;
+          rej()
+        },
+        () => {
+          setIsThumbUploading(false);
+          setThumbUploadComplete(true);
+          const bucketName = import.meta.env.VITE_FIREBASE_STORAGE_BUCKET;
+          const thumbnailUrl = `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encodeURIComponent(thumbPath)}?alt=media`;
+          res(thumbnailUrl)
+          toast.success("Thumbnail berhasil diupload ke Firebase.");
+          thumbUploadTaskRef.current = null;
+        },
+      );
+    })
+
+  };
+
+  const convertToWebp = (file: File): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) { reject(new Error("Canvas context not available")); return; }
+        ctx.drawImage(img, 0, 0);
+        canvas.toBlob(
+          (blob) => { if (blob) resolve(blob); else reject(new Error("Failed to convert to WebP")); },
+          "image/webp",
+          0.7,
+        );
+      };
+      img.onerror = () => reject(new Error("Failed to load image"));
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
   const captureThumbnail = () => {
-    if (!videoRef.current || !canCaptureFrame) return;
+    if (!videoRef.current) return;
     const previewVideo = videoRef.current;
     const canvas = document.createElement("canvas");
     canvas.width = previewVideo.videoWidth;
@@ -190,7 +437,10 @@ export default function Edit({ video }: { video: Video }) {
       (blob) => {
         if (!blob) { toast.error("Browser gagal membuat thumbnail WebP."); return; }
         const file = new File([blob], "captured-thumbnail.webp", { type: "image/webp" });
-        thumbForm.setData("thumbnail", file);
+        setThumbFile(file);
+        setThumbUploadComplete(false);
+        setThumbUploadError(null);
+        thumbForm.setData("thumbnail_url", null);
         toast.success("Thumbnail berhasil diambil dari video.");
         setIsCaptureModalOpen(false);
       },
@@ -199,13 +449,29 @@ export default function Edit({ video }: { video: Video }) {
     );
   };
 
-  const handleThumbSubmit = (e: React.FormEvent) => {
+  const handleThumbSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    thumbForm.post(route("admin.videos.upload-thumbnail", video.slug), {
-      forceFormData: true,
-      onSuccess: () => toast.success("Thumbnail berhasil diperbarui."),
-      onError: () => toast.error("Gagal mengupload thumbnail."),
-    });
+    try {
+      const thumbnailUrl = await startThumbUpload();
+
+      if (!thumbnailUrl) {
+        toast.error("Upload thumbnail gagal.");
+        return;
+      }
+
+      router.patch(route("admin.videos.upload-thumbnail", video.slug), {
+        thumbnail_url: thumbnailUrl,
+      }, {
+        onSuccess: () => {
+          toast.success("Thumbnail berhasil disimpan.");
+          setThumbFile(null);
+          setThumbUploadComplete(false);
+        },
+        onError: () => toast.error("Gagal menyimpan thumbnail."),
+      });
+    } catch {
+      // Error already handled in startThumbUpload
+    }
   };
 
   const handleDelete = () => {
@@ -227,7 +493,6 @@ export default function Edit({ video }: { video: Video }) {
           actions={
             <>
               <Button
-                variant="outline"
                 color="error"
                 onClick={() => setIsDeleteModalOpen(true)}
                 className="flex items-center gap-2"
@@ -372,73 +637,93 @@ export default function Edit({ video }: { video: Video }) {
                           )}
                         </div>
                       ) : (
-                        <div
-                          className={`rounded-2xl border-2 border-dashed p-5 transition-all duration-300 ${isVideoDragging
-                            ? "border-primary bg-primary/10 dark:bg-primary/20"
-                            : "border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/40"
-                            }`}
-                          onDragOver={handleVideoDragOver}
-                          onDragLeave={handleVideoDragLeave}
-                          onDrop={handleVideoDrop}
-                        >
-                          <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept="video/mp4,video/quicktime,video/x-msvideo"
-                            className="hidden"
-                            onChange={(e) => videoForm.setData("video", e.target.files?.[0] || null)}
-                          />
-                          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                            <div className="flex items-start gap-4">
-                              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                                <VideoIcon className="h-6 w-6" />
+                        <>
+                          <div
+                            className={`rounded-2xl border-2 border-dashed p-5 transition-all duration-300 ${isVideoDragging
+                              ? "border-primary bg-primary/10 dark:bg-primary/20"
+                              : "border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/40"
+                              }`}
+                            onDragOver={handleVideoDragOver}
+                            onDragLeave={handleVideoDragLeave}
+                            onDrop={handleVideoDrop}
+                          >
+                            <input
+                              ref={fileInputRef}
+                              type="file"
+                              accept="video/mp4,video/quicktime,video/x-msvideo"
+                              className="hidden"
+                              onChange={(e) => handleVideoFileSelected(e.target.files?.[0] || null)}
+                            />
+                            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                              <div className="flex items-start gap-4">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                                  <VideoIcon className="h-6 w-6" />
+                                </div>
+                                <div className="min-w-0">
+                                  <Typography className="font-semibold text-slate-800 dark:text-white">
+                                    {videoFile?.name || "Belum ada video dipilih"}
+                                  </Typography>
+                                  <Typography className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                                    {videoFile
+                                      ? `${(videoFile.size / (1024 * 1024)).toFixed(2)} MB`
+                                      : video.storage_path ? "Video saat ini tersimpan di Firebase." : "Pilih file video baru."}
+                                  </Typography>
+                                </div>
                               </div>
-                              <div className="min-w-0">
-                                <Typography className="font-semibold text-slate-800 dark:text-white">
-                                  {videoForm.data.video?.name || "Belum ada video dipilih"}
-                                </Typography>
-                                <Typography className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                                  {videoForm.data.video
-                                    ? `${(videoForm.data.video.size / (1024 * 1024)).toFixed(2)} MB — siap diupload`
-                                    : video.storage_path ? "Video saat ini tersimpan di Firebase." : "Pilih file video baru."}
-                                </Typography>
-                              </div>
+                              <Button type="button" variant="outline" color="secondary" className="flex items-center gap-2" onClick={() => fileInputRef.current?.click()}>
+                                <UploadCloudIcon className="h-4 w-4" />
+                                Pilih Video
+                              </Button>
                             </div>
-                            <Button type="button" variant="outline" color="secondary" className="flex items-center gap-2" onClick={() => fileInputRef.current?.click()}>
-                              <UploadCloudIcon className="h-4 w-4" />
-                              Pilih Video
-                            </Button>
+                            <Typography className="mt-4 text-xs text-slate-500 dark:text-slate-400">
+                              Drag & drop atau pilih manual. Format: MP4, MOV, AVI.
+                            </Typography>
                           </div>
-                          <Typography className="mt-4 text-xs text-slate-500 dark:text-slate-400">
-                            Drag & drop atau pilih manual. Format: MP4, MOV, AVI. Maks 100MB.
-                          </Typography>
-                        </div>
+
+                          {videoFile && !isUploading && !uploadComplete && (
+                            <Button type="submit" color="primary" className="flex w-full items-center justify-center gap-2">
+                              <UploadCloudIcon className="h-4 w-4" />
+                              Upload & Simpan
+                            </Button>
+                          )}
+
+                          {isUploading && (
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between gap-3">
+                                <Typography className="font-medium text-slate-800 dark:text-white">Mengupload ke Firebase...</Typography>
+                                <Typography className="text-sm text-slate-500 dark:text-slate-400">{uploadProgress}%</Typography>
+                              </div>
+                              <Progress value={uploadProgress} color="primary">
+                                <Progress.Bar />
+                              </Progress>
+                              <Button type="button" variant="outline" color="error" className="flex items-center gap-2" onClick={cancelFirebaseUpload}>
+                                Batalkan Upload
+                              </Button>
+                            </div>
+                          )}
+
+                          {uploadError && (
+                            <div className="rounded-2xl border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
+                              <Typography className="text-sm text-red-700 dark:text-red-300">{uploadError}</Typography>
+                            </div>
+                          )}
+                        </>
                       )}
 
-                      {videoForm.errors.video && (
-                        <Typography type="small" color="error" className="mt-1 block">{videoForm.errors.video}</Typography>
+                      {videoForm.errors.storage_path && (
+                        <Typography type="small" color="error" className="mt-1 block">{videoForm.errors.storage_path}</Typography>
                       )}
                     </CardBody>
                   </Card>
 
-                  {videoForm.progress && (
-                    <Card className="border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                      <CardBody className="space-y-3 p-5">
-                        <div className="flex items-center justify-between gap-3">
-                          <Typography className="font-medium text-slate-800 dark:text-white">Mengupload video...</Typography>
-                          <Typography className="text-sm text-slate-500 dark:text-slate-400">{videoForm.progress.percentage}%</Typography>
-                        </div>
-                        <Progress value={videoForm.progress.percentage} color="primary" />
-                      </CardBody>
-                    </Card>
+                  {videoForm.data.provider === "youtube" && (
+                    <div className="flex justify-end">
+                      <Button type="submit" color="primary" disabled={videoForm.processing} className="flex items-center gap-2">
+                        <SaveIcon className="h-4 w-4" />
+                        {videoForm.processing ? "Menyimpan..." : "Simpan"}
+                      </Button>
+                    </div>
                   )}
-
-                  <div className="flex justify-end">
-                    <Button type="submit" color="primary" disabled={videoForm.processing} className="flex items-center gap-2">
-                      <UploadCloudIcon className="h-4 w-4" />
-                      {videoForm.processing ? "Mengupload..." : "Upload Video"}
-                    </Button>
-                  </div>
                 </form>
               </Tabs.Panel>
 
@@ -456,7 +741,7 @@ export default function Edit({ video }: { video: Video }) {
                             Upload gambar baru atau ambil frame dari video.
                           </Typography>
                         </div>
-                        {canCaptureFrame && (
+                        {(canCaptureFrame || hasExistingVideo) && (
                           <Button size="sm" color="info" variant="outline" className="flex items-center gap-2" onClick={() => setIsCaptureModalOpen(true)} type="button">
                             <CameraIcon className="h-4 w-4" />
                             Ambil Frame
@@ -479,7 +764,13 @@ export default function Edit({ video }: { video: Video }) {
                           type="file"
                           accept="image/jpeg,image/png,image/jpg,image/webp"
                           className="hidden"
-                          onChange={(e) => thumbForm.setData("thumbnail", e.target.files?.[0] || null)}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0] || null;
+                            setThumbFile(file);
+                            setThumbUploadComplete(false);
+                            setThumbUploadError(null);
+                            thumbForm.setData("thumbnail_url", null);
+                          }}
                         />
                         {thumbPreviewUrl ? (
                           <div className="relative p-3">
@@ -499,30 +790,35 @@ export default function Edit({ video }: { video: Video }) {
                         )}
                       </div>
 
-                      {thumbForm.errors.thumbnail && (
-                        <Typography type="small" color="error" className="mt-1 block">{thumbForm.errors.thumbnail}</Typography>
+                      {thumbForm.errors.thumbnail_url && (
+                        <Typography type="small" color="error" className="mt-1 block">{thumbForm.errors.thumbnail_url}</Typography>
                       )}
+                      {isThumbUploading && (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between gap-3">
+                            <Typography className="font-medium text-slate-800 dark:text-white">Mengupload thumbnail...</Typography>
+                            <Typography className="text-sm text-slate-500 dark:text-slate-400">{thumbUploadProgress}%</Typography>
+                          </div>
+                          <Progress value={thumbUploadProgress} color="primary">
+                            <Progress.Bar />
+                          </Progress>
+                        </div>
+                      )}
+
+                      {thumbUploadError && (
+                        <div className="rounded-2xl border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
+                          <Typography className="text-sm text-red-700 dark:text-red-300">{thumbUploadError}</Typography>
+                        </div>
+                      )}
+
+                      <div className="flex w-full">
+                        <Button type="submit" color="primary" disabled={!thumbFile || isThumbUploading} className="flex items-center gap-2 w-full">
+                          <SaveIcon className="h-4 w-4" />
+                          {isThumbUploading ? "Mengupload..." : "Simpan Thumbnail"}
+                        </Button>
+                      </div>
                     </CardBody>
                   </Card>
-
-                  {thumbForm.progress && (
-                    <Card className="border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                      <CardBody className="space-y-3 p-5">
-                        <div className="flex items-center justify-between gap-3">
-                          <Typography className="font-medium text-slate-800 dark:text-white">Mengupload thumbnail...</Typography>
-                          <Typography className="text-sm text-slate-500 dark:text-slate-400">{thumbForm.progress.percentage}%</Typography>
-                        </div>
-                        <Progress value={thumbForm.progress.percentage} color="primary" />
-                      </CardBody>
-                    </Card>
-                  )}
-
-                  <div className="flex justify-end">
-                    <Button type="submit" color="primary" disabled={thumbForm.processing || !thumbForm.data.thumbnail} className="flex items-center gap-2">
-                      <SaveIcon className="h-4 w-4" />
-                      {thumbForm.processing ? "Mengupload..." : "Simpan Thumbnail"}
-                    </Button>
-                  </div>
                 </form>
               </Tabs.Panel>
             </Tabs>
@@ -599,9 +895,9 @@ export default function Edit({ video }: { video: Video }) {
               </IconButton>
             </div>
             <div className="flex w-full justify-center bg-black">
-              {canCaptureFrame && activeVideoUrl ? (
+              {(canCaptureFrame || hasExistingVideo) && (activeVideoUrl || video.video_url) ? (
                 <video ref={videoRef} preload="metadata" controls crossOrigin="anonymous" className="max-h-[500px] w-full object-contain" poster={thumbPreviewUrl || undefined}>
-                  <source src={activeVideoUrl} />
+                  <source src={activeVideoUrl || video.video_url || ""} />
                 </video>
               ) : (
                 <div className="flex min-h-[320px] w-full items-center justify-center px-6 text-center text-sm text-slate-300">
@@ -614,7 +910,7 @@ export default function Edit({ video }: { video: Video }) {
                 <Typography variant="small" className="text-slate-600 dark:text-slate-400">
                   Geser video ke frame yang tepat lalu klik "Simpan Frame".
                 </Typography>
-                <Button size="md" color="primary" className="flex flex-shrink-0 items-center gap-2" onClick={captureThumbnail} type="button" disabled={!canCaptureFrame}>
+                <Button size="md" color="primary" className="flex flex-shrink-0 items-center gap-2" onClick={captureThumbnail} type="button" disabled={!(canCaptureFrame || hasExistingVideo)}>
                   <CameraIcon className="h-4 w-4" />
                   Simpan Frame
                 </Button>

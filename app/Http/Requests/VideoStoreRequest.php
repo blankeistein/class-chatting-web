@@ -26,7 +26,6 @@ class VideoStoreRequest extends FormRequest
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'provider' => 'required|string|in:file,youtube',
-            'video' => 'required_if:provider,file|nullable|file|mimetypes:video/mp4,video/quicktime,video/x-msvideo|max:102400',
             'yt_url' => [
                 'required_if:provider,youtube',
                 'nullable',
@@ -38,7 +37,6 @@ class VideoStoreRequest extends FormRequest
                     }
                 },
             ],
-            'thumbnail' => 'nullable|image|max:5120',
             'tags' => 'nullable|array',
             'tags.*' => 'string|max:50',
         ];
@@ -52,16 +50,9 @@ class VideoStoreRequest extends FormRequest
             'title.max' => 'Judul maksimal 255 karakter.',
             'provider.required' => 'Sumber video wajib dipilih.',
             'provider.in' => 'Sumber video tidak valid.',
-            'video.required' => 'File video wajib diunggah.',
-            'video.required_if' => 'File video wajib diunggah.',
-            'video.file' => 'File video harus berupa file.',
-            'video.mimetypes' => 'Format video harus mp4, mov, atau avi.',
-            'video.max' => 'Ukuran video maksimal 100MB.',
             'yt_url.required_if' => 'URL Youtube wajib diisi.',
             'yt_url.string' => 'URL Youtube harus berupa teks.',
             'yt_url.max' => 'URL Youtube maksimal 2048 karakter.',
-            'thumbnail.image' => 'Thumbnail harus berupa gambar.',
-            'thumbnail.max' => 'Ukuran thumbnail maksimal 5MB.',
         ];
     }
 

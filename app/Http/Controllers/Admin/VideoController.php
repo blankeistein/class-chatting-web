@@ -87,58 +87,28 @@ class VideoController extends Controller
     {
         $validated = $request->validated();
         $slug = Str::random(11);
-        $thumbnailUrl = $this->storeThumbnail($request, $slug);
 
-        if ($validated['provider'] === 'youtube') {
-            Video::create([
-                'title' => $validated['title'],
-                'slug' => $slug,
-                'description' => $validated['description'] ?? null,
-                'tags' => $validated['tags'] ?? [],
-                'uploaded_by' => Auth::id(),
-                'video_url' => trim($validated['yt_url']),
-                'thumbnail' => $thumbnailUrl,
-                'storage_path' => null,
-                'provider' => VideoProviderEnum::Local,
-            ]);
-
-            return redirect()->route('admin.videos.index')->with('success', 'Video berhasil diunggah.');
-        }
-
-        $videoFile = $request->file('video');
-        $storagePath = $this->makeStoragePath($videoFile, $slug);
-
-        $this->uploadFileToFirebase($videoFile, $storagePath);
-
-        Video::create([
+        $videoData = [
             'title' => $validated['title'],
             'slug' => $slug,
             'description' => $validated['description'] ?? null,
             'tags' => $validated['tags'] ?? [],
             'uploaded_by' => Auth::id(),
             'video_url' => null,
-            'thumbnail' => $thumbnailUrl,
-            'storage_path' => $storagePath,
+            'thumbnail' => null,
+            'storage_path' => null,
             'provider' => VideoProviderEnum::Firebase,
-        ]);
+        ];
 
-        return redirect()->route('admin.videos.index')->with('success', 'Video berhasil diunggah.');
-    }
-
-    private function storeThumbnail(VideoStoreRequest $request, string $slug): ?string
-    {
-        if (! $request->hasFile('thumbnail')) {
-            return null;
+        if ($validated['provider'] === 'youtube') {
+            $videoData['video_url'] = trim($validated['yt_url']);
+            $videoData['provider'] = VideoProviderEnum::Youtube;
         }
 
-        $thumbnailFile = $request->file('thumbnail');
-        $thumbnailPath = $this->makeThumbnailPath($slug);
-        $temporaryWebpPath = $this->convertImageToWebpTemporaryPath($thumbnailFile, 70);
+        $video = Video::create($videoData);
 
-        $this->uploadLocalFileToFirebase($temporaryWebpPath, $thumbnailPath);
-        @unlink($temporaryWebpPath);
-
-        return $this->buildFirebaseUrl($thumbnailPath);
+        return redirect()->route('admin.videos.edit', $video)
+            ->with('success', 'Video berhasil dibuat. Silakan upload file video dan thumbnail.');
     }
 
     /**
@@ -169,51 +139,126 @@ class VideoController extends Controller
     public function update(VideoUpdateRequest $request, Video $video): RedirectResponse
     {
         $validated = $request->validated();
-        $updateData = [
+
+        $video->update([
             'title' => $validated['title'],
             'description' => $validated['description'] ?? null,
             'tags' => $validated['tags'] ?? [],
-        ];
+        ]);
 
-        if ($validated['provider'] === 'youtube') {
+        return redirect()->route('admin.videos.edit', $video)->with('success', 'Informasi video berhasil diperbarui.');
+    }
+
+    /**
+     * Upload or replace the video file for an existing video.
+     */
+    public function uploadVideo(Request $request, Video $video): RedirectResponse
+    {
+        $request->validate([
+            'provider' => 'required|string|in:file,youtube',
+            'video' => 'required_if:provider,file|nullable|file|mimetypes:video/mp4,video/quicktime,video/x-msvideo|max:102400',
+            'yt_url' => [
+                'required_if:provider,youtube',
+                'nullable',
+                'string',
+                'max:2048',
+            ],
+        ], [
+            'video.required_if' => 'File video wajib diunggah.',
+            'video.mimetypes' => 'Format video harus mp4, mov, atau avi.',
+            'video.max' => 'Ukuran video maksimal 100MB.',
+            'yt_url.required_if' => 'URL Youtube wajib diisi.',
+        ]);
+
+        if ($request->input('provider') === 'youtube') {
             if ($video->provider === VideoProviderEnum::Firebase) {
                 $this->deleteFirebaseObject($video->storage_path);
                 $this->deleteFirebaseDirectory($this->makeHlsDirectory($video->slug));
             }
 
-            $updateData['video_url'] = trim($validated['yt_url']);
-            $updateData['storage_path'] = null;
-            $updateData['provider'] = VideoProviderEnum::Local;
-        } elseif ($request->hasFile('video')) {
+            $video->update([
+                'video_url' => trim($request->input('yt_url')),
+                'storage_path' => null,
+                'provider' => VideoProviderEnum::Youtube,
+            ]);
+
+            return redirect()->back()->with('success', 'URL Youtube berhasil disimpan.');
+        }
+
+        if ($request->hasFile('video')) {
             $videoFile = $request->file('video');
             $storagePath = $this->makeStoragePath($videoFile, $video->slug);
 
             $this->uploadFileToFirebase($videoFile, $storagePath);
+
             if ($video->provider === VideoProviderEnum::Firebase) {
                 $this->deleteFirebaseObject($video->storage_path);
                 $this->deleteFirebaseDirectory($this->makeHlsDirectory($video->slug));
             }
 
-            $updateData['video_url'] = null;
-            $updateData['storage_path'] = $storagePath;
-            $updateData['provider'] = VideoProviderEnum::Firebase;
+            $video->update([
+                'video_url' => null,
+                'storage_path' => $storagePath,
+                'provider' => VideoProviderEnum::Firebase,
+            ]);
+
+            return redirect()->back()->with('success', 'Video berhasil diupload.');
         }
 
-        if ($request->hasFile('thumbnail')) {
-            $thumbnailFile = $request->file('thumbnail');
-            $thumbnailPath = $this->makeThumbnailPath($video->slug);
-            $temporaryWebpPath = $this->convertImageToWebpTemporaryPath($thumbnailFile, 70);
+        return redirect()->back()->with('error', 'Tidak ada file video yang dikirim.');
+    }
 
-            $this->uploadLocalFileToFirebase($temporaryWebpPath, $thumbnailPath);
-            @unlink($temporaryWebpPath);
-            $this->deleteFirebaseObject($this->extractFirebasePath($video->thumbnail));
+    /**
+     * Upload or replace the thumbnail for an existing video.
+     */
+    public function uploadThumbnail(Request $request, Video $video): RedirectResponse
+    {
+        $request->validate([
+            'thumbnail' => 'required|image|max:5120',
+        ], [
+            'thumbnail.required' => 'File thumbnail wajib diunggah.',
+            'thumbnail.image' => 'Thumbnail harus berupa gambar.',
+            'thumbnail.max' => 'Ukuran thumbnail maksimal 5MB.',
+        ]);
 
-            $updateData['thumbnail'] = $this->buildFirebaseUrl($thumbnailPath);
+        $thumbnailFile = $request->file('thumbnail');
+        $thumbnailPath = $this->makeThumbnailPath($video->slug);
+        $temporaryWebpPath = $this->convertImageToWebpTemporaryPath($thumbnailFile, 70);
+
+        $this->uploadLocalFileToFirebase($temporaryWebpPath, $thumbnailPath);
+        @unlink($temporaryWebpPath);
+
+        $this->deleteFirebaseObject($this->extractFirebasePath($video->thumbnail));
+
+        $video->update([
+            'thumbnail' => $this->buildFirebaseUrl($thumbnailPath),
+        ]);
+
+        return redirect()->back()->with('success', 'Thumbnail berhasil diperbarui.');
+    }
+
+    /**
+     * Check HLS manifest availability and update video_url.
+     */
+    public function syncHlsUrl(Video $video): RedirectResponse
+    {
+        if ($video->provider !== VideoProviderEnum::Firebase) {
+            return redirect()->back()->with('error', 'Hanya video Firebase yang bisa disinkronkan.');
         }
 
-        $video->update($updateData);
+        $manifestPath = "hls/{$video->slug}/manifest.m3u8";
+        $bucket = Firebase::storage()->getBucket();
+        $object = $bucket->object($manifestPath);
 
-        return redirect()->route('admin.videos.show', $video)->with('success', 'Video berhasil diperbarui.');
+        if (! $object->exists()) {
+            return redirect()->back()->with('error', 'Manifest HLS belum tersedia. Pastikan proses transcoding sudah selesai.');
+        }
+
+        $video->update([
+            'video_url' => $this->buildFirebaseUrl($manifestPath),
+        ]);
+
+        return redirect()->back()->with('success', 'URL video berhasil diperbarui dengan manifest HLS.');
     }
 
     /**

@@ -188,6 +188,7 @@ $excludeFiles = [
     'Thumbs.db',
     '.DS_Store',
     'npm-debug.log',
+    'public/hot',
 ];
 
 $excludeExtensions = ['log', 'zip'];

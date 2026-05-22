@@ -2,6 +2,7 @@ import { FirebaseApp, getApp, getApps, initializeApp } from "firebase/app";
 import { Auth, getAuth, signInWithCustomToken, signOut } from "firebase/auth";
 import { Database, getDatabase } from "firebase/database";
 import { Firestore, getFirestore, initializeFirestore, persistentLocalCache } from "firebase/firestore";
+import { FirebaseStorage, getStorage } from "firebase/storage";
 
 type FirebaseSession = {
     uid: string;
@@ -94,6 +95,16 @@ export function getFirebaseDatabase(): Database | null {
     }
 
     return getDatabase(app);
+}
+
+export function getFirebaseStorage(): FirebaseStorage | null {
+    const app = getFirebaseApp();
+
+    if (!app) {
+        return null;
+    }
+
+    return getStorage(app);
 }
 
 export function getFirebaseAuth(): Auth | null {

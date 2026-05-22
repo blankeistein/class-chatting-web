@@ -20,7 +20,7 @@ class UserSeeder extends Seeder
             'password' => bcrypt('password'),
             'role' => 'admin',
             'email_verified_at' => now(),
-            ]);
+        ]);
 
         User::create([
             'firebase_uid' => 'tMN7EPFpodhkRO7zA9lCJcV8q9k1',

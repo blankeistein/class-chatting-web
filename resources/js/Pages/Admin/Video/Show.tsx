@@ -164,6 +164,7 @@ export default function Show({ video }: { video: Video }) {
   const [job, setJob] = React.useState<HlsJob | null>(null);
   const [isJobLoading, setIsJobLoading] = React.useState(true);
   const [jobLoadError, setJobLoadError] = React.useState<string | null>(null);
+  const [isSyncingHls, setIsSyncingHls] = React.useState(false);
   const isFirebaseVideo = video.provider === "firebase";
   const youtubeId = resolveYoutubeId(video.video_url ?? "");
   const isYoutubeVideo = !isFirebaseVideo && Boolean(youtubeId);
@@ -220,6 +221,14 @@ export default function Show({ video }: { video: Video }) {
     }
   };
 
+  const handleSyncHls = () => {
+    setIsSyncingHls(true);
+    router.post(route("admin.videos.sync-hls", video.slug), {}, {
+      preserveScroll: true,
+      onFinish: () => setIsSyncingHls(false),
+    });
+  };
+
   return (
     <>
       <Head title={`Detail Video - ${video.title}`} />
@@ -230,6 +239,19 @@ export default function Show({ video }: { video: Video }) {
           description="Lihat informasi lengkap dan putar video."
           actions={
             <>
+              {isFirebaseVideo && (
+                <Button
+                  variant="ghost"
+                  color="warning"
+                  size="sm"
+                  className="flex items-center gap-2"
+                  onClick={handleSyncHls}
+                  disabled={isSyncingHls}
+                >
+                  <RefreshCcwIcon className={`h-4 w-4 ${isSyncingHls ? "animate-spin" : ""}`} />
+                  {isSyncingHls ? "Memeriksa..." : "Sync HLS"}
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 color="secondary"

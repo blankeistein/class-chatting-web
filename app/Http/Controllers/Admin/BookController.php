@@ -163,7 +163,8 @@ class BookController extends Controller
         return redirect()->back()->with('success', 'Buku berhasil dihapus.');
     }
 
-    public function sync(string $uuid) {
+    public function sync(string $uuid)
+    {
         $book = Book::query()
             ->where('uuid', $uuid)
             ->first();

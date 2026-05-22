@@ -4,7 +4,6 @@ use App\Http\Middleware\AdminMiddleware;
 use App\Http\Middleware\EnsureFirebaseIdToken;
 use App\Http\Middleware\EnsurePrivateApiKey;
 use App\Http\Middleware\HandleInertiaRequests;
-use App\Http\Middleware\VerifyFirebaseWebhook;
 use App\Mail\ExceptionReported;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;

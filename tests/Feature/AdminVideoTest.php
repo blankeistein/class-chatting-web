@@ -23,17 +23,18 @@ it('stores a youtube video from the admin form', function (): void {
             'tags' => ['edukasi', 'kelas-6'],
         ]);
 
-    $response
-        ->assertRedirect(route('admin.videos.index'))
-        ->assertSessionHas('success');
-
     $video = Video::query()->first();
 
     expect($video)->not->toBeNull();
+
+    $response
+        ->assertRedirect(route('admin.videos.edit', $video))
+        ->assertSessionHas('success');
+
     expect($video->title)->toBe('Video Youtube Admin');
     expect($video->video_url)->toBe($youtubeUrl);
     expect($video->storage_path)->toBeNull();
-    expect($video->provider?->value)->toBe('local');
+    expect($video->provider?->value)->toBe('youtube');
     expect($video->uploaded_by)->toBe($admin->id);
     expect($video->tags)->toBe(['edukasi', 'kelas-6']);
 });

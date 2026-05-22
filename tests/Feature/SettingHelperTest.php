@@ -1,8 +1,8 @@
 <?php
 
 use App\Models\Setting;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 
 uses(RefreshDatabase::class);
 
@@ -18,7 +18,7 @@ test('it returns default value for non existent setting', function () {
 
 test('it retrieves setting from cache', function () {
     $settings = collect([
-        'test_setting_cached' => 'cached_value'
+        'test_setting_cached' => 'cached_value',
     ]);
 
     Cache::forever('settings', $settings);

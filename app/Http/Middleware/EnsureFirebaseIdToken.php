@@ -37,7 +37,7 @@ class EnsureFirebaseIdToken
             return response()->json([
                 'status' => false,
                 'errorCode' => 401,
-                'message' => 'Unauthorized. ' . $e->getMessage(),
+                'message' => 'Unauthorized. '.$e->getMessage(),
                 'version' => 2,
             ], 401);
         }

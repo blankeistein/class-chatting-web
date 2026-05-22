@@ -1,5 +1,6 @@
 <?php
 
+use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\NullHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
@@ -132,7 +133,7 @@ return [
             'path' => storage_path('logs/activation-code.log'),
             'level' => env('LOG_ACTIVATION_LEVEL', 'info'),
             'days' => 180, // Approximately 6 months
-            'formatter' => \Monolog\Formatter\LineFormatter::class,
+            'formatter' => LineFormatter::class,
             'formatter_with' => [
                 'format' => "[%datetime%] [%level_name%] ACTIVATION_CODE: %message% %context% %extra%\n",
                 'dateFormat' => 'Y-m-d H:i:s',

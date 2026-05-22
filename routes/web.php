@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VideoController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PasswordResetController;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -26,6 +27,13 @@ Route::get('/', function () {
 Route::get('login', [AuthController::class, 'login'])->name('login')->middleware('guest');
 Route::post('login', [AuthController::class, 'loginAction'])->middleware(['guest', 'throttle:login']);
 Route::delete('logout', [AuthController::class, 'logout'])->name('logout');
+
+Route::middleware('guest')->group(function () {
+    Route::get('forgot-password', [PasswordResetController::class, 'forgotPassword'])->name('password.request');
+    Route::post('forgot-password', [PasswordResetController::class, 'sendResetLink'])->name('password.email');
+    Route::get('reset-password/{token}', [PasswordResetController::class, 'resetPassword'])->name('password.reset');
+    Route::post('reset-password', [PasswordResetController::class, 'updatePassword'])->name('password.update');
+});
 
 Route::middleware('auth')->group(function () {
     Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');

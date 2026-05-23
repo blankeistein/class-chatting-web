@@ -47,6 +47,9 @@ class HandleInertiaRequests extends Middleware
             ] : null,
             'auth.firebase' => fn () => $request->session()->get('firebase_auth'),
             'recaptcha_site_key' => config('services.nocaptcha.sitekey'),
+            'flash' => [
+                'status' => fn () => $request->session()->get('status'),
+            ],
         ];
     }
 }

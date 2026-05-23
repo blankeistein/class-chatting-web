@@ -94,7 +94,7 @@ if (! class_exists('ZipArchive')) {
 
 $projectName = basename(getcwd());
 $timestamp = date('Ymd_His');
-$outputDir = 'scripts/dist';
+$outputDir = 'dist';
 $source = getcwd();
 
 $zipLaravel = "$outputDir/{$projectName}_laravel_{$timestamp}.zip";
@@ -162,6 +162,8 @@ $excludeDirs = [
     '.idea',
     '.vscode',
     'bootstrap/cache',
+    'scripts',
+    'dist',
     // public/index.php dan .htaccess masuk zip public_html, bukan di sini
     // tapi public/build tetap masuk zip laravel
 ];

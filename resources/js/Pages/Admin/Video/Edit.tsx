@@ -831,9 +831,9 @@ export default function Edit({ video }: { video: Video }) {
                 <Typography variant="h6" className="font-bold text-slate-800 dark:text-white">Preview</Typography>
               </div>
               <CardBody className="space-y-4 p-5">
-                <div className="overflow-hidden rounded-2xl border border-slate-200 bg-black shadow-inner dark:border-slate-800">
+                <div className="overflow-hidden rounded-2xl border border-slate-200 bg-background shadow-inner dark:border-slate-800">
                   {videoForm.data.provider === "youtube" && activeYoutubeId ? (
-                    <div className="flex aspect-video items-center justify-center bg-black">
+                    <div className="flex aspect-video items-center justify-center bg-background">
                       <iframe
                         src={`https://www.youtube.com/embed/${activeYoutubeId}`}
                         title="YouTube Video Preview"
@@ -849,7 +849,7 @@ export default function Edit({ video }: { video: Video }) {
                       preload="metadata"
                       controls
                       crossOrigin="anonymous"
-                      className="aspect-video w-full bg-black"
+                      className="aspect-video w-full bg-background"
                       poster={thumbPreviewUrl || undefined}
                     >
                       <source src={activeVideoUrl} />
@@ -894,7 +894,7 @@ export default function Edit({ video }: { video: Video }) {
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
               </IconButton>
             </div>
-            <div className="flex w-full justify-center bg-black">
+            <div className="flex w-full justify-center bg-background">
               {(canCaptureFrame || hasExistingVideo) && (activeVideoUrl || video.video_url) ? (
                 <video ref={videoRef} preload="metadata" controls crossOrigin="anonymous" className="max-h-[500px] w-full object-contain" poster={thumbPreviewUrl || undefined}>
                   <source src={activeVideoUrl || video.video_url || ""} />

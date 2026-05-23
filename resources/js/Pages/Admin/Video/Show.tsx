@@ -355,10 +355,10 @@ export default function Show({ video }: { video: Video }) {
                   </Typography>
                 </div>
 
-                <div className="bg-black p-2 sm:p-4">
-                  <div className="overflow-hidden rounded-xl border border-slate-800 bg-black shadow-inner">
+                <div className="bg-backrgound p-2 sm:p-4">
+                  <div className="overflow-hidden rounded-xl border border-slate-800 bg-backrgound shadow-inner">
                     {isYoutubeVideo && youtubeId ? (
-                      <div className="flex aspect-video items-center justify-center bg-black">
+                      <div className="flex aspect-video items-center justify-center bg-backrgound">
                         <iframe
                           src={`https://www.youtube.com/embed/${youtubeId}`}
                           title="YouTube Video Player"
@@ -373,7 +373,7 @@ export default function Show({ video }: { video: Video }) {
                         controls
                         preload="metadata"
                         poster={video.thumbnail ?? undefined}
-                        className="aspect-video w-full bg-black"
+                        className="aspect-video w-full bg-backrgound"
                       >
                         <source src={video.video_url} />
                         Browser Anda tidak mendukung pemutaran video HTML5.

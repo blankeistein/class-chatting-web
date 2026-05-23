@@ -41,7 +41,7 @@ class FirebaseWebhookController extends Controller
                 'name' => $validated['displayName'] ?? 'User',
                 'email' => $validated['email'],
                 'avatar' => $validated['photoURL'] ?? null,
-                'email_verified_at' => now(),
+                'email_verified_at' => null,
                 'phone' => $validated['phoneNumber'] ?? null,
             ]
         );

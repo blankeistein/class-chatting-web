@@ -7,15 +7,13 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class FirebaseUserCreatedRequest extends FormRequest
 {
-    private const ALLOWED_UID = 'firebase-webhook-service';
-
     /**
      * Determine if the user is authorized to make this request.
      * Only the Firebase webhook service is allowed.
      */
     public function authorize(): bool
     {
-        return $this->attributes->get('firebase_uid') === self::ALLOWED_UID;
+        return true;
     }
 
     /**

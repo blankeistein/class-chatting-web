@@ -26,7 +26,7 @@ class RegionController extends Controller
         title: 'List provinces',
         description: 'Mengambil daftar provinsi dalam format paginasi.'
     )]
-    #[QueryParameter('search', 'Kata kunci pencarian berdasarkan kode atau nama provinsi.', required: false, example: 'jakarta')]
+    #[QueryParameter('search', 'Kata kunci pencarian berdasarkan kode atau nama provinsi. Minimal 3 karakter.', required: false, example: 'jakarta')]
     #[QueryParameter('per_page', 'Jumlah item per halaman. Nilai yang valid antara 1 sampai 100.', required: false, type: 'integer', example: 25)]
     public function provinces(RegionListRequest $request): AnonymousResourceCollection
     {
@@ -58,7 +58,7 @@ class RegionController extends Controller
         title: 'List regencies',
         description: 'Mengambil daftar kabupaten atau kota dalam format paginasi beserta referensi provinsinya.'
     )]
-    #[QueryParameter('search', 'Kata kunci pencarian berdasarkan kode atau nama kabupaten atau kota.', required: false, example: 'bandung')]
+    #[QueryParameter('search', 'Kata kunci pencarian berdasarkan kode atau nama kabupaten atau kota. Minimal 3 karakter.', required: false, example: 'bandung')]
     #[QueryParameter('per_page', 'Jumlah item per halaman. Nilai yang valid antara 1 sampai 100.', required: false, type: 'integer', example: 25)]
     public function regencies(RegionListRequest $request): AnonymousResourceCollection
     {
@@ -79,7 +79,7 @@ class RegionController extends Controller
         description: 'Mengambil daftar kabupaten atau kota yang berada dalam satu provinsi tertentu.'
     )]
     #[PathParameter('province', 'Kode provinsi Indonesia yang menjadi induk data kabupaten atau kota.', example: '31')]
-    #[QueryParameter('search', 'Kata kunci pencarian berdasarkan kode atau nama kabupaten atau kota.', required: false, example: 'selatan')]
+    #[QueryParameter('search', 'Kata kunci pencarian berdasarkan kode atau nama kabupaten atau kota. Minimal 3 karakter.', required: false, example: 'selatan')]
     #[QueryParameter('per_page', 'Jumlah item per halaman. Nilai yang valid antara 1 sampai 100.', required: false, type: 'integer', example: 25)]
     public function regenciesByProvince(RegionListRequest $request, Province $province): AnonymousResourceCollection
     {
@@ -112,7 +112,7 @@ class RegionController extends Controller
         title: 'List districts',
         description: 'Mengambil daftar kecamatan dalam format paginasi beserta konteks kabupaten atau kota dan provinsinya.'
     )]
-    #[QueryParameter('search', 'Kata kunci pencarian berdasarkan kode atau nama kecamatan.', required: false, example: 'kebayoran')]
+    #[QueryParameter('search', 'Kata kunci pencarian berdasarkan kode atau nama kecamatan. Minimal 3 karakter.', required: false, example: 'kebayoran')]
     #[QueryParameter('per_page', 'Jumlah item per halaman. Nilai yang valid antara 1 sampai 100.', required: false, type: 'integer', example: 25)]
     public function districts(RegionListRequest $request): AnonymousResourceCollection
     {
@@ -133,7 +133,7 @@ class RegionController extends Controller
         description: 'Mengambil daftar kecamatan untuk satu kabupaten atau kota tertentu.'
     )]
     #[PathParameter('regency', 'Kode kabupaten atau kota Indonesia yang menjadi induk data kecamatan.', example: '3171')]
-    #[QueryParameter('search', 'Kata kunci pencarian berdasarkan kode atau nama kecamatan.', required: false, example: 'baru')]
+    #[QueryParameter('search', 'Kata kunci pencarian berdasarkan kode atau nama kecamatan. Minimal 3 karakter.', required: false, example: 'baru')]
     #[QueryParameter('per_page', 'Jumlah item per halaman. Nilai yang valid antara 1 sampai 100.', required: false, type: 'integer', example: 25)]
     public function districtsByRegency(RegionListRequest $request, Regency $regency): AnonymousResourceCollection
     {
@@ -166,7 +166,7 @@ class RegionController extends Controller
         title: 'List villages',
         description: 'Mengambil daftar desa dalam format paginasi beserta konteks kecamatan, kabupaten atau kota, dan provinsinya.'
     )]
-    #[QueryParameter('search', 'Kata kunci pencarian berdasarkan kode atau nama desa.', required: false, example: 'sukamaju')]
+    #[QueryParameter('search', 'Kata kunci pencarian berdasarkan kode atau nama desa. Minimal 3 karakter.', required: false, example: 'sukamaju')]
     #[QueryParameter('per_page', 'Jumlah item per halaman. Nilai yang valid antara 1 sampai 100.', required: false, type: 'integer', example: 25)]
     public function villages(RegionListRequest $request): AnonymousResourceCollection
     {
@@ -186,7 +186,7 @@ class RegionController extends Controller
         description: 'Mengambil daftar desa untuk satu kecamatan tertentu.'
     )]
     #[PathParameter('district', 'Kode kecamatan Indonesia yang menjadi induk data desa.', example: '3171010')]
-    #[QueryParameter('search', 'Kata kunci pencarian berdasarkan kode atau nama desa.', required: false, example: 'baru')]
+    #[QueryParameter('search', 'Kata kunci pencarian berdasarkan kode atau nama desa. Minimal 3 karakter.', required: false, example: 'baru')]
     #[QueryParameter('per_page', 'Jumlah item per halaman. Nilai yang valid antara 1 sampai 100.', required: false, type: 'integer', example: 25)]
     public function villagesByDistrict(RegionListRequest $request, District $district): AnonymousResourceCollection
     {

@@ -23,7 +23,7 @@ class RegionListRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'search' => ['nullable', 'string', 'max:100'],
+            'search' => ['nullable', 'string', 'min:3', 'max:100'],
             'per_page' => ['nullable', 'integer', 'between:1,100'],
         ];
     }
@@ -32,6 +32,7 @@ class RegionListRequest extends FormRequest
     {
         return [
             'search.string' => 'Parameter pencarian harus berupa teks.',
+            'search.min' => 'Parameter pencarian minimal 3 karakter.',
             'search.max' => 'Parameter pencarian maksimal 100 karakter.',
             'per_page.integer' => 'Parameter per_page harus berupa angka.',
             'per_page.between' => 'Parameter per_page harus berada di antara 1 sampai 100.',

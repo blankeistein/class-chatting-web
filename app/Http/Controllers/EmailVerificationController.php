@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\SendVerificationEmailRequest;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -13,8 +14,7 @@ class EmailVerificationController extends Controller
 {
     public function notice(): Response|RedirectResponse
     {
-        /** @var \App\Models\User $user */
-        $user = request()->user();
+        $user = Auth::user();
 
         if ($user->hasVerifiedEmail()) {
             return to_route('home');

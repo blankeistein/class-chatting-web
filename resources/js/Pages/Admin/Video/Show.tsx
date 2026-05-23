@@ -356,7 +356,7 @@ export default function Show({ video }: { video: Video }) {
                 </div>
 
                 <div className="bg-backrgound p-2 sm:p-4">
-                  <div className="overflow-hidden rounded-xl border border-slate-800 bg-backrgound shadow-inner">
+                  <div className="overflow-hidden rounded-xl border border-slate-800 bg-backrgound/10 shadow-inner">
                     {isYoutubeVideo && youtubeId ? (
                       <div className="flex aspect-video items-center justify-center bg-backrgound">
                         <iframe
@@ -373,7 +373,7 @@ export default function Show({ video }: { video: Video }) {
                         controls
                         preload="metadata"
                         poster={video.thumbnail ?? undefined}
-                        className="aspect-video w-full bg-backrgound"
+                        className="aspect-video w-full bg-backrgound/10"
                       >
                         <source src={video.video_url} />
                         Browser Anda tidak mendukung pemutaran video HTML5.

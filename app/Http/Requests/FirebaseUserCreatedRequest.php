@@ -30,6 +30,7 @@ class FirebaseUserCreatedRequest extends FormRequest
             'photoURL' => ['nullable', 'url'],
             'phoneNumber' => ['nullable', 'string'],
             'providerType' => ['nullable', 'string'],
+            'emailVerified' => ['nullable', 'boolean'],
         ];
     }
 

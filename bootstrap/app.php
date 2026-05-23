@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\AdminMiddleware;
 use App\Http\Middleware\EnsureFirebaseIdToken;
+use App\Http\Middleware\EnsureFirebaseWebhookSecret;
 use App\Http\Middleware\EnsurePrivateApiKey;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Mail\ExceptionReported;
@@ -33,6 +34,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => AdminMiddleware::class,
             'firebase.id_token' => EnsureFirebaseIdToken::class,
+            'firebase.webhook_secret' => EnsureFirebaseWebhookSecret::class,
             'private.api' => EnsurePrivateApiKey::class,
         ]);
     })

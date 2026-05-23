@@ -9,11 +9,10 @@ class UpdateVideoHlsUrlRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
-     * Only the HLS converter service (firebase uid: hls-converter-service) is allowed.
      */
     public function authorize(): bool
     {
-        return $this->attributes->get('firebase_uid') === 'hls-converter-service';
+        return false;
     }
 
     /**

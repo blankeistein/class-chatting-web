@@ -66,7 +66,7 @@ const BookRow = ({ book, onDelete }: { book: Book; onDelete: (book: Book) => voi
             className="h-16 w-12 rounded object-cover shadow-sm border border-slate-200 dark:border-slate-700"
           />
           <div>
-            <Typography variant="small" className="font-bold text-slate-800 dark:text-white line-clamp-1 max-w-[200px]" title={book.title}>
+            <Typography variant="small" className="font-bold text-slate-800 dark:text-white line-clamp-1 max-w-[500px]" title={book.title}>
               {book.title}
             </Typography>
             <div className="flex flex-wrap items-center gap-2">

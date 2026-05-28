@@ -9,7 +9,6 @@ use App\Http\Requests\VideoUpdateRequest;
 use App\Models\Video;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -301,78 +300,9 @@ class VideoController extends Controller
         return redirect()->route('admin.videos.index')->with('success', 'Video berhasil dihapus.');
     }
 
-    private function makeStoragePath(UploadedFile $file, string $slug): string
-    {
-        $extension = $file->getClientOriginalExtension();
-        $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-        $filename = Str::slug($originalName).'-'.uniqid().'.'.$extension;
-
-        return "videos/{$slug}/{$filename}";
-    }
-
-    private function makeThumbnailPath(string $slug): string
-    {
-        return "videos/{$slug}/thumbnail-".uniqid().'.webp';
-    }
-
     private function makeHlsDirectory(string $slug): string
     {
         return "hls/{$slug}/";
-    }
-
-    private function uploadFileToFirebase(UploadedFile $file, string $path): void
-    {
-        Firebase::storage()->getBucket()->upload(
-            fopen($file->getPathname(), 'r'),
-            ['name' => $path]
-        );
-    }
-
-    private function uploadLocalFileToFirebase(string $localPath, string $remotePath): void
-    {
-        Firebase::storage()->getBucket()->upload(
-            fopen($localPath, 'r'),
-            ['name' => $remotePath]
-        );
-    }
-
-    private function convertImageToWebpTemporaryPath(UploadedFile $file, int $quality = 70): string
-    {
-        $source = @imagecreatefromstring(file_get_contents($file->getPathname()));
-
-        if (! $source) {
-            throw new \RuntimeException('Thumbnail gagal diproses menjadi WebP.');
-        }
-
-        $width = imagesx($source);
-        $height = imagesy($source);
-        $canvas = imagecreatetruecolor($width, $height);
-
-        imagealphablending($canvas, false);
-        imagesavealpha($canvas, true);
-        $transparent = imagecolorallocatealpha($canvas, 0, 0, 0, 127);
-        imagefilledrectangle($canvas, 0, 0, $width, $height, $transparent);
-        imagecopy($canvas, $source, 0, 0, 0, 0, $width, $height);
-
-        $temporaryPath = tempnam(sys_get_temp_dir(), 'thumb-webp-');
-
-        if ($temporaryPath === false) {
-            unset($canvas, $source);
-            throw new \RuntimeException('File sementara thumbnail tidak dapat dibuat.');
-        }
-
-        $webpPath = $temporaryPath.'.webp';
-        @unlink($temporaryPath);
-
-        $converted = imagewebp($canvas, $webpPath, $quality);
-
-        unset($canvas, $source);
-
-        if (! $converted) {
-            throw new \RuntimeException('Thumbnail gagal dikonversi ke WebP.');
-        }
-
-        return $webpPath;
     }
 
     private function deleteFirebaseObject(?string $path): void

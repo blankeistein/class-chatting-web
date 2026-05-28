@@ -51,6 +51,11 @@ const ClassChattingLinks: LinkType[] = [
         routeName: "admin.apps.class-chatting.book"
       },
       {
+        title: "Daftar (RTDB)",
+        icon: ListCollapse,
+        routeName: "admin.apps.class-chatting.book.book-rtdb"
+      },
+      {
         title: "Kategori",
         icon: LayoutGrid,
         routeName: "admin.apps.class-chatting.book.category"
@@ -75,6 +80,11 @@ const AnakIndonesiaMenghafalLinks: LinkType[] = [
         routeName: "admin.apps.anak-indonesia-menghafal.book"
       },
       {
+        title: "Daftar (RTDB)",
+        icon: ListCollapse,
+        routeName: "admin.apps.anak-indonesia-menghafal.book.book-rtdb"
+      },
+      {
         title: "Kategori",
         icon: LayoutGrid,
         routeName: "admin.apps.anak-indonesia-menghafal.book.category"
@@ -94,6 +104,11 @@ const ClassChattingForKidsLinks: LinkType[] = [
         routeName: "admin.apps.class-chatting-for-kids.book"
       },
       {
+        title: "Daftar (RTDB)",
+        icon: ListCollapse,
+        routeName: "admin.apps.class-chatting-for-kids.book.book-rtdb"
+      },
+      {
         title: "Kategori",
         icon: LayoutGrid,
         routeName: "admin.apps.class-chatting-for-kids.book.category"
@@ -111,6 +126,11 @@ const ClassChattingLayarLebarLinks: LinkType[] = [
         title: "Daftar",
         icon: ListCollapse,
         routeName: "admin.apps.class-chatting-layar-lebar.book"
+      },
+      {
+        title: "Daftar (RTDB)",
+        icon: ListCollapse,
+        routeName: "admin.apps.class-chatting-layar-lebar.book.book-rtdb"
       },
       {
         title: "Kategori",

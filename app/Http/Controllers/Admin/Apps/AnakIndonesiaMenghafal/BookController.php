@@ -28,6 +28,11 @@ class BookController extends Controller
         return Inertia::render('Admin/Apps/AnakIndonesiaMenghafal/Book/Index');
     }
 
+    public function indexRTDB(): Response
+    {
+        return Inertia::render('Admin/Apps/AnakIndonesiaMenghafal/Book/IndexRTDB');
+    }
+
     public function category(): Response
     {
         return Inertia::render('Admin/Apps/AnakIndonesiaMenghafal/Book/Category');

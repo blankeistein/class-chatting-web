@@ -64,7 +64,7 @@ export type FirebaseRTDBBookForm = {
 
 type FirebaseBook = FirebaseRTDBBookForm;
 
-const ALL_BOOKS_PATH = "/AllBooks";
+const ALL_BOOKS_PATH = "/AndroidTV/AllBooks";
 
 const normalizeBook = (key: string, value: Partial<FirebaseRTDBBookForm>): Book => {
   return {
@@ -697,7 +697,7 @@ export default function IndexRTDB() {
               Buku tidak ditemukan
             </Typography>
             <Typography className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-              Periksa kata kunci pencarian atau pastikan path <span className="font-mono">${ALL_BOOKS_PATH}</span> sudah memiliki data.
+              Periksa kata kunci pencarian atau pastikan path <span className="font-mono">{ALL_BOOKS_PATH}</span> sudah memiliki data.
             </Typography>
           </Card>
         )}
@@ -737,5 +737,5 @@ export default function IndexRTDB() {
 }
 
 IndexRTDB.layout = (page: React.ReactNode) => {
-  return <AdminAppLayout appName="class-chatting">{page}</AdminAppLayout>;
+  return <AdminAppLayout appName="class-chatting-layar-lebar">{page}</AdminAppLayout>;
 };

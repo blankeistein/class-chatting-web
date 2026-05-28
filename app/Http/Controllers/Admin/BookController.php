@@ -128,15 +128,6 @@ class BookController extends Controller
         $book = Book::findOrFail($id);
         $data = $request->safe()->only(['url', 'version']);
 
-        if ($request->hasFile('book_file')) {
-            $bookFile = $request->file('book_file');
-            $storagePath = $this->makeBookFilePath($bookFile, $book->uuid);
-
-            $this->storage->upload($bookFile, $storagePath);
-            $this->storage->delete($this->storage->extractPath($book->url));
-            $data['url'] = $this->storage->buildUrl($storagePath);
-        }
-
         $book->update($data);
 
         return redirect()->route('admin.books.upload', $book->id)->with('success', 'File buku berhasil diperbarui.');

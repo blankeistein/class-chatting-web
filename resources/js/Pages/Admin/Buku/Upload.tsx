@@ -6,12 +6,15 @@ import {
   Button,
   Input,
   IconButton,
+  Progress,
 } from "@material-tailwind/react";
 import AdminLayout from "@/Layouts/AdminLayout";
 import { Head, router, useForm } from "@inertiajs/react";
 import { ArrowLeftIcon, SaveIcon, FileTextIcon, FileUpIcon, HashIcon, LinkIcon } from "lucide-react";
 import { toast, Toaster } from "react-hot-toast";
 import { PageHeader } from "@/Components/PageHeader";
+import { getFirebaseStorage } from "@/lib/firebase";
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 
 interface Book {
   id: number;
@@ -25,16 +28,18 @@ interface Book {
 export default function Upload({ book }: { book: { data: Book } }) {
   const bookFileInputRef = useRef<HTMLInputElement>(null);
   const [isDraggingBookFile, setIsDraggingBookFile] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [isUploading, setIsUploading] = useState(false);
 
-  const { data, setData, post, processing, errors } = useForm({
+  const { data, setData, put, processing, errors } = useForm({
     url: book.data.url || "",
     version: book.data.version || 1,
-    book_file: null as File | null,
-    _method: "put",
   });
 
   const handleBookFileChange = (file: File | null) => {
-    setData("book_file", file);
+    setSelectedFile(file);
+    setUploadProgress(0);
 
     if (file) {
       setData("url", "");
@@ -60,17 +65,81 @@ export default function Upload({ book }: { book: { data: Book } }) {
     return `${(size / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const uploadToFirebase = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const storage = getFirebaseStorage();
+
+      if (!storage) {
+        reject(new Error("Firebase Storage belum dikonfigurasi."));
+        return;
+      }
+
+      const extension = file.name.split(".").pop()?.toLowerCase() ?? "zip";
+      const baseName = file.name.replace(/\.[^/.]+$/, "").replace(/[^a-z0-9]/gi, "-").toLowerCase();
+      const filename = `${baseName}-${Date.now()}.${extension}`;
+      const storagePath = `books/${book.data.uuid}/${filename}`;
+
+      const storageRef = ref(storage, storagePath);
+      const uploadTask = uploadBytesResumable(storageRef, file);
+
+      uploadTask.on(
+        "state_changed",
+        (snapshot) => {
+          const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+          setUploadProgress(progress);
+        },
+        (error) => {
+          reject(error);
+        },
+        async () => {
+          const downloadUrl = await getDownloadURL(uploadTask.snapshot.ref);
+          resolve(downloadUrl);
+        }
+      );
+    });
+  };
+
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    post(route("admin.books.upload.post", book.data.id), {
-      onSuccess: () => {
-        toast.success("Data buku berhasil diperbarui.");
-      },
-      onError: () => {
-        toast.error("Gagal memperbarui data buku.");
-      },
-    });
+    if (selectedFile) {
+      setIsUploading(true);
+      setUploadProgress(0);
+
+      try {
+        const downloadUrl = await uploadToFirebase(selectedFile);
+
+        router.put(route("admin.books.upload.post", book.data.id), {
+          url: downloadUrl,
+          version: data.version,
+        }, {
+          onSuccess: () => {
+            toast.success("Data buku berhasil diperbarui.");
+            setSelectedFile(null);
+            setUploadProgress(0);
+          },
+          onError: () => {
+            toast.error("Gagal menyimpan data buku.");
+          },
+          onFinish: () => {
+            setIsUploading(false);
+          },
+        });
+      } catch (error) {
+        toast.error("Gagal mengupload file ke Firebase.");
+        setIsUploading(false);
+        setUploadProgress(0);
+      }
+    } else {
+      put(route("admin.books.upload.post", book.data.id), {
+        onSuccess: () => {
+          toast.success("Data buku berhasil diperbarui.");
+        },
+        onError: () => {
+          toast.error("Gagal memperbarui data buku.");
+        },
+      });
+    }
   };
 
   return (
@@ -118,7 +187,7 @@ export default function Upload({ book }: { book: { data: Book } }) {
                   value={data.url}
                   onChange={(event) => setData("url", event.target.value)}
                   isError={!!errors.url}
-                  disabled={!!data.book_file}
+                  disabled={!!selectedFile}
                 >
                   <Input.Icon><LinkIcon className="w-4 h-4" /></Input.Icon>
                 </Input>
@@ -167,39 +236,49 @@ export default function Upload({ book }: { book: { data: Book } }) {
                   onDrop={handleBookFileDrop}
                   className={`rounded-xl border-2 border-dashed p-5 transition-all cursor-pointer ${isDraggingBookFile
                     ? "border-primary bg-primary/5"
-                    : data.book_file
+                    : selectedFile
                       ? "border-primary/60 bg-primary/5"
                       : "border-slate-300 dark:border-slate-700 hover:border-primary"
                     }`}
                 >
                   <div className="flex flex-col items-center justify-center gap-3 text-center">
-                    {data.book_file ? (
+                    {selectedFile ? (
                       <>
                         <FileTextIcon className="h-10 w-10 text-primary" />
                         <div>
                           <Typography className="font-semibold text-slate-800 dark:text-white">
-                            {data.book_file.name}
+                            {selectedFile.name}
                           </Typography>
                           <Typography className="text-xs text-slate-500 dark:text-slate-400">
-                            {formatFileSize(data.book_file.size)}
+                            {formatFileSize(selectedFile.size)}
                           </Typography>
                         </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          color="secondary"
-                          size="sm"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            handleBookFileChange(null);
+                        {isUploading && (
+                          <div className="w-full space-y-1">
+                            <Progress value={uploadProgress} color="primary" size="sm" />
+                            <Typography className="text-xs text-slate-500 dark:text-slate-400 text-center">
+                              {uploadProgress}% terupload
+                            </Typography>
+                          </div>
+                        )}
+                        {!isUploading && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            color="secondary"
+                            size="sm"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleBookFileChange(null);
 
-                            if (bookFileInputRef.current) {
-                              bookFileInputRef.current.value = "";
-                            }
-                          }}
-                        >
-                          Hapus File
-                        </Button>
+                              if (bookFileInputRef.current) {
+                                bookFileInputRef.current.value = "";
+                              }
+                            }}
+                          >
+                            Hapus File
+                          </Button>
+                        )}
                       </>
                     ) : (
                       <>
@@ -225,23 +304,18 @@ export default function Upload({ book }: { book: { data: Book } }) {
                   onChange={(event) => handleBookFileChange(event.target.files?.[0] ?? null)}
                 />
                 <Typography type="small" className="text-xs text-slate-500 dark:text-slate-400">
-                  Jika file baru diupload, file lama akan diganti dan URL download buku akan diperbarui otomatis.
+                  File akan diupload langsung ke Firebase Storage. URL download buku akan diperbarui otomatis.
                 </Typography>
-                {errors.book_file && (
-                  <Typography type="small" color="error" className="mt-1 block">
-                    {errors.book_file}
-                  </Typography>
-                )}
               </div>
               <div className="flex flex-col justify-center gap-2">
                 <Button
                   type="submit"
                   color="primary"
-                  disabled={processing}
+                  disabled={processing || isUploading}
                   className="flex items-center justify-center gap-2"
                 >
                   <SaveIcon className="w-5 h-5" />
-                  {processing ? "Sedang Mengunggah..." : "Unggah File"}
+                  {isUploading ? "Sedang Mengunggah..." : processing ? "Menyimpan..." : "Simpan"}
                 </Button>
                 <Button
                   variant="ghost"

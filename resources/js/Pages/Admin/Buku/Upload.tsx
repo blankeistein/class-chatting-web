@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import {
   Card,
   CardBody,
@@ -10,11 +10,12 @@ import {
 } from "@material-tailwind/react";
 import AdminLayout from "@/Layouts/AdminLayout";
 import { Head, router, useForm } from "@inertiajs/react";
-import { ArrowLeftIcon, SaveIcon, FileTextIcon, FileUpIcon, HashIcon, LinkIcon } from "lucide-react";
+import { ArrowLeftIcon, SaveIcon, FileTextIcon, FileUpIcon, HashIcon, LinkIcon, PackageIcon } from "lucide-react";
 import { toast, Toaster } from "react-hot-toast";
 import { PageHeader } from "@/Components/PageHeader";
 import { getFirebaseStorage } from "@/lib/firebase";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import JSZip from "jszip";
 
 interface Book {
   id: number;
@@ -25,47 +26,116 @@ interface Book {
   version: number;
 }
 
+interface PackageInfo {
+  title: string;
+  subTitle: string;
+  version: string;
+}
+
 export default function Upload({ book }: { book: { data: Book } }) {
   const bookFileInputRef = useRef<HTMLInputElement>(null);
   const [isDraggingBookFile, setIsDraggingBookFile] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [isUploading, setIsUploading] = useState(false);
+  const [packageInfo, setPackageInfo] = useState<PackageInfo | null>(null);
 
   const { data, setData, put, processing, errors } = useForm({
     url: book.data.url || "",
     version: book.data.version || 1,
   });
 
-  const handleBookFileChange = (file: File | null) => {
+  const readPackageFromZip = useCallback(async (file: File): Promise<PackageInfo | null> => {
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const zip = await JSZip.loadAsync(arrayBuffer);
+
+      const packageFile = zip.file("package.json");
+
+      if (!packageFile) {
+        return null;
+      }
+
+      const content = await packageFile.async("string");
+      const json = JSON.parse(content);
+
+      return {
+        title: json.title || "",
+        subTitle: json.subTitle || json.subtitle || "",
+        version: json.version || "",
+      };
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const handleBookFileChange = useCallback(async (file: File | null) => {
     setSelectedFile(file);
     setUploadProgress(0);
+    setPackageInfo(null);
 
     if (file) {
       setData("url", "");
-    }
-  };
 
-  const handleBookFileDrop = (event: React.DragEvent<HTMLDivElement>) => {
+      const info = await readPackageFromZip(file);
+
+      if (info) {
+        setPackageInfo(info);
+
+        if (info.version) {
+          const versionNumber = parseInt(info.version) || 1;
+          setData("version", versionNumber);
+        }
+      }
+    }
+  }, [readPackageFromZip, setData]);
+
+  const handleBookFileDrop = useCallback((event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setIsDraggingBookFile(false);
 
     const file = event.dataTransfer.files?.[0] ?? null;
 
     if (file) {
-      handleBookFileChange(file);
+      void handleBookFileChange(file);
     }
-  };
+  }, [handleBookFileChange]);
 
-  const formatFileSize = (size: number) => {
+  const handleDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDraggingBookFile(true);
+  }, []);
+
+  const handleDragLeave = useCallback(() => {
+    setIsDraggingBookFile(false);
+  }, []);
+
+  const handleFileInputChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    void handleBookFileChange(event.target.files?.[0] ?? null);
+  }, [handleBookFileChange]);
+
+  const handleRemoveFile = useCallback((event: React.MouseEvent) => {
+    event.stopPropagation();
+    void handleBookFileChange(null);
+
+    if (bookFileInputRef.current) {
+      bookFileInputRef.current.value = "";
+    }
+  }, [handleBookFileChange]);
+
+  const handleDropZoneClick = useCallback(() => {
+    bookFileInputRef.current?.click();
+  }, []);
+
+  const formatFileSize = useCallback((size: number) => {
     if (size < 1024 * 1024) {
       return `${Math.round(size / 1024)} KB`;
     }
 
     return `${(size / (1024 * 1024)).toFixed(1)} MB`;
-  };
+  }, []);
 
-  const uploadToFirebase = (file: File): Promise<string> => {
+  const uploadToFirebase = useCallback((file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const storage = getFirebaseStorage();
 
@@ -75,8 +145,7 @@ export default function Upload({ book }: { book: { data: Book } }) {
       }
 
       const extension = file.name.split(".").pop()?.toLowerCase() ?? "zip";
-      const baseName = file.name.replace(/\.[^/.]+$/, "").replace(/[^a-z0-9]/gi, "-").toLowerCase();
-      const filename = `${baseName}-${Date.now()}.${extension}`;
+      const filename = `${book.data.uuid}.${extension}`;
       const storagePath = `books/${book.data.uuid}/${filename}`;
 
       const storageRef = ref(storage, storagePath);
@@ -97,9 +166,9 @@ export default function Upload({ book }: { book: { data: Book } }) {
         }
       );
     });
-  };
+  }, [book.data.uuid]);
 
-  const handleSubmit = async (event: React.FormEvent) => {
+  const handleSubmit = useCallback(async (event: React.FormEvent) => {
     event.preventDefault();
 
     if (selectedFile) {
@@ -125,7 +194,7 @@ export default function Upload({ book }: { book: { data: Book } }) {
             setIsUploading(false);
           },
         });
-      } catch (error) {
+      } catch {
         toast.error("Gagal mengupload file ke Firebase.");
         setIsUploading(false);
         setUploadProgress(0);
@@ -140,7 +209,11 @@ export default function Upload({ book }: { book: { data: Book } }) {
         },
       });
     }
-  };
+  }, [selectedFile, uploadToFirebase, book.data.id, data.version, put]);
+
+  const handleGoBack = useCallback(() => {
+    router.get(route("admin.books.index"));
+  }, []);
 
   return (
     <>
@@ -151,16 +224,13 @@ export default function Upload({ book }: { book: { data: Book } }) {
         <PageHeader
           title="Upload Data Buku"
           backAction={
-            <IconButton
-              variant="ghost"
-              onClick={() => router.get(route("admin.books.index"))}
-            >
+            <IconButton variant="ghost" onClick={handleGoBack}>
               <ArrowLeftIcon className="w-5 h-5 dark:text-white" />
             </IconButton>
           }
         />
 
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-[max-content_1fr]  items-start gap-6">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-[max-content_1fr] items-start gap-6">
           <Card className="w-full lg:w-[360px] shadow-sm border border-slate-200 dark:border-slate-800 dark:bg-slate-900 overflow-hidden">
             <CardBody className="p-6 space-y-6">
               <div className="space-y-1">
@@ -227,12 +297,9 @@ export default function Upload({ book }: { book: { data: Book } }) {
                   Upload File Buku Baru
                 </Typography>
                 <div
-                  onClick={() => bookFileInputRef.current?.click()}
-                  onDragOver={(event) => {
-                    event.preventDefault();
-                    setIsDraggingBookFile(true);
-                  }}
-                  onDragLeave={() => setIsDraggingBookFile(false)}
+                  onClick={handleDropZoneClick}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
                   onDrop={handleBookFileDrop}
                   className={`rounded-xl border-2 border-dashed p-5 transition-all cursor-pointer ${isDraggingBookFile
                     ? "border-primary bg-primary/5"
@@ -253,9 +320,45 @@ export default function Upload({ book }: { book: { data: Book } }) {
                             {formatFileSize(selectedFile.size)}
                           </Typography>
                         </div>
+                        {packageInfo && (
+                          <div className="w-full rounded-lg bg-slate-100 dark:bg-slate-800 p-3 text-left space-y-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <PackageIcon className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                              <Typography className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                                package.json
+                              </Typography>
+                            </div>
+                            {packageInfo.title && (
+                              <div className="flex items-center gap-2">
+                                <Typography className="text-xs text-slate-500 dark:text-slate-400 shrink-0">Title:</Typography>
+                                <Typography className="text-sm font-medium text-slate-800 dark:text-white truncate">
+                                  {packageInfo.title}
+                                </Typography>
+                              </div>
+                            )}
+                            {packageInfo.subTitle && (
+                              <div className="flex items-center gap-2">
+                                <Typography className="text-xs text-slate-500 dark:text-slate-400 shrink-0">Subtitle:</Typography>
+                                <Typography className="text-sm font-medium text-slate-800 dark:text-white truncate">
+                                  {packageInfo.subTitle}
+                                </Typography>
+                              </div>
+                            )}
+                            {packageInfo.version && (
+                              <div className="flex items-center gap-2">
+                                <Typography className="text-xs text-slate-500 dark:text-slate-400 shrink-0">Version:</Typography>
+                                <Typography className="text-sm font-medium text-slate-800 dark:text-white">
+                                  {packageInfo.version}
+                                </Typography>
+                              </div>
+                            )}
+                          </div>
+                        )}
                         {isUploading && (
                           <div className="w-full space-y-1">
-                            <Progress value={uploadProgress} color="primary" size="sm" />
+                            <Progress value={uploadProgress} color="primary" size="sm">
+                              <Progress.Bar />
+                            </Progress>
                             <Typography className="text-xs text-slate-500 dark:text-slate-400 text-center">
                               {uploadProgress}% terupload
                             </Typography>
@@ -267,14 +370,7 @@ export default function Upload({ book }: { book: { data: Book } }) {
                             variant="ghost"
                             color="secondary"
                             size="sm"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              handleBookFileChange(null);
-
-                              if (bookFileInputRef.current) {
-                                bookFileInputRef.current.value = "";
-                              }
-                            }}
+                            onClick={handleRemoveFile}
                           >
                             Hapus File
                           </Button>
@@ -301,7 +397,7 @@ export default function Upload({ book }: { book: { data: Book } }) {
                   ref={bookFileInputRef}
                   hidden
                   accept=".zip,application/zip,application/x-zip,application/x-zip-compressed"
-                  onChange={(event) => handleBookFileChange(event.target.files?.[0] ?? null)}
+                  onChange={handleFileInputChange}
                 />
                 <Typography type="small" className="text-xs text-slate-500 dark:text-slate-400">
                   File akan diupload langsung ke Firebase Storage. URL download buku akan diperbarui otomatis.
@@ -321,14 +417,13 @@ export default function Upload({ book }: { book: { data: Book } }) {
                   variant="ghost"
                   color="secondary"
                   type="button"
-                  onClick={() => router.get(route("admin.books.index"))}
+                  onClick={handleGoBack}
                 >
                   Batal
                 </Button>
               </div>
             </CardBody>
           </Card>
-
         </form>
       </div>
     </>

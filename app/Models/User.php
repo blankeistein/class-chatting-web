@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Notifications\ResetPasswordNotification;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -44,7 +45,17 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function getImageAttribute($value)
     {
-        return $value ? asset('storage/'.$value) : '/assets/images/avatar-placeholder.webp';
+        $avatar = $this->attributes['avatar'] ?? null;
+
+        if (! $avatar) {
+            return '/assets/images/avatar-placeholder.webp';
+        }
+
+        if (str_starts_with($avatar, 'http')) {
+            return $avatar;
+        }
+
+        return asset('storage/'.$avatar);
     }
 
     public function books()
@@ -68,5 +79,10 @@ class User extends Authenticatable implements MustVerifyEmail
             ['key' => $key],
             ['value' => $value]
         );
+    }
+
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new ResetPasswordNotification($token));
     }
 }

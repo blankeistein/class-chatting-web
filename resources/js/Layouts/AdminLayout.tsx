@@ -399,7 +399,7 @@ function ProfileMenu({ user }: { user: User | null }) {
         className={`border ${user ? "border-success" : "border-error"} p-0.5 cursor-pointer`}
       />
       <Menu.Content className="z-20">
-        <Menu.Item>
+        <Menu.Item as={Link} href={route('admin.profile.edit')}>
           <UserCircle2Icon className="mr-2 h-[18px] w-[18px]" /> Profil
         </Menu.Item>
         <Menu.Item onClick={handleReAuthentication} disabled={user !== null}>

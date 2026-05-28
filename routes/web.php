@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\Apps\ClassChattingLayarLebar\BookController as Cl
 use App\Http\Controllers\Admin\BookController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\EmailConfigController;
+use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\RegionController as AdminRegionController;
 use App\Http\Controllers\Admin\SchoolController as AdminSchoolController;
 use App\Http\Controllers\Admin\UserController;
@@ -54,6 +55,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/re-auth-firebase', [AuthController::class, 'authenticateFirebaseUser'])->name('authenticate-firebase-user');
 
         Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+        Route::get('profile', [ProfileController::class, 'edit'])->name('profile.edit');
+        Route::post('profile', [ProfileController::class, 'update'])->name('profile.update');
+        Route::put('profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
         Route::get('videos/jobs', [VideoController::class, 'jobs'])->name('videos.jobs');
 
         Route::get('activation-code/bulk-export', [ActivationCodeController::class, 'bulkExport'])->name('activation-code.bulk-export');

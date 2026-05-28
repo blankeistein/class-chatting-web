@@ -8,16 +8,18 @@ use App\Http\Requests\BookUpdateRequest;
 use App\Http\Requests\BookUploadFileRequest;
 use App\Http\Resources\BookResource;
 use App\Models\Book;
+use App\Services\FirebaseStorageService;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
-use Kreait\Laravel\Firebase\Facades\Firebase;
 
 class BookController extends Controller
 {
+    public function __construct(
+        private FirebaseStorageService $storage,
+    ) {}
+
     public function index(Request $request)
     {
         $perPage = $request->input('per_page', 25);
@@ -67,16 +69,16 @@ class BookController extends Controller
         if ($request->hasFile('cover_url')) {
             $coverPath = $this->makeBookThumbnailPath($data['uuid']);
 
-            $this->uploadCoverToFirebaseAsWebp($request->file('cover_url'), $coverPath);
-            $data['cover_url'] = $this->buildFirebaseUrl($coverPath);
+            $this->storage->uploadImageAsWebp($request->file('cover_url'), $coverPath);
+            $data['cover_url'] = $this->storage->buildUrl($coverPath);
         }
 
         if ($request->hasFile('book_file')) {
             $bookFile = $request->file('book_file');
             $storagePath = $this->makeBookFilePath($bookFile, $data['uuid']);
 
-            $this->uploadFileToFirebase($bookFile, $storagePath);
-            $data['url'] = $this->buildFirebaseUrl($storagePath);
+            $this->storage->upload($bookFile, $storagePath);
+            $data['url'] = $this->storage->buildUrl($storagePath);
         }
 
         Book::create($data);
@@ -102,9 +104,9 @@ class BookController extends Controller
         if ($request->hasFile('cover_url')) {
             $coverPath = $this->makeBookThumbnailPath($book->uuid);
 
-            $this->uploadCoverToFirebaseAsWebp($request->file('cover_url'), $coverPath);
-            $this->deleteFirebaseObject($this->extractFirebasePath($book->cover_url));
-            $data['cover_url'] = $this->buildFirebaseUrl($coverPath);
+            $this->storage->uploadImageAsWebp($request->file('cover_url'), $coverPath);
+            $this->storage->delete($this->storage->extractPath($book->cover_url));
+            $data['cover_url'] = $this->storage->buildUrl($coverPath);
         }
 
         $book->update($data);
@@ -130,9 +132,9 @@ class BookController extends Controller
             $bookFile = $request->file('book_file');
             $storagePath = $this->makeBookFilePath($bookFile, $book->uuid);
 
-            $this->uploadFileToFirebase($bookFile, $storagePath);
-            $this->deleteFirebaseObject($this->extractFirebasePath($book->url));
-            $data['url'] = $this->buildFirebaseUrl($storagePath);
+            $this->storage->upload($bookFile, $storagePath);
+            $this->storage->delete($this->storage->extractPath($book->url));
+            $data['url'] = $this->storage->buildUrl($storagePath);
         }
 
         $book->update($data);
@@ -149,7 +151,7 @@ class BookController extends Controller
                 $query->where('title', 'like', "%{$search}%");
             })
             ->latest()
-            ->limit(20) // Batasi biar gak berat, ntar pake search aja
+            ->limit(20)
             ->get(['id', 'title']);
 
         return response()->json($books);
@@ -196,121 +198,5 @@ class BookController extends Controller
     private function makeBookThumbnailPath(string $uuid): string
     {
         return "books/{$uuid}/thumbnail.webp";
-    }
-
-    private function uploadFileToFirebase(UploadedFile $file, string $path): void
-    {
-        Firebase::storage()->getBucket()->upload(
-            fopen($file->getPathname(), 'r'),
-            ['name' => $path]
-        );
-    }
-
-    private function uploadCoverToFirebaseAsWebp(UploadedFile $file, string $path): void
-    {
-        if (! function_exists('imagewebp')) {
-            throw ValidationException::withMessages([
-                'cover_url' => 'Server belum mendukung kompresi gambar ke WebP.',
-            ]);
-        }
-
-        $image = $this->createImageResourceFromUploadedCover($file);
-        $temporaryWebpPath = tempnam(sys_get_temp_dir(), 'book-cover-');
-
-        if ($temporaryWebpPath === false) {
-            imagedestroy($image);
-
-            throw ValidationException::withMessages([
-                'cover_url' => 'Gagal menyiapkan file cover sementara.',
-            ]);
-        }
-
-        try {
-            if (function_exists('imagepalettetotruecolor')) {
-                imagepalettetotruecolor($image);
-            }
-
-            imagealphablending($image, true);
-            imagesavealpha($image, true);
-
-            if (! imagewebp($image, $temporaryWebpPath, 80)) {
-                throw ValidationException::withMessages([
-                    'cover_url' => 'Gagal mengompres cover buku ke format WebP.',
-                ]);
-            }
-
-            Firebase::storage()->getBucket()->upload(
-                fopen($temporaryWebpPath, 'r'),
-                ['name' => $path]
-            );
-        } finally {
-            imagedestroy($image);
-
-            if (is_file($temporaryWebpPath)) {
-                unlink($temporaryWebpPath);
-            }
-        }
-    }
-
-    private function createImageResourceFromUploadedCover(UploadedFile $file): \GdImage
-    {
-        $mimeType = $file->getMimeType();
-        $pathname = $file->getPathname();
-
-        $image = match ($mimeType) {
-            'image/jpeg', 'image/jpg' => imagecreatefromjpeg($pathname),
-            'image/png' => imagecreatefrompng($pathname),
-            'image/gif' => imagecreatefromgif($pathname),
-            'image/webp' => function_exists('imagecreatefromwebp') ? imagecreatefromwebp($pathname) : false,
-            default => false,
-        };
-
-        if (! $image instanceof \GdImage) {
-            throw ValidationException::withMessages([
-                'cover_url' => 'Format cover buku tidak dapat diproses ke WebP.',
-            ]);
-        }
-
-        return $image;
-    }
-
-    private function buildFirebaseUrl(string $path): string
-    {
-        $bucketName = config('services.firebase.storage_bucket');
-
-        return "https://firebasestorage.googleapis.com/v0/b/{$bucketName}/o/".urlencode($path).'?alt=media';
-    }
-
-    private function extractFirebasePath(?string $url): ?string
-    {
-        if (! $url) {
-            return null;
-        }
-
-        $bucketName = config('services.firebase.storage_bucket');
-        $prefix = "https://firebasestorage.googleapis.com/v0/b/{$bucketName}/o/";
-
-        if (! str_contains($url, $prefix)) {
-            return null;
-        }
-
-        return urldecode(explode('?', str_replace($prefix, '', $url))[0]);
-    }
-
-    private function deleteFirebaseObject(?string $path): void
-    {
-        if (! $path) {
-            return;
-        }
-
-        try {
-            $object = Firebase::storage()->getBucket()->object($path);
-
-            if ($object->exists()) {
-                $object->delete();
-            }
-        } catch (\Exception $exception) {
-            Log::error('Firebase object deletion failed: '.$exception->getMessage());
-        }
     }
 }

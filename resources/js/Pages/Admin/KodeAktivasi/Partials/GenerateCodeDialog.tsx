@@ -9,7 +9,7 @@ import {
   Checkbox,
   Radio,
 } from "@material-tailwind/react";
-import { XCircleIcon, SearchIcon, Loader2Icon, HashIcon, Edit3Icon, Hammer, BookA, XIcon } from "lucide-react";
+import { SearchIcon, Loader2Icon, HashIcon, Edit3Icon, Hammer, XIcon, LayoutListIcon, LayoutGridIcon } from "lucide-react";
 import { toast } from "react-hot-toast";
 import axios from "axios";
 import { router } from "@inertiajs/react";
@@ -17,6 +17,7 @@ import { router } from "@inertiajs/react";
 interface Book {
   id: number;
   title: string;
+  thumbnail: string;
 }
 
 interface GenerateCodeDialogProps {
@@ -29,6 +30,7 @@ export default function GenerateCodeDialog({ open, setOpen }: GenerateCodeDialog
   const [isLoading, setIsLoading] = React.useState(false);
   const [selectedBooks, setSelectedBooks] = React.useState<number[]>([]);
   const [bookSearch, setBookSearch] = React.useState("");
+  const [bookViewMode, setBookViewMode] = React.useState<"list" | "grid">("list");
 
   // New States
   const [mode, setMode] = React.useState<"random" | "custom">("random");
@@ -286,6 +288,24 @@ export default function GenerateCodeDialog({ open, setOpen }: GenerateCodeDialog
                   <Typography variant="small" className="font-bold text-slate-700 dark:text-slate-300">
                     Pilih Buku ({selectedBooks.length} dipilih)
                   </Typography>
+                  <div className="flex items-center gap-1">
+                    <IconButton
+                      size="sm"
+                      variant={bookViewMode === "list" ? "solid" : "ghost"}
+                      color={bookViewMode === "list" ? "primary" : "secondary"}
+                      onClick={() => setBookViewMode("list")}
+                    >
+                      <LayoutListIcon className="h-4 w-4" />
+                    </IconButton>
+                    <IconButton
+                      size="sm"
+                      variant={bookViewMode === "grid" ? "solid" : "ghost"}
+                      color={bookViewMode === "grid" ? "primary" : "secondary"}
+                      onClick={() => setBookViewMode("grid")}
+                    >
+                      <LayoutGridIcon className="h-4 w-4" />
+                    </IconButton>
+                  </div>
                 </div>
                 <div className="relative">
                   <Input
@@ -298,42 +318,82 @@ export default function GenerateCodeDialog({ open, setOpen }: GenerateCodeDialog
                   <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 </div>
               </div>
-              <div className="max-h-48 overflow-y-auto border border-slate-200 dark:border-slate-800 rounded-lg p-2 bg-slate-50/50 dark:bg-slate-900/50 relative min-h-[100px]">
+              <div className="max-h-60 overflow-y-auto border border-slate-200 dark:border-slate-800 rounded-lg p-2 bg-slate-50/50 dark:bg-slate-900/50 relative min-h-[100px]">
                 {isLoading ? (
                   <div className="absolute inset-0 flex items-center justify-center bg-white/50 dark:bg-slate-900/50 z-10 backdrop-blur-[1px]">
                     <Loader2Icon className="h-6 w-6 animate-spin text-slate-500" />
                   </div>
                 ) : null}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
-                  {books.map((book) => (
-                    <Typography
-                      key={book.id}
-                      as="label"
-                      className={`flex items-center gap-2 truncate text-xs font-medium  p-2 rounded-md transition-colors cursor-pointer ${selectedBooks.includes(book.id)
-                        ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-800'
-                        : 'hover:bg-slate-100 dark:hover:bg-slate-800'
-                        }`}
-                    >
-                      <Checkbox
-                        id={`book-${book.id}`}
-                        checked={selectedBooks.includes(book.id)}
-                        className="p-0"
-                        onChange={() => toggleBook(book.id)} // handled by div click
+                {bookViewMode === "list" ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
+                    {books.map((book) => (
+                      <Typography
+                        key={book.id}
+                        as="label"
+                        className={`flex items-center gap-2 text-xs font-medium p-2 rounded-md transition-colors cursor-pointer ${selectedBooks.includes(book.id)
+                          ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-800'
+                          : 'hover:bg-slate-100 dark:hover:bg-slate-800'
+                          }`}
                       >
-                        <Checkbox.Indicator />
-                      </Checkbox>
-                      {book.title}
-                    </Typography>
-                  ))}
-                  {!isLoading && books.length === 0 && (
-                    <div className="p-4 text-center col-span-2">
-                      <Typography variant="small" className="text-slate-500 italic">
-                        {bookSearch ? "Buku tidak ditemukan." : "Tidak ada buku yang tersedia."}
+                        <Checkbox
+                          id={`book-${book.id}`}
+                          checked={selectedBooks.includes(book.id)}
+                          className="p-0 shrink-0"
+                          onChange={() => toggleBook(book.id)}
+                        >
+                          <Checkbox.Indicator />
+                        </Checkbox>
+                        <img
+                          src={book.thumbnail}
+                          alt={book.title}
+                          className="w-8 h-10 object-cover rounded shrink-0 bg-slate-200 dark:bg-slate-700"
+                        />
+                        <span className="truncate">{book.title}</span>
                       </Typography>
-                    </div>
-                  )}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                    {books.map((book) => (
+                      <div
+                        key={book.id}
+                        onClick={() => toggleBook(book.id)}
+                        className={`relative flex flex-col items-center gap-1 p-2 rounded-lg transition-colors cursor-pointer border ${selectedBooks.includes(book.id)
+                          ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 ring-1 ring-blue-300 dark:ring-blue-700'
+                          : 'border-transparent hover:bg-slate-100 dark:hover:bg-slate-800'
+                          }`}
+                      >
+                        <div className="absolute top-1 left-1">
+                          <Checkbox
+                            id={`book-grid-${book.id}`}
+                            checked={selectedBooks.includes(book.id)}
+                            className="p-0"
+                            onChange={() => toggleBook(book.id)}
+                          >
+                            <Checkbox.Indicator />
+                          </Checkbox>
+                        </div>
+                        <img
+                          src={book.thumbnail}
+                          alt={book.title}
+                          className="w-16 h-20 object-cover rounded-md bg-slate-200 dark:bg-slate-700 shadow-sm"
+                        />
+                        <Typography variant="small" className="text-[10px] font-medium text-center leading-tight line-clamp-2 w-full">
+                          {book.title}
+                        </Typography>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {!isLoading && books.length === 0 && (
+                  <div className="p-4 text-center">
+                    <Typography variant="small" className="text-slate-500 italic">
+                      {bookSearch ? "Buku tidak ditemukan." : "Tidak ada buku yang tersedia."}
+                    </Typography>
+                  </div>
+                )}
               </div>
             </div>
           </div>

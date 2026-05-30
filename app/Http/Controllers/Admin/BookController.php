@@ -143,7 +143,7 @@ class BookController extends Controller
             })
             ->latest()
             ->limit(20)
-            ->get(['id', 'title']);
+            ->get(['id', 'title', 'cover_url']);
 
         return response()->json($books);
     }

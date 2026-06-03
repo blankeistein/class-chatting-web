@@ -29,7 +29,10 @@ class BookController extends Controller
 
         $books = Book::query()
             ->when($search, function ($query, $search) {
-                $query->where('title', 'like', "%{$search}%");
+                $query->where(function ($q) use ($search) {
+                    $q->where('title', 'like', "%{$search}%")
+                      ->orWhere('uuid', 'like', "%{$search}%");
+                });
             })
             ->when(in_array($sortBy, ['title', 'created_at', 'updated_at']), function ($query) use ($sortBy, $sortDirection) {
                 $query->orderBy($sortBy, $sortDirection === 'asc' ? 'asc' : 'desc');

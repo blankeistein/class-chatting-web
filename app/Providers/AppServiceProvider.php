@@ -2,13 +2,13 @@
 
 namespace App\Providers;
 
-use App\Models\ActivationCode;
 use App\Models\Book;
+use App\Models\District;
+use App\Models\Province;
+use App\Models\Regency;
 use App\Models\User;
-use App\Models\Video;
-use App\Policies\ActivationCodePolicy;
-use App\Policies\UserPolicy;
-use App\Policies\VideoPolicy;
+use App\Models\Village;
+use App\Policies\RegionPolicy;
 use Dedoc\Scramble\Scramble;
 use Google\Cloud\Firestore\FirestoreClient;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -103,6 +103,11 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('manageSchools', function (User $user): bool {
             return $user->canManageUsers();
         });
+
+        Gate::policy(Province::class, RegionPolicy::class);
+        Gate::policy(Regency::class, RegionPolicy::class);
+        Gate::policy(District::class, RegionPolicy::class);
+        Gate::policy(Village::class, RegionPolicy::class);
 
         RateLimiter::for('login', function (Request $request) {
             return [

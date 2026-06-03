@@ -172,6 +172,8 @@ class RegionController extends Controller
 
     public function storeProvince(ProvinceDataRequest $request): RedirectResponse
     {
+        $this->authorize('create', Province::class);
+
         $province = Province::query()->create($request->validated());
 
         return $this->redirectToPage('admin.regions.provinces.index', 'Provinsi berhasil ditambahkan.');
@@ -179,6 +181,8 @@ class RegionController extends Controller
 
     public function updateProvince(ProvinceDataRequest $request, Province $province): RedirectResponse
     {
+        $this->authorize('update', $province);
+
         $province->update($request->validated());
 
         return $this->redirectToPage('admin.regions.provinces.index', 'Provinsi berhasil diperbarui.');
@@ -186,6 +190,8 @@ class RegionController extends Controller
 
     public function destroyProvince(Province $province): RedirectResponse
     {
+        $this->authorize('delete', $province);
+
         $province->delete();
 
         return $this->redirectToPage('admin.regions.provinces.index', 'Provinsi berhasil dihapus.');
@@ -193,6 +199,8 @@ class RegionController extends Controller
 
     public function storeRegency(RegencyDataRequest $request): RedirectResponse
     {
+        $this->authorize('create', Regency::class);
+
         Regency::query()->create($request->validated());
 
         return $this->redirectToPage('admin.regions.regencies.index', 'Kabupaten atau kota berhasil ditambahkan.');
@@ -200,6 +208,8 @@ class RegionController extends Controller
 
     public function updateRegency(RegencyDataRequest $request, Regency $regency): RedirectResponse
     {
+        $this->authorize('update', $regency);
+
         $regency->update($request->validated());
 
         return $this->redirectToPage('admin.regions.regencies.index', 'Kabupaten atau kota berhasil diperbarui.');
@@ -207,6 +217,8 @@ class RegionController extends Controller
 
     public function destroyRegency(Regency $regency): RedirectResponse
     {
+        $this->authorize('delete', $regency);
+
         $regency->delete();
 
         return $this->redirectToPage('admin.regions.regencies.index', 'Kabupaten atau kota berhasil dihapus.');
@@ -214,6 +226,8 @@ class RegionController extends Controller
 
     public function storeDistrict(DistrictDataRequest $request): RedirectResponse
     {
+        $this->authorize('create', District::class);
+
         District::query()->create($request->validated());
 
         return $this->redirectToPage(
@@ -224,6 +238,8 @@ class RegionController extends Controller
 
     public function updateDistrict(DistrictDataRequest $request, District $district): RedirectResponse
     {
+        $this->authorize('update', $district);
+
         $district->update($request->validated());
 
         return $this->redirectToPage(
@@ -234,6 +250,8 @@ class RegionController extends Controller
 
     public function destroyDistrict(District $district): RedirectResponse
     {
+        $this->authorize('delete', $district);
+
         $district->delete();
 
         return $this->redirectToPage('admin.regions.districts.index', 'Kecamatan berhasil dihapus.');
@@ -241,6 +259,8 @@ class RegionController extends Controller
 
     public function storeVillage(VillageDataRequest $request): RedirectResponse
     {
+        $this->authorize('create', Village::class);
+
         Village::query()->create($request->validated());
 
         return $this->redirectToPage(
@@ -251,6 +271,8 @@ class RegionController extends Controller
 
     public function updateVillage(VillageDataRequest $request, Village $village): RedirectResponse
     {
+        $this->authorize('update', $village);
+
         $village->update($request->validated());
 
         return $this->redirectToPage(
@@ -261,6 +283,8 @@ class RegionController extends Controller
 
     public function destroyVillage(Village $village): RedirectResponse
     {
+        $this->authorize('delete', $village);
+
         $village->delete();
 
         return $this->redirectToPage('admin.regions.villages.index', 'Desa berhasil dihapus.');

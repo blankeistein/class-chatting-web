@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\RoleEnum;
 use App\Notifications\ResetPasswordNotification;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -40,6 +41,7 @@ class User extends Authenticatable implements MustVerifyEmail
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'role' => RoleEnum::class,
         ];
     }
 
@@ -84,5 +86,30 @@ class User extends Authenticatable implements MustVerifyEmail
     public function sendPasswordResetNotification($token): void
     {
         $this->notify(new ResetPasswordNotification($token));
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === RoleEnum::Admin;
+    }
+
+    public function isStaff(): bool
+    {
+        return $this->role === RoleEnum::Staff;
+    }
+
+    public function isUser(): bool
+    {
+        return $this->role === RoleEnum::User;
+    }
+
+    public function canManageUsers(): bool
+    {
+        return $this->role?->canManageUsers() ?? false;
+    }
+
+    public function canManageContent(): bool
+    {
+        return $this->role?->canManageContent() ?? false;
     }
 }

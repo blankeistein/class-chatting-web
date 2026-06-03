@@ -15,6 +15,7 @@ import { Head, router, useForm } from "@inertiajs/react";
 import { ArrowLeftIcon, SaveIcon, UserIcon, LockIcon, MailIcon, PhoneIcon, AlertCircleIcon } from "lucide-react";
 import { toast, Toaster } from "react-hot-toast";
 import { PageHeader } from "@/Components/PageHeader";
+import { ROLES, ROLE_LABELS } from "@/constants/roles";
 
 interface User {
   id: number;
@@ -161,11 +162,14 @@ export default function Edit({ user }: { user: User }) {
                     onValueChange={(val) => setData("role", val)}
                   >
                     <Select.Trigger placeholder="Pilih Role">
-                      {() => data.role === 'admin' ? "Admin" : "User"}
+                      {() => ROLE_LABELS[data.role as keyof typeof ROLE_LABELS] || "Pilih Role"}
                     </Select.Trigger>
                     <Select.List>
-                      <Select.Option value="admin">Admin</Select.Option>
-                      <Select.Option value="user">User</Select.Option>
+                      <Select.Option value={ROLES.ADMIN}>{ROLE_LABELS[ROLES.ADMIN]}</Select.Option>
+                      <Select.Option value={ROLES.STAFF}>{ROLE_LABELS[ROLES.STAFF]}</Select.Option>
+                      <Select.Option value={ROLES.TEACHER}>{ROLE_LABELS[ROLES.TEACHER]}</Select.Option>
+                      <Select.Option value={ROLES.STUDENT}>{ROLE_LABELS[ROLES.STUDENT]}</Select.Option>
+                      <Select.Option value={ROLES.USER}>{ROLE_LABELS[ROLES.USER]}</Select.Option>
                     </Select.List>
                   </Select>
                   {errors.role && (

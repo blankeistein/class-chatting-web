@@ -11,6 +11,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Enum;
 use Inertia\Inertia;
@@ -138,6 +139,14 @@ class ActivationCodeController extends Controller
                         'model_type' => 'book',
                     ]);
                 }
+
+                Log::info('Activation code created', [
+                    'code' => $codeStr,
+                    'tier' => $request->tier,
+                    'type' => $request->type,
+                    'created_by' => Auth::id(),
+                    'book_ids' => $request->book_ids,
+                ]);
             }
         });
 
@@ -165,6 +174,15 @@ class ActivationCodeController extends Controller
     public function destroy($id): RedirectResponse
     {
         $activationCode = ActivationCode::findOrFail($id);
+
+        $this->authorize('delete', $activationCode);
+
+        Log::info('Activation code deleted', [
+            'code' => $activationCode->code,
+            'id' => $activationCode->id,
+            'deleted_by' => Auth::id(),
+        ]);
+
         $activationCode->delete();
 
         return redirect()->back()->with('success', 'Kode aktivasi berhasil dihapus.');
@@ -185,6 +203,18 @@ class ActivationCodeController extends Controller
     public function bulkDelete(Request $request): RedirectResponse
     {
         $ids = $request->input('ids', []);
+        $codes = ActivationCode::whereIn('id', $ids)->get();
+
+        foreach ($codes as $code) {
+            $this->authorize('delete', $code);
+        }
+
+        Log::info('Bulk activation codes deleted', [
+            'count' => count($ids),
+            'ids' => $ids,
+            'deleted_by' => Auth::id(),
+        ]);
+
         ActivationCode::whereIn('id', $ids)->delete();
 
         return redirect()->back()->with('success', count($ids).' kode aktivasi berhasil dihapus.');

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\RoleEnum;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\UserBook;
@@ -22,13 +23,14 @@ class UserController extends Controller
     {
         $query = User::query();
 
-        // Search by name, email, or username
+        // Search by name, email, username, or firebase_uid
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhere('username', 'like', "%{$search}%");
+                    ->orWhere('username', 'like', "%{$search}%")
+                    ->orWhere('firebase_uid', 'like', "%{$search}%");
             });
         }
 
@@ -78,15 +80,23 @@ class UserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        $this->authorize('create', User::class);
+
+        $allowedRoles = RoleEnum::values();
+
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'username' => 'nullable|string|max:255|unique:users',
             'phone' => 'nullable|string|max:20',
             'password' => 'required|string|min:8|confirmed',
-            'role' => 'required|string|in:admin,user',
+            'role' => ['required', 'string', Rule::in($allowedRoles)],
             'is_active' => 'boolean',
         ]);
+
+        // Check if user can assign this role
+        $tempUser = new User;
+        $this->authorize('changeRole', [$tempUser, $request->role]);
 
         User::create([
             'name' => $request->name,
@@ -123,15 +133,24 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user): RedirectResponse
     {
+        $this->authorize('update', $user);
+
+        $allowedRoles = RoleEnum::values();
+
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'username' => ['nullable', 'string', 'max:255', Rule::unique('users')->ignore($user->id)],
             'phone' => 'nullable|string|max:20',
             'password' => 'nullable|string|min:8|confirmed',
-            'role' => 'required|string|in:admin,user',
+            'role' => ['required', 'string', Rule::in($allowedRoles)],
             'is_active' => 'boolean',
         ]);
+
+        // Check if user can change to this role
+        if ($request->role !== $user->role) {
+            $this->authorize('changeRole', [$user, $request->role]);
+        }
 
         $data = [
             'name' => $request->name,
@@ -156,10 +175,7 @@ class UserController extends Controller
      */
     public function destroy(User $user): RedirectResponse
     {
-        // Prevent deleting yourself
-        if ($user->id === Auth::id()) {
-            return redirect()->back()->withErrors('Anda tidak dapat menghapus akun Anda sendiri.');
-        }
+        $this->authorize('delete', $user);
 
         $user->delete();
 

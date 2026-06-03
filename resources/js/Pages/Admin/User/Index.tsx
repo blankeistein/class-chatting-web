@@ -289,7 +289,7 @@ export default function Index({ users: paginatedUsers, filters }: { users: any, 
                 </Typography>
                 <Input
                   id="cari"
-                  placeholder="Cari nama, email, atau username..."
+                  placeholder="Cari nama, email, username, atau Firebase UID..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   onKeyDown={handleSearchKeyPress}

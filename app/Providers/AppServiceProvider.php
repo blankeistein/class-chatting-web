@@ -2,8 +2,11 @@
 
 namespace App\Providers;
 
+use App\Models\ActivationCode;
 use App\Models\Book;
 use App\Models\User;
+use App\Policies\ActivationCodePolicy;
+use App\Policies\UserPolicy;
 use Dedoc\Scramble\Scramble;
 use Google\Cloud\Firestore\FirestoreClient;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -64,6 +67,10 @@ class AppServiceProvider extends ServiceProvider
             'user' => User::class,
         ]);
 
+        // Register policies
+        Gate::policy(ActivationCode::class, ActivationCodePolicy::class);
+        Gate::policy(User::class, UserPolicy::class);
+
         Scramble::configure()
             ->routes(function (Route $route): bool {
                 return Str::startsWith($route->uri(), ['api/v1', 'api/v2', 'api/firebase', 'private-api']);
@@ -76,6 +83,43 @@ class AppServiceProvider extends ServiceProvider
             }
 
             return $user !== null && in_array($user->email, (array) config('app.development_email', []), true);
+        });
+
+        // Role-based authorization gates
+        Gate::define('viewAdmin', function (User $user): bool {
+            return $user->isAdmin();
+        });
+
+        Gate::define('manageUsers', function (User $user): bool {
+            return $user->canManageUsers();
+        });
+
+        Gate::define('manageContent', function (User $user): bool {
+            return $user->canManageContent();
+        });
+
+        Gate::define('manageBooks', function (User $user): bool {
+            return $user->canManageContent();
+        });
+
+        Gate::define('manageVideos', function (User $user): bool {
+            return $user->canManageContent();
+        });
+
+        Gate::define('manageActivationCodes', function (User $user): bool {
+            return $user->isAdmin();
+        });
+
+        Gate::define('manageSettings', function (User $user): bool {
+            return $user->isAdmin();
+        });
+
+        Gate::define('viewReports', function (User $user): bool {
+            return $user->canManageUsers();
+        });
+
+        Gate::define('manageSchools', function (User $user): bool {
+            return $user->canManageUsers();
         });
 
         RateLimiter::for('login', function (Request $request) {

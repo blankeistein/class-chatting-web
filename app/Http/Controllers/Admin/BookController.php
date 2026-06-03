@@ -31,7 +31,7 @@ class BookController extends Controller
             ->when($search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('title', 'like', "%{$search}%")
-                      ->orWhere('uuid', 'like', "%{$search}%");
+                        ->orWhere('uuid', 'like', "%{$search}%");
                 });
             })
             ->when(in_array($sortBy, ['title', 'created_at', 'updated_at']), function ($query) use ($sortBy, $sortDirection) {
@@ -66,6 +66,8 @@ class BookController extends Controller
 
     public function store(BookStoreRequest $request)
     {
+        $this->authorize('create', Book::class);
+
         $data = $request->safe()->only(['title', 'uuid', 'type', 'tags', 'url', 'version']);
         $data['uuid'] = filled($data['uuid'] ?? null) ? $data['uuid'] : (string) Str::uuid();
 
@@ -102,6 +104,8 @@ class BookController extends Controller
     {
         $book = Book::findOrFail($id);
 
+        $this->authorize('update', $book);
+
         $data = $request->safe()->only(['title', 'type', 'tags']);
 
         if ($request->hasFile('cover_url')) {
@@ -129,6 +133,9 @@ class BookController extends Controller
     public function uploadFile(BookUploadFileRequest $request, string $id)
     {
         $book = Book::findOrFail($id);
+
+        $this->authorize('update', $book);
+
         $data = $request->safe()->only(['url', 'version']);
 
         $book->update($data);
@@ -154,6 +161,9 @@ class BookController extends Controller
     public function destroy(string $id)
     {
         $book = Book::findOrFail($id);
+
+        $this->authorize('delete', $book);
+
         $book->delete();
 
         return redirect()->back()->with('success', 'Buku berhasil dihapus.');

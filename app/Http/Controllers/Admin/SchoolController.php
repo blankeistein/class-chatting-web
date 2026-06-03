@@ -91,6 +91,8 @@ class SchoolController extends Controller
 
     public function store(SchoolDataRequest $request): RedirectResponse
     {
+        $this->authorize('create', School::class);
+
         School::query()->create($request->validated());
 
         return redirect()->route('admin.schools.index')->with('success', 'Sekolah berhasil ditambahkan.');
@@ -117,6 +119,8 @@ class SchoolController extends Controller
 
     public function update(SchoolDataRequest $request, School $school): RedirectResponse
     {
+        $this->authorize('update', $school);
+
         $school->update($request->validated());
 
         return redirect()->route('admin.schools.index')->with('success', 'Sekolah berhasil diperbarui.');
@@ -124,6 +128,8 @@ class SchoolController extends Controller
 
     public function destroy(School $school): RedirectResponse
     {
+        $this->authorize('delete', $school);
+
         $school->delete();
 
         return redirect()->back()->with('success', 'Sekolah berhasil dihapus.');
@@ -131,6 +137,8 @@ class SchoolController extends Controller
 
     public function bulkDelete(Request $request): RedirectResponse
     {
+        $this->authorize('delete', School::class);
+
         $validated = $request->validate([
             'ids' => ['required', 'array', 'min:1'],
             'ids.*' => ['integer', 'exists:schools,id'],
@@ -193,6 +201,8 @@ class SchoolController extends Controller
 
     public function import(SchoolImportRequest $request): RedirectResponse
     {
+        $this->authorize('create', School::class);
+
         $file = $request->file('file');
 
         if (! $file instanceof UploadedFile) {

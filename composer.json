@@ -10,7 +10,6 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
-        "anhskohbo/no-captcha": "^3.8",
         "dedoc/scramble": "^0.13.8",
         "google/cloud-firestore": "^2.1",
         "inertiajs/inertia-laravel": "^2.0",

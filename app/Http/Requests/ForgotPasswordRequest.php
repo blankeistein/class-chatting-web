@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\TurnstileRule;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -21,8 +22,8 @@ class ForgotPasswordRequest extends FormRequest
             'email' => ['required', 'email', 'max:255'],
         ];
 
-        if (config('services.nocaptcha.sitekey')) {
-            $rules['g-recaptcha-response'] = 'required|captcha';
+        if (config('services.turnstile.sitekey')) {
+            $rules['cf-turnstile-response'] = ['required', new TurnstileRule];
         }
 
         return $rules;
@@ -37,8 +38,7 @@ class ForgotPasswordRequest extends FormRequest
             'email.required' => 'Email wajib diisi.',
             'email.email' => 'Email harus berupa alamat email yang valid.',
             'email.max' => 'Email maksimal 255 karakter.',
-            'g-recaptcha-response.required' => 'Mohon verifikasi bahwa kamu bukan robot.',
-            'g-recaptcha-response.captcha' => 'Captcha error! Coba lagi nanti atau hubungi admin.',
+            'cf-turnstile-response.required' => 'Mohon verifikasi bahwa kamu bukan robot.',
         ];
     }
 }

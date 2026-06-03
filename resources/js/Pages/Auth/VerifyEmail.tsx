@@ -4,15 +4,15 @@ import { MailCheck } from "lucide-react";
 import { FormEvent, useRef } from "react";
 import { route } from "ziggy-js";
 import toast, { Toaster } from "react-hot-toast";
-import ReCAPTCHA from "react-google-recaptcha";
+import { Turnstile, TurnstileInstance } from "@marsidev/react-turnstile";
 
 export default function VerifyEmail() {
   const page = usePage();
   const { data, setData, post, processing } = useForm({
-    "g-recaptcha-response": "",
+    "cf-turnstile-response": "",
   });
-  const recaptchaSiteKey = page.props?.recaptcha_site_key as string | null;
-  const recaptchaRef = useRef<ReCAPTCHA>(null);
+  const turnstileSiteKey = page.props?.turnstile_site_key as string | null;
+  const turnstileRef = useRef<TurnstileInstance>(null);
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -23,15 +23,15 @@ export default function VerifyEmail() {
         if (status) {
           toast.success(status);
         }
-        recaptchaRef.current?.reset();
-        setData("g-recaptcha-response", "");
+        turnstileRef.current?.reset();
+        setData("cf-turnstile-response", "");
       },
       onError: (errors) => {
         Object.values(errors).forEach((error) => {
           toast.error(error);
         });
-        recaptchaRef.current?.reset();
-        setData("g-recaptcha-response", "");
+        turnstileRef.current?.reset();
+        setData("cf-turnstile-response", "");
       },
     });
   };
@@ -68,12 +68,12 @@ export default function VerifyEmail() {
                 mengirim ulang.
               </Typography>
               <form className="mt-6" onSubmit={handleSubmit}>
-                {recaptchaSiteKey && (
-                  <ReCAPTCHA
-                    ref={recaptchaRef}
-                    sitekey={recaptchaSiteKey}
-                    onChange={(value) => {
-                      setData("g-recaptcha-response", value || "");
+                {turnstileSiteKey && (
+                  <Turnstile
+                    ref={turnstileRef}
+                    siteKey={turnstileSiteKey}
+                    onSuccess={(token) => {
+                      setData("cf-turnstile-response", token);
                     }}
                     className="mb-6"
                   />

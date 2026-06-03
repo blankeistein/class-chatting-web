@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\RoleEnum;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -16,7 +17,7 @@ class NotificationController extends Controller
             return $notifications;
         }
 
-        if (Auth::user()->role === 'admin') {
+        if (Auth::user()->role === RoleEnum::Admin) {
             return Inertia::render('Admin/Notifications', [
                 'notifications' => $notifications,
             ]);

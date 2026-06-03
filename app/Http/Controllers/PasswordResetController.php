@@ -19,7 +19,9 @@ class PasswordResetController extends Controller
 {
     public function forgotPassword(): Response
     {
-        return Inertia::render('Auth/ForgotPassword');
+        return Inertia::render('Auth/ForgotPassword', [
+            'turnstile_site_key' => config('services.turnstile.sitekey'),
+        ]);
     }
 
     public function sendResetLink(ForgotPasswordRequest $request): RedirectResponse
@@ -40,6 +42,7 @@ class PasswordResetController extends Controller
         return Inertia::render('Auth/ResetPassword', [
             'token' => $token,
             'email' => request()->query('email', ''),
+            'turnstile_site_key' => config('services.turnstile.sitekey'),
         ]);
     }
 

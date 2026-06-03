@@ -20,7 +20,9 @@ class EmailVerificationController extends Controller
             return to_route('home');
         }
 
-        return Inertia::render('Auth/VerifyEmail');
+        return Inertia::render('Auth/VerifyEmail',[
+            'turnstile_site_key' => config('services.turnstile.sitekey'),
+        ]);
     }
 
     public function verify(EmailVerificationRequest $request): RedirectResponse

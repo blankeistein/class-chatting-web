@@ -4,15 +4,15 @@ import { ArrowLeft } from "lucide-react";
 import { FormEvent } from "react";
 import { route } from "ziggy-js";
 import toast, { Toaster } from "react-hot-toast";
-import ReCAPTCHA from "react-google-recaptcha";
+import { Turnstile } from "@marsidev/react-turnstile";
 
 export default function ForgotPassword() {
   const page = usePage();
   const { data, setData, post, processing } = useForm({
     email: "",
-    "g-recaptcha-response": "",
+    "cf-turnstile-response": "",
   });
-  const recaptchaSiteKey = page.props?.recaptcha_site_key as string | null;
+  const turnstileSiteKey = page.props?.turnstile_site_key as string | null;
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -79,11 +79,11 @@ export default function ForgotPassword() {
                     placeholder="email@kamu.com"
                   />
                 </div>
-                {recaptchaSiteKey && (
-                  <ReCAPTCHA
-                    sitekey={recaptchaSiteKey}
-                    onChange={(value) => {
-                      setData("g-recaptcha-response", value || "");
+                {turnstileSiteKey && (
+                  <Turnstile
+                    siteKey={turnstileSiteKey}
+                    onSuccess={(token) => {
+                      setData("cf-turnstile-response", token);
                     }}
                     className="mb-6"
                   />

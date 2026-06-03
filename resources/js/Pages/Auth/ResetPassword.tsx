@@ -11,7 +11,7 @@ import { EyeClosedIcon, EyeIcon } from "lucide-react";
 import { FormEvent, useState } from "react";
 import { route } from "ziggy-js";
 import toast, { Toaster } from "react-hot-toast";
-import ReCAPTCHA from "react-google-recaptcha";
+import { Turnstile } from "@marsidev/react-turnstile";
 
 interface ResetPasswordProps {
   token: string;
@@ -25,11 +25,11 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
     email,
     password: "",
     password_confirmation: "",
-    "g-recaptcha-response": "",
+    "cf-turnstile-response": "",
   });
   const [passwordType, setPasswordType] = useState("password");
   const [confirmType, setConfirmType] = useState("password");
-  const recaptchaSiteKey = page.props?.recaptcha_site_key as string | null;
+  const turnstileSiteKey = page.props?.turnstile_site_key as string | null;
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -178,11 +178,11 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
                     </Input.Icon>
                   </Input>
                 </div>
-                {recaptchaSiteKey && (
-                  <ReCAPTCHA
-                    sitekey={recaptchaSiteKey}
-                    onChange={(value) => {
-                      setData("g-recaptcha-response", value || "");
+                {turnstileSiteKey && (
+                  <Turnstile
+                    siteKey={turnstileSiteKey}
+                    onSuccess={(token) => {
+                      setData("cf-turnstile-response", token);
                     }}
                     className="mb-6"
                   />

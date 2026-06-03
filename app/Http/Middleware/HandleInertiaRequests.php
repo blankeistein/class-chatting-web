@@ -46,7 +46,6 @@ class HandleInertiaRequests extends Middleware
                 'unread_notifications_count' => $request->user()->unreadNotifications()->count(),
             ] : null,
             'auth.firebase' => fn () => $request->session()->get('firebase_auth'),
-            'recaptcha_site_key' => config('services.nocaptcha.sitekey'),
             'flash' => [
                 'status' => fn () => $request->session()->get('status'),
             ],

@@ -45,8 +45,9 @@ return [
         'url' => env('HLS_SERVICE_URL'),
     ],
 
-    'nocaptcha' => [
-        'sitekey' => env('NOCAPTCHA_SITEKEY'),
+    'turnstile' => [
+        'sitekey' => env('TURNSTILE_SITEKEY'),
+        'secret' => env('TURNSTILE_SECRET'),
     ],
 
     'private_api' => [

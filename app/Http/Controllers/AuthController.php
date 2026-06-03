@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\RoleEnum;
 use App\Http\Requests\LoginRequest;
 use App\Models\User;
 use App\Services\FirebaseCustomTokenService;
@@ -29,7 +30,9 @@ class AuthController extends Controller
 
     public function login()
     {
-        return Inertia::render('Auth/Login');
+        return Inertia::render('Auth/Login', [
+            'turnstile_site_key' => config('services.turnstile.sitekey'),
+        ]);
     }
 
     public function loginAction(LoginRequest $request, FirebaseCustomTokenService $firebaseCustomTokenService)
@@ -68,7 +71,7 @@ class AuthController extends Controller
 
             $firebaseAuth = $firebaseCustomTokenService->issueFor($request->user());
 
-            if ($request->user()?->role === 'admin') {
+            if ($request->user()?->role === RoleEnum::Admin) {
                 return redirect()
                     ->intended(route('admin.dashboard'))
                     ->with('firebase_auth', $firebaseAuth);

@@ -5,17 +5,17 @@ import { FormEvent, useState } from "react";
 import { route } from "ziggy-js";
 import toast, { Toaster } from "react-hot-toast";
 import { syncFirebaseAuth } from "@/lib/firebase";
-import ReCAPTCHA from "react-google-recaptcha";
+import { Turnstile } from "@marsidev/react-turnstile";
 
 export default function Login() {
   const page = usePage();
   const { data, setData, post, processing } = useForm({
     email: "",
     password: "",
-    "g-recaptcha-response": ""
+    "cf-turnstile-response": ""
   });
   const [inputType, setInputType] = useState("password");
-  const recaptchaSiteKey = page.props?.recaptcha_site_key as string | null;
+  const turnstileSiteKey = page.props?.turnstile_site_key as string | null;
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -133,11 +133,11 @@ export default function Login() {
                     </Link>
                   </div>
                 </div>
-                {recaptchaSiteKey && (
-                  <ReCAPTCHA
-                    sitekey={recaptchaSiteKey}
-                    onChange={(value) => {
-                      setData('g-recaptcha-response', value || '');
+                {turnstileSiteKey && (
+                  <Turnstile
+                    siteKey={turnstileSiteKey}
+                    onSuccess={(token) => {
+                      setData('cf-turnstile-response', token);
                     }}
                     className="mb-6"
                   />

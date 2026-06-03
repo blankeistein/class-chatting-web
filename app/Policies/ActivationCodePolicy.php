@@ -7,6 +7,15 @@ use App\Models\User;
 
 class ActivationCodePolicy
 {
+    public function before(User $user, $ability): ?bool
+    {
+        if ($user->isAdmin()) {
+            return true; // Admin can perform any action
+        }
+
+        return null; // Defer to other methods for non-admin users
+    }
+
     /**
      * Determine whether the user can view any models.
      */
@@ -36,20 +45,6 @@ class ActivationCodePolicy
      */
     public function update(User $user, ActivationCode $activationCode): bool
     {
-        return $user->canManageContent();
-    }
-
-    /**
-     * Determine whether the user can delete the model.
-     */
-    public function delete(User $user, ActivationCode $activationCode): bool
-    {
-        // Admin can delete any activation code
-        if ($user->isAdmin()) {
-            return true;
-        }
-
-        // Staff can only delete activation codes they created
         if ($user->isStaff()) {
             return $activationCode->created_by === $user->id;
         }
@@ -58,18 +53,20 @@ class ActivationCodePolicy
     }
 
     /**
-     * Determine whether the user can restore the model.
+     * Determine whether the user can delete the model.
      */
-    public function restore(User $user, ActivationCode $activationCode): bool
+    public function delete(User $user, ActivationCode $activationCode): bool
     {
-        return $user->isAdmin();
+        // Staff can only delete activation codes they created
+        if ($user->isStaff()) {
+            return $activationCode->created_by === $user->id;
+        }
+
+        return false;
     }
 
-    /**
-     * Determine whether the user can permanently delete the model.
-     */
-    public function forceDelete(User $user, ActivationCode $activationCode): bool
+    public function export(User $user): bool
     {
-        return $user->isAdmin();
+        return $user->canManageContent();
     }
 }

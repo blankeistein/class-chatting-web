@@ -13,7 +13,13 @@
         rel="stylesheet">
 
     @viteReactRefresh
-    @routes
+    {{-- @dd(auth()->check()) --}}
+    @if (auth()->check() && in_array(auth()->user()->role, [\App\Enums\RoleEnum::Admin, \App\Enums\RoleEnum::Staff], true))
+        @routes
+    @else
+        @routes(['auth'])
+    @endif
+
     @vite(['resources/js/app.tsx', "resources/js/Pages/{$page['component']}.tsx"])
     @inertiaHead
 </head>

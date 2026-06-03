@@ -191,6 +191,9 @@ class ActivationCodeController extends Controller
     public function toggleActive($id): RedirectResponse
     {
         $activationCode = ActivationCode::findOrFail($id);
+
+        $this->authorize('update', $activationCode);
+
         $activationCode->update([
             'is_active' => ! $activationCode->is_active,
         ]);
@@ -222,6 +225,8 @@ class ActivationCodeController extends Controller
 
     public function bulkExport(Request $request)
     {
+        $this->authorize('export', ActivationCode::class);
+
         $ids = explode(',', $request->input('ids', ''));
         $codes = ActivationCode::whereIn('id', $ids)->with(['user', 'items.model'])->get();
 

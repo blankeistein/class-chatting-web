@@ -128,6 +128,8 @@ class VideoController extends Controller
      */
     public function edit(Video $video): Response
     {
+        $this->authorize('update', $video);
+
         return Inertia::render('Admin/Video/Edit', [
             'video' => $video,
         ]);
@@ -138,6 +140,8 @@ class VideoController extends Controller
      */
     public function update(VideoUpdateRequest $request, Video $video): RedirectResponse
     {
+        $this->authorize('update', $video);
+
         $validated = $request->validated();
 
         $video->update([
@@ -154,6 +158,8 @@ class VideoController extends Controller
      */
     public function uploadVideo(Request $request, Video $video): RedirectResponse
     {
+        $this->authorize('update', $video);
+
         $request->validate([
             'provider' => 'required|string|in:file,youtube',
             'storage_path' => 'required_if:provider,file|nullable|string|max:1024',
@@ -203,6 +209,8 @@ class VideoController extends Controller
      */
     public function uploadThumbnail(Request $request, Video $video): RedirectResponse
     {
+        $this->authorize('update', $video);
+
         $request->validate([
             'thumbnail_url' => 'required|string|url|max:2048',
         ], [
@@ -264,6 +272,8 @@ class VideoController extends Controller
      */
     public function syncHlsUrl(Video $video): RedirectResponse
     {
+        $this->authorize('update', $video);
+
         if ($video->provider !== VideoProviderEnum::Firebase) {
             return redirect()->back()->with('error', 'Hanya video Firebase yang bisa disinkronkan.');
         }
@@ -288,6 +298,8 @@ class VideoController extends Controller
      */
     public function destroy(Video $video): RedirectResponse
     {
+        $this->authorize('delete', $video);
+
         if ($video->provider === VideoProviderEnum::Firebase) {
             $this->deleteFirebaseObject($video->storage_path);
             $this->deleteFirebaseDirectory($this->makeHlsDirectory($video->slug));

@@ -7,6 +7,15 @@ use App\Models\User;
 
 class UserPolicy
 {
+    public function before(User $user, $ability): ?bool
+    {
+        if ($user->isAdmin()) {
+            return true; // Admin can perform any action
+        }
+
+        return null; // Defer to other methods for non-admin users
+    }
+
     /**
      * Determine whether the user can view any models.
      */
@@ -53,31 +62,10 @@ class UserPolicy
     }
 
     /**
-     * Determine whether the user can restore the model.
-     */
-    public function restore(User $user, User $model): bool
-    {
-        return $user->isAdmin();
-    }
-
-    /**
-     * Determine whether the user can permanently delete the model.
-     */
-    public function forceDelete(User $user, User $model): bool
-    {
-        return $user->isAdmin();
-    }
-
-    /**
      * Determine whether the user can change the role of the model.
      */
     public function changeRole(User $user, User $model, string $newRole): bool
     {
-        // Admin can change any role
-        if ($user->isAdmin()) {
-            return true;
-        }
-
         // Staff can only change roles to user, teacher, or student
         if ($user->isStaff()) {
             $allowedRoles = [

@@ -46,6 +46,11 @@ enum RoleEnum: string
         return in_array($this, [self::Admin, self::Staff], true);
     }
 
+    public function canManageVideo(): bool
+    {
+        return in_array($this, [self::Admin, self::Staff, self::Teacher], true);
+    }
+
     public static function values(): array
     {
         return array_column(self::cases(), 'value');

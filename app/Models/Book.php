@@ -20,8 +20,6 @@ class Book extends Model
         'version',
     ];
 
-    protected $appends = ['thumbnail'];
-
     public const TYPE_MATERI = 'materi';
 
     public const TYPE_PENILAIAN = 'penilaian';
@@ -56,5 +54,48 @@ class Book extends Model
     public function integrations(): HasMany
     {
         return $this->hasMany(BookIntegration::class);
+    }
+
+    /**
+     * Scope a query to filter books by type.
+     */
+    public function scopeByType($query, $type)
+    {
+        return $query->where('type', $type);
+    }
+
+    /**
+     * Scope a query to only include materi books.
+     */
+    public function scopeMateri($query)
+    {
+        return $query->where('type', self::TYPE_MATERI);
+    }
+
+    /**
+     * Scope a query to only include penilaian books.
+     */
+    public function scopePenilaian($query)
+    {
+        return $query->where('type', self::TYPE_PENILAIAN);
+    }
+
+    /**
+     * Scope a query to search books by title or uuid.
+     */
+    public function scopeSearch($query, $search)
+    {
+        return $query->where(function ($q) use ($search) {
+            $q->where('title', 'like', "%{$search}%")
+                ->orWhere('uuid', 'like', "%{$search}%");
+        });
+    }
+
+    /**
+     * Scope a query to find book by uuid.
+     */
+    public function scopeByUuid($query, $uuid)
+    {
+        return $query->where('uuid', $uuid);
     }
 }

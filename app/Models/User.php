@@ -27,10 +27,6 @@ class User extends Authenticatable implements MustVerifyEmail
         'is_active',
     ];
 
-    protected $appends = [
-        'image',
-    ];
-
     protected $hidden = [
         'password',
         'remember_token',
@@ -111,5 +107,42 @@ class User extends Authenticatable implements MustVerifyEmail
     public function canManageContent(): bool
     {
         return $this->role?->canManageContent() ?? false;
+    }
+
+    /**
+     * Scope a query to only include active users.
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    /**
+     * Scope a query to only include inactive users.
+     */
+    public function scopeInactive($query)
+    {
+        return $query->where('is_active', false);
+    }
+
+    /**
+     * Scope a query to filter users by role.
+     */
+    public function scopeByRole($query, $role)
+    {
+        return $query->where('role', $role);
+    }
+
+    /**
+     * Scope a query to search users by name, email, username, or firebase_uid.
+     */
+    public function scopeSearch($query, $search)
+    {
+        return $query->where(function ($q) use ($search) {
+            $q->where('name', 'like', "%{$search}%")
+                ->orWhere('email', 'like', "%{$search}%")
+                ->orWhere('username', 'like', "%{$search}%")
+                ->orWhere('firebase_uid', 'like', "%{$search}%");
+        });
     }
 }

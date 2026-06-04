@@ -165,14 +165,17 @@ class BookController extends Controller
     public function selection(Request $request)
     {
         $search = $request->input('search');
+        $cacheKey = 'books_selection_'.md5($search ?? 'all');
 
-        $books = Book::query()
-            ->when($search, function ($query, $search) {
-                $query->where('title', 'like', "%{$search}%");
-            })
-            ->latest()
-            ->limit(20)
-            ->get(['id', 'title', 'cover_url']);
+        $books = cache()->remember($cacheKey, 300, function () use ($search) {
+            return Book::query()
+                ->when($search, function ($query, $search) {
+                    $query->where('title', 'like', "%{$search}%");
+                })
+                ->latest()
+                ->limit(20)
+                ->get(['id', 'title', 'cover_url']);
+        });
 
         return response()->json($books);
     }

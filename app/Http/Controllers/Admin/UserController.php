@@ -60,7 +60,9 @@ class UserController extends Controller
 
         $perPage = (int) $request->input('perPage', 25);
 
-        $users = $query->paginate($perPage)->withQueryString();
+        $users = $query->with(['books:id,title,cover_url', 'metadata:id,user_id,key,value'])
+            ->paginate($perPage)
+            ->withQueryString();
 
         return Inertia::render('Admin/User/Index', [
             'users' => $users,
@@ -71,8 +73,14 @@ class UserController extends Controller
     /**
      * Show the form for creating a new user.
      */
-    public function create(): Response
+    public function create(): Response | RedirectResponse
     {
+        if (! Gate::allows('create', User::class)) {
+            return back()->withErrors([
+                'authorization' => 'Kamu tidak punya hak untuk menggunakan fitur ini.',
+            ]);
+        }
+
         return Inertia::render('Admin/User/Create');
     }
 
@@ -230,7 +238,10 @@ class UserController extends Controller
     public function books(Request $request, User $user): Response
     {
         $query = UserBook::where('user_id', $user->id)
-            ->with(['book', 'activationCode']);
+            ->with([
+                'book:id,uuid,title,cover_url,type',
+                'activationCode:id,code,type,tier,is_active',
+            ]);
 
         if ($request->filled('search')) {
             $search = $request->search;

@@ -127,7 +127,7 @@ class VideoController extends Controller
     /**
      * Show the form for editing the specified video.
      */
-    public function edit(Video $video): Response
+    public function edit(Video $video)
     {
         if (! Gate::allows('update', $video)) {
             return back()->withErrors([

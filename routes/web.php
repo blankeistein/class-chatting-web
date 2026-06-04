@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\RoleEnum;
 use App\Http\Controllers\Admin\ActivationCodeController;
 use App\Http\Controllers\Admin\Apps\AnakIndonesiaMenghafal\BookController as AnakIndonesiaMenghafalBookController;
 use App\Http\Controllers\Admin\Apps\ClassChatting\BookController as ClassChattingBookController;
@@ -18,12 +19,36 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\EmailVerificationController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PasswordResetController;
+use App\Http\Controllers\Teacher\DashboardController as TeacherDashboardController;
+use App\Http\Controllers\User\DashboardController as UserDashboardController;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', function () {
-    return view('index');
+    $dashboard_link = NULL;
+    switch(Auth::user()->role) {
+        case RoleEnum::Admin:
+        case RoleEnum::Staff:
+            $dashboard_link = route('admin.dashboard');
+            break;
+
+        case RoleEnum::Teacher:
+            $dashboard_link = route('teacher.dashboard');
+            break;
+        case RoleEnum::User:
+        case RoleEnum::Student:
+            $dashboard_link = route('user.dashboard');
+            break;
+        default:
+            $dashboard_link = NULL;
+            break;
+    }
+
+    return view('index', [
+        'dashboard_link' => $dashboard_link
+    ]);
 })->name('home');
 
 Route::get('login', [AuthController::class, 'login'])->name('login')->middleware('guest');
@@ -47,12 +72,26 @@ Route::middleware('auth')->group(function () {
     Route::put('notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
     Route::delete('notifications/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
 
+    Route::group(['prefix' => 'user', 'as' => 'user.'], function () {
+        Route::get('dashboard', [UserDashboardController::class, 'index'])->name('dashboard');
+        Route::get('book', [UserDashboardController::class, 'index'])->name('book');
+
+        Route::get('re-auth-firebase', [AuthController::class, 'authenticateFirebaseUser'])->name('authenticate-firebase-user');
+    });
+
+    Route::group(['prefix' => 'teacher', 'as' => 'teacher.'], function () {
+        Route::get('dashboard', [TeacherDashboardController::class, 'index'])->name('dashboard');
+        Route::get('students', [TeacherDashboardController::class, 'index'])->name('students');
+
+        Route::get('re-auth-firebase', [AuthController::class, 'authenticateFirebaseUser'])->name('authenticate-firebase-user');
+    });
+
     Route::group(['prefix' => Config::get('app.admin_path'), 'as' => 'admin.', 'middleware' => 'admin'], function () {
         Route::get('/', function () {
             return redirect()->route('admin.dashboard');
         });
 
-        Route::get('/re-auth-firebase', [AuthController::class, 'authenticateFirebaseUser'])->name('authenticate-firebase-user');
+        Route::get('re-auth-firebase', [AuthController::class, 'authenticateFirebaseUser'])->name('authenticate-firebase-user');
 
         Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 

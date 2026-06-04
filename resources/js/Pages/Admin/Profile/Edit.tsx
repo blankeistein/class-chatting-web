@@ -11,6 +11,7 @@ import {
 import AdminLayout from "@/Layouts/AdminLayout";
 import { Head, useForm, usePage } from "@inertiajs/react";
 import {
+  AtSign,
   CameraIcon,
   LockIcon,
   MailIcon,
@@ -118,7 +119,7 @@ export default function Edit({ user }: { user: User }) {
                   />
                   <IconButton
                     size="sm"
-                    className="absolute -bottom-1 -right-1 rounded-full"
+                    className="!absolute -bottom-1 -right-1 rounded-full"
                     color="primary"
                     onClick={() => fileInputRef.current?.click()}
                     type="button"
@@ -181,7 +182,9 @@ export default function Edit({ user }: { user: User }) {
                     onChange={(e) => profileForm.setData("username", e.target.value)}
                     isError={!!profileForm.errors.username}
                   >
-                    <Input.Icon><span className="text-sm font-bold">@</span></Input.Icon>
+                    <Input.Icon>
+                      <AtSign className="w-4 h-4" />
+                    </Input.Icon>
                   </Input>
                   {profileForm.errors.username && (
                     <Typography type="small" color="error" className="mt-1 block">

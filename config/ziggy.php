@@ -10,6 +10,12 @@ return [
             'password.email',
             'password.reset',
             'password.update',
+        ],
+        'user' => [
+            'user.*',
+        ],
+        'teacher' => [
+            'teacher.*',
         ]
     ]
 ];

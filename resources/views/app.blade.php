@@ -13,9 +13,14 @@
         rel="stylesheet">
 
     @viteReactRefresh
-    {{-- @dd(auth()->check()) --}}
-    @if (auth()->check() && in_array(auth()->user()->role, [\App\Enums\RoleEnum::Admin, \App\Enums\RoleEnum::Staff], true))
-        @routes
+    @if (auth()->check())
+        @if (in_array(auth()->user()->role, [\App\Enums\RoleEnum::Admin, \App\Enums\RoleEnum::Staff], true))
+            @routes
+        @elseif (in_array(auth()->user()->role, [\App\Enums\RoleEnum::Teacher], true))
+            @routes(['teacher', 'auth'])
+        @elseif (in_array(auth()->user()->role, [\App\Enums\RoleEnum::Student, \App\Enums\RoleEnum::User], true))
+            @routes(['user', 'auth'])
+        @endif
     @else
         @routes(['auth'])
     @endif

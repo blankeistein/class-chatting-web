@@ -56,7 +56,8 @@
     </style>
 </head>
 
-<body class="bg-neo-pinkish text-neo-dark min-h-screen w-full overflow-x-hidden flex flex-col font-neo selection:bg-neo-lime">
+<body
+    class="bg-neo-pinkish text-neo-dark min-h-screen w-full overflow-x-hidden flex flex-col font-neo selection:bg-neo-lime">
     <header class="flex-none p-4 md:p-6 flex justify-between items-center border-b-4 border-black bg-white">
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 bg-neo-yellow border-2 border-black flex items-center justify-center shadow-neo-sm">
@@ -75,7 +76,8 @@
 
                     <div id="profileMenuDropdown"
                         class="hidden absolute right-0 top-12 md:top-14 z-20 w-40 border-4 border-black bg-white shadow-neo p-1">
-                        <a href="{{ route('admin.dashboard') }}"
+
+                        <a href="{{ $dashboard_link }}"
                             class="w-full flex items-center gap-2 font-mono text-sm font-bold border-2 border-transparent hover:border-black px-3 py-2">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -112,7 +114,8 @@
         </div>
     </header>
 
-    <main class="flex-grow flex flex-col items-center justify-center p-4 w-full max-w-5xl mx-auto relative overflow-hidden">
+    <main
+        class="flex-grow flex flex-col items-center justify-center p-4 w-full max-w-5xl mx-auto relative overflow-hidden">
         <div
             class="absolute top-10 left-10 w-16 h-16 bg-purple-400 rounded-full border-4 border-black -z-10 opacity-50 hidden md:block">
         </div>

@@ -90,10 +90,6 @@ export default function RegionTablePage({
     });
   };
 
-  useEffect(() => {
-    applyFilters();
-  }, [sort, perPage, provinceId, regencyId, districtId]);
-
   return (
     <>
       <Head title={title} />

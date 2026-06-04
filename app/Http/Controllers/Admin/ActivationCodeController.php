@@ -176,7 +176,11 @@ class ActivationCodeController extends Controller
     {
         $activationCode = ActivationCode::findOrFail($id);
 
-        Gate::authorize('delete', $activationCode);
+        if (! Gate::allows('delete', $activationCode)) {
+            return back()->withErrors([
+                'authorization' => 'Kamu tidak punya hak untuk menggunakan fitur ini.',
+            ]);
+        }
 
         Log::info('Activation code deleted', [
             'code' => $activationCode->code,
@@ -193,7 +197,11 @@ class ActivationCodeController extends Controller
     {
         $activationCode = ActivationCode::findOrFail($id);
 
-        Gate::authorize('update', $activationCode);
+        if (! Gate::allows('update', $activationCode)) {
+            return back()->withErrors([
+                'authorization' => 'Kamu tidak punya hak untuk menggunakan fitur ini.',
+            ]);
+        }
 
         $activationCode->update([
             'is_active' => ! $activationCode->is_active,
@@ -210,7 +218,11 @@ class ActivationCodeController extends Controller
         $codes = ActivationCode::whereIn('id', $ids)->get();
 
         foreach ($codes as $code) {
-            Gate::authorize('delete', $code);
+            if (! Gate::allows('delete', $code)) {
+                return back()->withErrors([
+                    'authorization' => 'Kamu tidak punya hak untuk menggunakan fitur ini.',
+                ]);
+            }
         }
 
         Log::info('Bulk activation codes deleted', [
@@ -226,7 +238,11 @@ class ActivationCodeController extends Controller
 
     public function bulkExport(Request $request)
     {
-        Gate::authorize('export', ActivationCode::class);
+        if (! Gate::allows('export', ActivationCode::class)) {
+            return back()->withErrors([
+                'authorization' => 'Kamu tidak punya hak untuk menggunakan fitur ini.',
+            ]);
+        }
 
         $ids = explode(',', $request->input('ids', ''));
         $codes = ActivationCode::whereIn('id', $ids)->with(['user', 'items.model'])->get();

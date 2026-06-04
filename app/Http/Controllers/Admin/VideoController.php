@@ -129,7 +129,11 @@ class VideoController extends Controller
      */
     public function edit(Video $video): Response
     {
-        Gate::authorize('update', $video);
+        if (! Gate::allows('update', $video)) {
+            return back()->withErrors([
+                'authorization' => 'Kamu tidak punya hak untuk menggunakan fitur ini.',
+            ]);
+        }
 
         return Inertia::render('Admin/Video/Edit', [
             'video' => $video,
@@ -141,7 +145,11 @@ class VideoController extends Controller
      */
     public function update(VideoUpdateRequest $request, Video $video): RedirectResponse
     {
-        Gate::authorize('update', $video);
+        if (! Gate::allows('update', $video)) {
+            return back()->withErrors([
+                'authorization' => 'Kamu tidak punya hak untuk menggunakan fitur ini.',
+            ]);
+        }
 
         $validated = $request->validated();
 
@@ -159,7 +167,11 @@ class VideoController extends Controller
      */
     public function uploadVideo(Request $request, Video $video): RedirectResponse
     {
-        Gate::authorize('update', $video);
+        if (! Gate::allows('update', $video)) {
+            return back()->withErrors([
+                'authorization' => 'Kamu tidak punya hak untuk menggunakan fitur ini.',
+            ]);
+        }
 
         $request->validate([
             'provider' => 'required|string|in:file,youtube',
@@ -210,7 +222,11 @@ class VideoController extends Controller
      */
     public function uploadThumbnail(Request $request, Video $video): RedirectResponse
     {
-        Gate::authorize('update', $video);
+        if (! Gate::allows('update', $video)) {
+            return back()->withErrors([
+                'authorization' => 'Kamu tidak punya hak untuk menggunakan fitur ini.',
+            ]);
+        }
 
         $request->validate([
             'thumbnail_url' => 'required|string|url|max:2048',
@@ -273,7 +289,11 @@ class VideoController extends Controller
      */
     public function syncHlsUrl(Video $video): RedirectResponse
     {
-        Gate::authorize('update', $video);
+        if (! Gate::allows('update', $video)) {
+            return back()->withErrors([
+                'authorization' => 'Kamu tidak punya hak untuk menggunakan fitur ini.',
+            ]);
+        }
 
         if ($video->provider !== VideoProviderEnum::Firebase) {
             return redirect()->back()->with('error', 'Hanya video Firebase yang bisa disinkronkan.');
@@ -299,7 +319,11 @@ class VideoController extends Controller
      */
     public function destroy(Video $video): RedirectResponse
     {
-        Gate::authorize('delete', $video);
+        if (! Gate::allows('delete', $video)) {
+            return back()->withErrors([
+                'authorization' => 'Kamu tidak punya hak untuk menggunakan fitur ini.',
+            ]);
+        }
 
         if ($video->provider === VideoProviderEnum::Firebase) {
             $this->deleteFirebaseObject($video->storage_path);

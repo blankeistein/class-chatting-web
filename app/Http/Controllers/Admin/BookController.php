@@ -53,7 +53,7 @@ class BookController extends Controller
     {
         if (! Gate::allows('create', Book::class)) {
             return back()->withErrors([
-                'authorization' => 'Kamu tidak berhak untuk menggunakan fitur ini.',
+                'authorization' => 'Kamu tidak punya hak untuk menggunakan fitur ini.',
             ]);
         }
 
@@ -75,7 +75,7 @@ class BookController extends Controller
     {
         if (! Gate::allows('create', Book::class)) {
             return back()->withErrors([
-                'authorization' => 'Kamu tidak berhak untuk menggunakan fitur ini.',
+                'authorization' => 'Kamu tidak punya hak untuk menggunakan fitur ini.',
             ]);
         }
 
@@ -117,7 +117,7 @@ class BookController extends Controller
 
         if (! Gate::allows('update', $book)) {
             return back()->withErrors([
-                'authorization' => 'Kamu tidak berhak untuk menggunakan fitur ini.',
+                'authorization' => 'Kamu tidak punya hak untuk menggunakan fitur ini.',
             ]);
         }
 
@@ -149,7 +149,11 @@ class BookController extends Controller
     {
         $book = Book::findOrFail($id);
 
-        Gate::authorize('update', $book);
+        if (! Gate::allows('update', $book)) {
+            return back()->withErrors([
+                'authorization' => 'Kamu tidak punya hak untuk menggunakan fitur ini.',
+            ]);
+        }
 
         $data = $request->safe()->only(['url', 'version']);
 
@@ -177,7 +181,11 @@ class BookController extends Controller
     {
         $book = Book::findOrFail($id);
 
-        Gate::authorize('delete', $book);
+        if (! Gate::allows('delete', $book)) {
+            return back()->withErrors([
+                'authorization' => 'Kamu tidak punya hak untuk menggunakan fitur ini.',
+            ]);
+        }
 
         $book->delete();
 

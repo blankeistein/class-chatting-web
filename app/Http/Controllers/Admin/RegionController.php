@@ -173,7 +173,11 @@ class RegionController extends Controller
 
     public function storeProvince(ProvinceDataRequest $request): RedirectResponse
     {
-        Gate::authorize('create', Province::class);
+        if (! Gate::allows('create', Province::class)) {
+            return back()->withErrors([
+                'authorization' => 'Kamu tidak punya hak untuk menggunakan fitur ini.',
+            ]);
+        }
 
         $province = Province::query()->create($request->validated());
 
@@ -182,7 +186,11 @@ class RegionController extends Controller
 
     public function updateProvince(ProvinceDataRequest $request, Province $province): RedirectResponse
     {
-        Gate::authorize('update', $province);
+        if (! Gate::allows('update', $province)) {
+            return back()->withErrors([
+                'authorization' => 'Kamu tidak punya hak untuk menggunakan fitur ini.',
+            ]);
+        }
 
         $province->update($request->validated());
 
@@ -191,7 +199,11 @@ class RegionController extends Controller
 
     public function destroyProvince(Province $province): RedirectResponse
     {
-        Gate::authorize('delete', $province);
+        if (! Gate::allows('delete', $province)) {
+            return back()->withErrors([
+                'authorization' => 'Kamu tidak punya hak untuk menggunakan fitur ini.',
+            ]);
+        }
 
         $province->delete();
 
@@ -200,7 +212,11 @@ class RegionController extends Controller
 
     public function storeRegency(RegencyDataRequest $request): RedirectResponse
     {
-        Gate::authorize('create', Regency::class);
+        if (! Gate::allows('create', Regency::class)) {
+            return back()->withErrors([
+                'authorization' => 'Kamu tidak punya hak untuk menggunakan fitur ini.',
+            ]);
+        }
 
         Regency::query()->create($request->validated());
 
@@ -209,7 +225,11 @@ class RegionController extends Controller
 
     public function updateRegency(RegencyDataRequest $request, Regency $regency): RedirectResponse
     {
-        Gate::authorize('update', $regency);
+        if (! Gate::allows('update', $regency)) {
+            return back()->withErrors([
+                'authorization' => 'Kamu tidak punya hak untuk menggunakan fitur ini.',
+            ]);
+        }
 
         $regency->update($request->validated());
 
@@ -218,7 +238,11 @@ class RegionController extends Controller
 
     public function destroyRegency(Regency $regency): RedirectResponse
     {
-        Gate::authorize('delete', $regency);
+        if (! Gate::allows('delete', $regency)) {
+            return back()->withErrors([
+                'authorization' => 'Kamu tidak punya hak untuk menggunakan fitur ini.',
+            ]);
+        }
 
         $regency->delete();
 
@@ -227,7 +251,11 @@ class RegionController extends Controller
 
     public function storeDistrict(DistrictDataRequest $request): RedirectResponse
     {
-        Gate::authorize('create', District::class);
+        if (! Gate::allows('create', District::class)) {
+            return back()->withErrors([
+                'authorization' => 'Kamu tidak punya hak untuk menggunakan fitur ini.',
+            ]);
+        }
 
         District::query()->create($request->validated());
 
@@ -239,7 +267,11 @@ class RegionController extends Controller
 
     public function updateDistrict(DistrictDataRequest $request, District $district): RedirectResponse
     {
-        Gate::authorize('update', $district);
+        if (! Gate::allows('update', $district)) {
+            return back()->withErrors([
+                'authorization' => 'Kamu tidak punya hak untuk menggunakan fitur ini.',
+            ]);
+        }
 
         $district->update($request->validated());
 
@@ -251,7 +283,11 @@ class RegionController extends Controller
 
     public function destroyDistrict(District $district): RedirectResponse
     {
-        Gate::authorize('delete', $district);
+        if (! Gate::allows('delete', $district)) {
+            return back()->withErrors([
+                'authorization' => 'Kamu tidak punya hak untuk menggunakan fitur ini.',
+            ]);
+        }
 
         $district->delete();
 
@@ -260,7 +296,11 @@ class RegionController extends Controller
 
     public function storeVillage(VillageDataRequest $request): RedirectResponse
     {
-        Gate::authorize('create', Village::class);
+        if (! Gate::allows('create', Village::class)) {
+            return back()->withErrors([
+                'authorization' => 'Kamu tidak punya hak untuk menggunakan fitur ini.',
+            ]);
+        }
 
         Village::query()->create($request->validated());
 
@@ -272,7 +312,11 @@ class RegionController extends Controller
 
     public function updateVillage(VillageDataRequest $request, Village $village): RedirectResponse
     {
-        Gate::authorize('update', $village);
+        if (! Gate::allows('update', $village)) {
+            return back()->withErrors([
+                'authorization' => 'Kamu tidak punya hak untuk menggunakan fitur ini.',
+            ]);
+        }
 
         $village->update($request->validated());
 
@@ -284,7 +328,11 @@ class RegionController extends Controller
 
     public function destroyVillage(Village $village): RedirectResponse
     {
-        Gate::authorize('delete', $village);
+        if (! Gate::allows('delete', $village)) {
+            return back()->withErrors([
+                'authorization' => 'Kamu tidak punya hak untuk menggunakan fitur ini.',
+            ]);
+        }
 
         $village->delete();
 

@@ -81,7 +81,11 @@ class UserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        Gate::authorize('create', User::class);
+        if (! Gate::allows('create', User::class)) {
+            return back()->withErrors([
+                'authorization' => 'Kamu tidak punya hak untuk menggunakan fitur ini.',
+            ]);
+        }
 
         $allowedRoles = RoleEnum::values();
 
@@ -97,7 +101,11 @@ class UserController extends Controller
 
         // Check if user can assign this role
         $tempUser = new User;
-        Gate::authorize('changeRole', [$tempUser, $request->role]);
+        if (! Gate::allows('changeRole', [$tempUser, $request->role])) {
+            return back()->withErrors([
+                'authorization' => 'Kamu tidak punya hak untuk mengubah role ini.',
+            ]);
+        }
 
         User::create([
             'name' => $request->name,
@@ -134,7 +142,11 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user): RedirectResponse
     {
-        Gate::authorize('update', $user);
+        if (! Gate::allows('update', $user)) {
+            return back()->withErrors([
+                'authorization' => 'Kamu tidak punya hak untuk menggunakan fitur ini.',
+            ]);
+        }
 
         $allowedRoles = RoleEnum::values();
 
@@ -150,7 +162,11 @@ class UserController extends Controller
 
         // Check if user can change to this role
         if ($request->role !== $user->role) {
-            Gate::authorize('changeRole', [$user, $request->role]);
+            if (! Gate::allows('changeRole', [$user, $request->role])) {
+                return back()->withErrors([
+                    'authorization' => 'Kamu tidak punya hak untuk mengubah role ini.',
+                ]);
+            }
         }
 
         $data = [
@@ -176,7 +192,11 @@ class UserController extends Controller
      */
     public function destroy(User $user): RedirectResponse
     {
-        Gate::authorize('delete', $user);
+        if (! Gate::allows('delete', $user)) {
+            return back()->withErrors([
+                'authorization' => 'Kamu tidak punya hak untuk menggunakan fitur ini.',
+            ]);
+        }
 
         $user->delete();
 

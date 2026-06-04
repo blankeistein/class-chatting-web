@@ -92,7 +92,11 @@ class SchoolController extends Controller
 
     public function store(SchoolDataRequest $request): RedirectResponse
     {
-        Gate::authorize('create', School::class);
+        if (! Gate::allows('create', School::class)) {
+            return back()->withErrors([
+                'authorization' => 'Kamu tidak punya hak untuk menggunakan fitur ini.',
+            ]);
+        }
 
         School::query()->create($request->validated());
 
@@ -120,7 +124,11 @@ class SchoolController extends Controller
 
     public function update(SchoolDataRequest $request, School $school): RedirectResponse
     {
-        Gate::authorize('update', $school);
+        if (! Gate::allows('update', $school)) {
+            return back()->withErrors([
+                'authorization' => 'Kamu tidak punya hak untuk menggunakan fitur ini.',
+            ]);
+        }
 
         $school->update($request->validated());
 
@@ -129,7 +137,11 @@ class SchoolController extends Controller
 
     public function destroy(School $school): RedirectResponse
     {
-        Gate::authorize('delete', $school);
+        if (! Gate::allows('delete', $school)) {
+            return back()->withErrors([
+                'authorization' => 'Kamu tidak punya hak untuk menggunakan fitur ini.',
+            ]);
+        }
 
         $school->delete();
 
@@ -138,7 +150,11 @@ class SchoolController extends Controller
 
     public function bulkDelete(Request $request): RedirectResponse
     {
-        Gate::authorize('delete', School::class);
+        if (! Gate::allows('delete', School::class)) {
+            return back()->withErrors([
+                'authorization' => 'Kamu tidak punya hak untuk menggunakan fitur ini.',
+            ]);
+        }
 
         $validated = $request->validate([
             'ids' => ['required', 'array', 'min:1'],
@@ -202,7 +218,11 @@ class SchoolController extends Controller
 
     public function import(SchoolImportRequest $request): RedirectResponse
     {
-        $this->authorize('create', School::class);
+        if (! Gate::allows('create', School::class)) {
+            return back()->withErrors([
+                'authorization' => 'Kamu tidak punya hak untuk menggunakan fitur ini.',
+            ]);
+        }
 
         $file = $request->file('file');
 

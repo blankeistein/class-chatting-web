@@ -2,13 +2,21 @@
 
 namespace App\Providers;
 
+use App\Models\ActivationCode;
 use App\Models\Book;
 use App\Models\District;
 use App\Models\Province;
 use App\Models\Regency;
+use App\Models\School;
 use App\Models\User;
+use App\Models\Video;
 use App\Models\Village;
+use App\Policies\ActivationCodePolicy;
+use App\Policies\BookPolicy;
 use App\Policies\RegionPolicy;
+use App\Policies\SchoolPolicy;
+use App\Policies\UserPolicy;
+use App\Policies\VideoPolicy;
 use Dedoc\Scramble\Scramble;
 use Google\Cloud\Firestore\FirestoreClient;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -104,6 +112,11 @@ class AppServiceProvider extends ServiceProvider
             return $user->canManageUsers();
         });
 
+        Gate::policy(ActivationCode::class, ActivationCodePolicy::class);
+        Gate::policy(Book::class, BookPolicy::class);
+        Gate::policy(Video::class, VideoPolicy::class);
+        Gate::policy(User::class, UserPolicy::class);
+        Gate::policy(School::class, SchoolPolicy::class);
         Gate::policy(Province::class, RegionPolicy::class);
         Gate::policy(Regency::class, RegionPolicy::class);
         Gate::policy(District::class, RegionPolicy::class);

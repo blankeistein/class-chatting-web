@@ -10,6 +10,7 @@ use App\Models\Video;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -128,7 +129,7 @@ class VideoController extends Controller
      */
     public function edit(Video $video): Response
     {
-        $this->authorize('update', $video);
+        Gate::authorize('update', $video);
 
         return Inertia::render('Admin/Video/Edit', [
             'video' => $video,
@@ -140,7 +141,7 @@ class VideoController extends Controller
      */
     public function update(VideoUpdateRequest $request, Video $video): RedirectResponse
     {
-        $this->authorize('update', $video);
+        Gate::authorize('update', $video);
 
         $validated = $request->validated();
 
@@ -158,7 +159,7 @@ class VideoController extends Controller
      */
     public function uploadVideo(Request $request, Video $video): RedirectResponse
     {
-        $this->authorize('update', $video);
+        Gate::authorize('update', $video);
 
         $request->validate([
             'provider' => 'required|string|in:file,youtube',
@@ -209,7 +210,7 @@ class VideoController extends Controller
      */
     public function uploadThumbnail(Request $request, Video $video): RedirectResponse
     {
-        $this->authorize('update', $video);
+        Gate::authorize('update', $video);
 
         $request->validate([
             'thumbnail_url' => 'required|string|url|max:2048',
@@ -272,7 +273,7 @@ class VideoController extends Controller
      */
     public function syncHlsUrl(Video $video): RedirectResponse
     {
-        $this->authorize('update', $video);
+        Gate::authorize('update', $video);
 
         if ($video->provider !== VideoProviderEnum::Firebase) {
             return redirect()->back()->with('error', 'Hanya video Firebase yang bisa disinkronkan.');
@@ -298,7 +299,7 @@ class VideoController extends Controller
      */
     public function destroy(Video $video): RedirectResponse
     {
-        $this->authorize('delete', $video);
+        Gate::authorize('delete', $video);
 
         if ($video->provider === VideoProviderEnum::Firebase) {
             $this->deleteFirebaseObject($video->storage_path);

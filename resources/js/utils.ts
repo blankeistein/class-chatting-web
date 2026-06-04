@@ -39,3 +39,18 @@ export const useClassManager = () => {
 
     return { findClassValue, updateClass };
 };
+
+export class NotificationError extends Error {
+    messages: string | Record<string, string>;
+
+    constructor(message: string | Record<string, string>) {
+        if (typeof (message) === "string") {
+            super(message);
+        } else {
+            super(Object.values(message)[0]);
+        }
+
+        this.messages = message;
+        this.name = "NotificationError";
+    }
+}

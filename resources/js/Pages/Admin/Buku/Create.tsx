@@ -14,6 +14,7 @@ import { Head, router, useForm } from "@inertiajs/react";
 import { ArrowLeftIcon, SaveIcon, ImageIcon, XIcon, TagIcon, LinkIcon, HashIcon, RefreshCcwIcon, FileUpIcon, FileTextIcon } from "lucide-react";
 import { toast, Toaster } from "react-hot-toast";
 import { PageHeader } from "@/Components/PageHeader";
+import { NotificationError } from "@/utils";
 
 const generateCustomID = (length: number = 32): string => {
   const characters: string = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -106,9 +107,9 @@ export default function Create() {
       onSuccess: () => {
         toast.success("Buku berhasil ditambahkan.");
       },
-      onError: () => {
+      onError: (errors) => {
         console.error(errors);
-        toast.error("Gagal menambahkan buku. Periksa kembali form Anda.")
+        throw new NotificationError(errors);
       }
     });
   };
@@ -138,7 +139,7 @@ export default function Create() {
                   <Typography as="label" htmlFor="uuid" type="small" className="font-semibold dark:text-white">
                     UID Buku
                   </Typography>
-                  <div className="flex flex-col gap-2 sm:flex-row">
+                  <div className="flex flex-row gap-2">
                     <Input
                       id="uuid"
                       placeholder="Masukkan UID custom"

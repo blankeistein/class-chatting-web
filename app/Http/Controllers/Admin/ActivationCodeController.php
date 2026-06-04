@@ -11,6 +11,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Enum;
@@ -175,7 +176,7 @@ class ActivationCodeController extends Controller
     {
         $activationCode = ActivationCode::findOrFail($id);
 
-        $this->authorize('delete', $activationCode);
+        Gate::authorize('delete', $activationCode);
 
         Log::info('Activation code deleted', [
             'code' => $activationCode->code,
@@ -192,7 +193,7 @@ class ActivationCodeController extends Controller
     {
         $activationCode = ActivationCode::findOrFail($id);
 
-        $this->authorize('update', $activationCode);
+        Gate::authorize('update', $activationCode);
 
         $activationCode->update([
             'is_active' => ! $activationCode->is_active,
@@ -209,7 +210,7 @@ class ActivationCodeController extends Controller
         $codes = ActivationCode::whereIn('id', $ids)->get();
 
         foreach ($codes as $code) {
-            $this->authorize('delete', $code);
+            Gate::authorize('delete', $code);
         }
 
         Log::info('Bulk activation codes deleted', [
@@ -225,7 +226,7 @@ class ActivationCodeController extends Controller
 
     public function bulkExport(Request $request)
     {
-        $this->authorize('export', ActivationCode::class);
+        Gate::authorize('export', ActivationCode::class);
 
         $ids = explode(',', $request->input('ids', ''));
         $codes = ActivationCode::whereIn('id', $ids)->with(['user', 'items.model'])->get();

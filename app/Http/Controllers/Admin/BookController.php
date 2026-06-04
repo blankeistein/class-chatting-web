@@ -11,6 +11,7 @@ use App\Models\Book;
 use App\Services\FirebaseStorageService;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 
@@ -50,6 +51,12 @@ class BookController extends Controller
 
     public function create()
     {
+        if (! Gate::allows('create', Book::class)) {
+            return back()->withErrors([
+                'authorization' => 'Kamu tidak berhak untuk menggunakan fitur ini.',
+            ]);
+        }
+
         return Inertia::render('Admin/Buku/Create');
     }
 
@@ -66,7 +73,11 @@ class BookController extends Controller
 
     public function store(BookStoreRequest $request)
     {
-        $this->authorize('create', Book::class);
+        if (! Gate::allows('create', Book::class)) {
+            return back()->withErrors([
+                'authorization' => 'Kamu tidak berhak untuk menggunakan fitur ini.',
+            ]);
+        }
 
         $data = $request->safe()->only(['title', 'uuid', 'type', 'tags', 'url', 'version']);
         $data['uuid'] = filled($data['uuid'] ?? null) ? $data['uuid'] : (string) Str::uuid();
@@ -104,7 +115,11 @@ class BookController extends Controller
     {
         $book = Book::findOrFail($id);
 
-        $this->authorize('update', $book);
+        if (! Gate::allows('update', $book)) {
+            return back()->withErrors([
+                'authorization' => 'Kamu tidak berhak untuk menggunakan fitur ini.',
+            ]);
+        }
 
         $data = $request->safe()->only(['title', 'type', 'tags']);
 
@@ -134,7 +149,7 @@ class BookController extends Controller
     {
         $book = Book::findOrFail($id);
 
-        $this->authorize('update', $book);
+        Gate::authorize('update', $book);
 
         $data = $request->safe()->only(['url', 'version']);
 
@@ -162,7 +177,7 @@ class BookController extends Controller
     {
         $book = Book::findOrFail($id);
 
-        $this->authorize('delete', $book);
+        Gate::authorize('delete', $book);
 
         $book->delete();
 

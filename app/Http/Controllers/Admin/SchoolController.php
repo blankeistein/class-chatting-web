@@ -16,6 +16,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -91,7 +92,7 @@ class SchoolController extends Controller
 
     public function store(SchoolDataRequest $request): RedirectResponse
     {
-        $this->authorize('create', School::class);
+        Gate::authorize('create', School::class);
 
         School::query()->create($request->validated());
 
@@ -119,7 +120,7 @@ class SchoolController extends Controller
 
     public function update(SchoolDataRequest $request, School $school): RedirectResponse
     {
-        $this->authorize('update', $school);
+        Gate::authorize('update', $school);
 
         $school->update($request->validated());
 
@@ -128,7 +129,7 @@ class SchoolController extends Controller
 
     public function destroy(School $school): RedirectResponse
     {
-        $this->authorize('delete', $school);
+        Gate::authorize('delete', $school);
 
         $school->delete();
 
@@ -137,7 +138,7 @@ class SchoolController extends Controller
 
     public function bulkDelete(Request $request): RedirectResponse
     {
-        $this->authorize('delete', School::class);
+        Gate::authorize('delete', School::class);
 
         $validated = $request->validate([
             'ids' => ['required', 'array', 'min:1'],

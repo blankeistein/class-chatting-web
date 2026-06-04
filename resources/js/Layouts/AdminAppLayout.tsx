@@ -23,6 +23,8 @@ import { getFirebaseAuth, signOutFirebase, syncFirebaseAuth } from "../lib/fireb
 import { AppsLinks } from "./AdminLayout";
 import { User } from "firebase/auth";
 import toast from "react-hot-toast";
+import ErrorHandlerProvider from "@/Components/ErrorHandlerProvider";
+import { NotificationError } from "@/utils";
 
 type ChildLinkType = {
   icon: React.ForwardRefExoticComponent<React.SVGProps<SVGSVGElement>>;
@@ -378,10 +380,8 @@ function ProfileMenu({ user }: { user: User | null }) {
         setIsReAuthentication(false);
       },
       onError: (errors) => {
-        Object.values(errors).forEach((error) => {
-          toast.error(error);
-        });
         setIsReAuthentication(false);
+        throw new NotificationError(errors);
       }
     })
   }
@@ -592,26 +592,28 @@ export default function AdminAppLayout({ appName, children }: { appName: string,
   }
 
   return (
-    <div className="h-screen bg-background flex overflow-hidden">
-      <Sidebar title={title} logo={logo} links={links} isCollapsed={isCollapsed} />
-      <div ref={contentRef} className="flex-1 overflow-auto">
-        <TopNavbar title={title} logo={logo} links={links} onToggleSidebar={() => setIsCollapsed(!isCollapsed)} />
-        {children}
-        <footer className="p-2 flex items-center justify-between border-t border-surface mt-auto">
-          <Typography className="text-sm text-surface-foreground/60">
-            &copy; {new Date().getFullYear()} All rights reserved.
-          </Typography>
-          <IconButton
-            variant="ghost"
-            size="sm"
-            as="a"
-            href="https://github.com/blankeistein"
-            target="_blank"
-          >
-            <GithubIcon className="h-4 w-4" />
-          </IconButton>
-        </footer>
+    <ErrorHandlerProvider>
+      <div className="h-screen bg-background flex overflow-hidden">
+        <Sidebar title={title} logo={logo} links={links} isCollapsed={isCollapsed} />
+        <div ref={contentRef} className="flex-1 overflow-auto">
+          <TopNavbar title={title} logo={logo} links={links} onToggleSidebar={() => setIsCollapsed(!isCollapsed)} />
+          {children}
+          <footer className="p-2 flex items-center justify-between border-t border-surface mt-auto">
+            <Typography className="text-sm text-surface-foreground/60">
+              &copy; {new Date().getFullYear()} All rights reserved.
+            </Typography>
+            <IconButton
+              variant="ghost"
+              size="sm"
+              as="a"
+              href="https://github.com/blankeistein"
+              target="_blank"
+            >
+              <GithubIcon className="h-4 w-4" />
+            </IconButton>
+          </footer>
+        </div>
       </div>
-    </div>
+    </ErrorHandlerProvider>
   );
 }

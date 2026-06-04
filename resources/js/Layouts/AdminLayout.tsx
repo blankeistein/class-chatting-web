@@ -22,6 +22,8 @@ import { NotificationMenu } from "../Components/NotificationMenu";
 import { getFirebaseAuth, signOutFirebase, syncFirebaseAuth } from "../lib/firebase";
 import toast from "react-hot-toast";
 import { User } from "firebase/auth";
+import ErrorHandlerProvider from "@/Components/ErrorHandlerProvider";
+import { NotificationError } from "@/utils";
 
 type ChildLinkType = {
   icon: React.ForwardRefExoticComponent<React.SVGProps<SVGSVGElement>>;
@@ -373,10 +375,8 @@ function ProfileMenu({ user }: { user: User | null }) {
         setIsReAuthenticating(false);
       },
       onError: (errors) => {
-        Object.values(errors).forEach((error) => {
-          toast.error(error);
-        });
-        setIsReAuthenticating(false)
+        setIsReAuthenticating(false);
+        throw new NotificationError(errors);
       }
     })
   }
@@ -546,26 +546,28 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, []);
 
   return (
-    <div className="h-screen bg-background flex overflow-hidden">
-      <Sidebar isCollapsed={isCollapsed} />
-      <div ref={contentRef} className="flex-1 overflow-auto">
-        <TopNavbar onToggleSidebar={() => setIsCollapsed(!isCollapsed)} />
-        {children}
-        <footer className="p-2 flex items-center justify-between border-t border-surface mt-auto">
-          <Typography className="text-sm text-surface-foreground/60">
-            &copy; {new Date().getFullYear()} All rights reserved.
-          </Typography>
-          <IconButton
-            variant="ghost"
-            size="sm"
-            as="a"
-            href="https://github.com/blankeistein"
-            target="_blank"
-          >
-            <GithubIcon className="h-4 w-4" />
-          </IconButton>
-        </footer>
+    <ErrorHandlerProvider>
+      <div className="h-screen bg-background flex overflow-hidden">
+        <Sidebar isCollapsed={isCollapsed} />
+        <div ref={contentRef} className="flex-1 overflow-auto">
+          <TopNavbar onToggleSidebar={() => setIsCollapsed(!isCollapsed)} />
+          {children}
+          <footer className="p-2 flex items-center justify-between border-t border-surface mt-auto">
+            <Typography className="text-sm text-surface-foreground/60">
+              &copy; {new Date().getFullYear()} All rights reserved.
+            </Typography>
+            <IconButton
+              variant="ghost"
+              size="sm"
+              as="a"
+              href="https://github.com/blankeistein"
+              target="_blank"
+            >
+              <GithubIcon className="h-4 w-4" />
+            </IconButton>
+          </footer>
+        </div>
       </div>
-    </div>
+    </ErrorHandlerProvider>
   );
 }

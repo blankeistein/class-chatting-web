@@ -17,6 +17,7 @@ use App\Models\Regency;
 use App\Models\Village;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -172,7 +173,7 @@ class RegionController extends Controller
 
     public function storeProvince(ProvinceDataRequest $request): RedirectResponse
     {
-        $this->authorize('create', Province::class);
+        Gate::authorize('create', Province::class);
 
         $province = Province::query()->create($request->validated());
 
@@ -181,7 +182,7 @@ class RegionController extends Controller
 
     public function updateProvince(ProvinceDataRequest $request, Province $province): RedirectResponse
     {
-        $this->authorize('update', $province);
+        Gate::authorize('update', $province);
 
         $province->update($request->validated());
 
@@ -190,7 +191,7 @@ class RegionController extends Controller
 
     public function destroyProvince(Province $province): RedirectResponse
     {
-        $this->authorize('delete', $province);
+        Gate::authorize('delete', $province);
 
         $province->delete();
 
@@ -199,7 +200,7 @@ class RegionController extends Controller
 
     public function storeRegency(RegencyDataRequest $request): RedirectResponse
     {
-        $this->authorize('create', Regency::class);
+        Gate::authorize('create', Regency::class);
 
         Regency::query()->create($request->validated());
 
@@ -208,7 +209,7 @@ class RegionController extends Controller
 
     public function updateRegency(RegencyDataRequest $request, Regency $regency): RedirectResponse
     {
-        $this->authorize('update', $regency);
+        Gate::authorize('update', $regency);
 
         $regency->update($request->validated());
 
@@ -217,7 +218,7 @@ class RegionController extends Controller
 
     public function destroyRegency(Regency $regency): RedirectResponse
     {
-        $this->authorize('delete', $regency);
+        Gate::authorize('delete', $regency);
 
         $regency->delete();
 
@@ -226,7 +227,7 @@ class RegionController extends Controller
 
     public function storeDistrict(DistrictDataRequest $request): RedirectResponse
     {
-        $this->authorize('create', District::class);
+        Gate::authorize('create', District::class);
 
         District::query()->create($request->validated());
 
@@ -238,7 +239,7 @@ class RegionController extends Controller
 
     public function updateDistrict(DistrictDataRequest $request, District $district): RedirectResponse
     {
-        $this->authorize('update', $district);
+        Gate::authorize('update', $district);
 
         $district->update($request->validated());
 
@@ -250,7 +251,7 @@ class RegionController extends Controller
 
     public function destroyDistrict(District $district): RedirectResponse
     {
-        $this->authorize('delete', $district);
+        Gate::authorize('delete', $district);
 
         $district->delete();
 
@@ -259,7 +260,7 @@ class RegionController extends Controller
 
     public function storeVillage(VillageDataRequest $request): RedirectResponse
     {
-        $this->authorize('create', Village::class);
+        Gate::authorize('create', Village::class);
 
         Village::query()->create($request->validated());
 
@@ -271,7 +272,7 @@ class RegionController extends Controller
 
     public function updateVillage(VillageDataRequest $request, Village $village): RedirectResponse
     {
-        $this->authorize('update', $village);
+        Gate::authorize('update', $village);
 
         $village->update($request->validated());
 
@@ -283,7 +284,7 @@ class RegionController extends Controller
 
     public function destroyVillage(Village $village): RedirectResponse
     {
-        $this->authorize('delete', $village);
+        Gate::authorize('delete', $village);
 
         $village->delete();
 

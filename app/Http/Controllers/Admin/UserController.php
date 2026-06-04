@@ -9,6 +9,7 @@ use App\Models\UserBook;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -80,7 +81,7 @@ class UserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        $this->authorize('create', User::class);
+        Gate::authorize('create', User::class);
 
         $allowedRoles = RoleEnum::values();
 
@@ -96,7 +97,7 @@ class UserController extends Controller
 
         // Check if user can assign this role
         $tempUser = new User;
-        $this->authorize('changeRole', [$tempUser, $request->role]);
+        Gate::authorize('changeRole', [$tempUser, $request->role]);
 
         User::create([
             'name' => $request->name,
@@ -133,7 +134,7 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user): RedirectResponse
     {
-        $this->authorize('update', $user);
+        Gate::authorize('update', $user);
 
         $allowedRoles = RoleEnum::values();
 
@@ -149,7 +150,7 @@ class UserController extends Controller
 
         // Check if user can change to this role
         if ($request->role !== $user->role) {
-            $this->authorize('changeRole', [$user, $request->role]);
+            Gate::authorize('changeRole', [$user, $request->role]);
         }
 
         $data = [
@@ -175,7 +176,7 @@ class UserController extends Controller
      */
     public function destroy(User $user): RedirectResponse
     {
-        $this->authorize('delete', $user);
+        Gate::authorize('delete', $user);
 
         $user->delete();
 

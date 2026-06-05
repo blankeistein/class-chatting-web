@@ -147,10 +147,11 @@ export default function Books({
                     >
                       <td className="p-4">
                         <Avatar
-                          src={userBook.book.thumbnail}
+                          src={userBook.book.cover_url || "/assets/images/book-thumbnail.webp"}
                           alt={userBook.book.title}
                           size="sm"
                           shape="rounded"
+                          className="!aspect-[3/4] w-8 h-12"
                         />
                       </td>
                       <td className="p-4">

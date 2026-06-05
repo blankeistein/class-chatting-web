@@ -38,7 +38,7 @@ interface User {
   phone: string | null;
   role: string;
   is_active: boolean;
-  image: string;
+  avatar: string;
   created_at: string;
 }
 
@@ -351,7 +351,7 @@ export default function Index({ users: paginatedUsers, filters }: { users: any, 
                       <td className="p-4">
                         <div className="flex items-center gap-3">
                           <Avatar
-                            src={user.image}
+                            src={user.avatar}
                             alt={user.name}
                             size="sm"
                           />

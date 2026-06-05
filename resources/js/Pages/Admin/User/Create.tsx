@@ -11,7 +11,7 @@ import {
 } from "@material-tailwind/react";
 import AdminLayout from "@/Layouts/AdminLayout";
 import { Head, router, useForm } from "@inertiajs/react";
-import { ArrowLeftIcon, SaveIcon, UserPlusIcon, LockIcon, MailIcon, UserIcon, PhoneIcon } from "lucide-react";
+import { ArrowLeftIcon, SaveIcon, UserPlusIcon, LockIcon, MailIcon, UserIcon, PhoneIcon, ImageIcon, XIcon, AtSignIcon } from "lucide-react";
 import { toast, Toaster } from "react-hot-toast";
 import { PageHeader } from "@/Components/PageHeader";
 import { ROLES, ROLE_LABELS } from "@/constants/roles";
@@ -22,11 +22,31 @@ export default function Create() {
     email: "",
     username: "",
     phone: "",
-    role: ROLES.USER,
+    role: ROLES.USER as string,
     password: "",
     password_confirmation: "",
     is_active: true,
+    photo: null as File | null,
   });
+
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setData("photo", file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removePhoto = () => {
+    setData("photo", null);
+    setPhotoPreview(null);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,6 +79,63 @@ export default function Create() {
         <Card className="shadow-sm border border-slate-200 dark:border-slate-800 dark:bg-slate-900 overflow-hidden max-w-2xl mx-auto">
           <CardBody className="p-6">
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Photo Upload Section */}
+              <div className="space-y-3">
+                <Typography as="label" type="small" color="default" className="font-semibold dark:text-white">
+                  Foto Profil
+                </Typography>
+                <div className="flex items-center gap-4">
+                  {photoPreview ? (
+                    <div className="relative">
+                      <img
+                        src={photoPreview}
+                        alt="Preview"
+                        className="w-24 h-24 rounded-full object-cover border-2 border-slate-200 dark:border-slate-700"
+                      />
+                      <IconButton
+                        type="button"
+                        size="xs"
+                        color="error"
+                        onClick={removePhoto}
+                        className="absolute -top-2 -right-2 p-1 rounded-full"
+                      >
+                        <XIcon className="w-4 h-4" />
+                      </IconButton>
+                    </div>
+                  ) : (
+                    <div className="w-24 h-24 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center border-2 border-dashed border-slate-300 dark:border-slate-600">
+                      <ImageIcon className="w-8 h-8 text-slate-400" />
+                    </div>
+                  )}
+                  <div className="flex-1 flex flex-col items-start">
+                    <input
+                      type="file"
+                      id="photo"
+                      accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                      onChange={handlePhotoChange}
+                      className="hidden"
+                    />
+                    <Button
+                      as="label"
+                      size="sm"
+                      htmlFor="photo"
+                      className="cursor-pointer"
+                    >
+                      <ImageIcon className="w-4 h-4 mr-2" />
+                      Pilih Foto
+                    </Button>
+                    <Typography type="small" className="text-xs mt-2 text-slate-500 dark:text-slate-400">
+                      Format: JPG, PNG, GIF, WEBP. Maksimal 2MB.
+                    </Typography>
+                  </div>
+                </div>
+                {errors.photo && (
+                  <Typography type="small" color="error" className="mt-1 block text-xs">
+                    {errors.photo}
+                  </Typography>
+                )}
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-1">
                   <Typography as="label" htmlFor="name" type="small" color="default" className="font-semibold dark:text-white">
@@ -91,7 +168,9 @@ export default function Create() {
                     onChange={(e) => setData("username", e.target.value)}
                     isError={!!errors.username}
                   >
-                    <Input.Icon><span className="text-sm font-bold">@</span></Input.Icon>
+                    <Input.Icon>
+                      <AtSignIcon className="w-4 h-4" />
+                    </Input.Icon>
                   </Input>
                   {errors.username && (
                     <Typography type="small" color="error" className="mt-1 block">

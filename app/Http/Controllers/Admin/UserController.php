@@ -2,21 +2,29 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Enums\RoleEnum;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\StoreUserRequest;
+use App\Http\Requests\Admin\UpdateUserRequest;
 use App\Models\User;
 use App\Models\UserBook;
+use App\Services\FirebaseStorageService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
+use Kreait\Firebase\Exception\Auth\EmailExists;
+use Kreait\Laravel\Firebase\Facades\Firebase;
 
 class UserController extends Controller
 {
+    public function __construct(
+        private FirebaseStorageService $firebaseStorage
+    ) {}
+
     /**
      * Display a listing of the users.
      */
@@ -73,7 +81,7 @@ class UserController extends Controller
     /**
      * Show the form for creating a new user.
      */
-    public function create(): Response | RedirectResponse
+    public function create(): Response|RedirectResponse
     {
         if (! Gate::allows('create', User::class)) {
             return back()->withErrors([
@@ -87,45 +95,125 @@ class UserController extends Controller
     /**
      * Store a newly created user in storage.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(StoreUserRequest $request): RedirectResponse
     {
-        if (! Gate::allows('create', User::class)) {
-            return back()->withErrors([
-                'authorization' => 'Kamu tidak punya hak untuk menggunakan fitur ini.',
-            ]);
-        }
-
-        $allowedRoles = RoleEnum::values();
-
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'username' => 'nullable|string|max:255|unique:users',
-            'phone' => 'nullable|string|max:20',
-            'password' => 'required|string|min:8|confirmed',
-            'role' => ['required', 'string', Rule::in($allowedRoles)],
-            'is_active' => 'boolean',
-        ]);
+        $validated = $request->validated();
 
         // Check if user can assign this role
         $tempUser = new User;
-        if (! Gate::allows('changeRole', [$tempUser, $request->role])) {
+        if (! Gate::allows('changeRole', [$tempUser, $validated['role']])) {
             return back()->withErrors([
                 'authorization' => 'Kamu tidak punya hak untuk mengubah role ini.',
             ]);
         }
 
-        User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'username' => $request->username,
-            'phone' => $request->phone,
-            'password' => Hash::make($request->password),
-            'role' => $request->role,
-            'is_active' => $request->has('is_active') ? $request->is_active : true,
-        ]);
+        // Check if user already exists in database
+        $existingUser = User::where('email', $validated['email'])->first();
 
-        return redirect()->route('admin.users.index')->with('success', 'User berhasil ditambahkan.');
+        if ($existingUser) {
+            return back()->withErrors([
+                'email' => 'User dengan email ini sudah terdaftar.',
+            ]);
+        }
+
+        $firebaseUid = null;
+        $avatarUrl = null;
+
+        try {
+            // Create user in Firebase Auth
+            $userProperties = [
+                'email' => $validated['email'],
+                'password' => $validated['password'],
+                'displayName' => $validated['name'],
+                'emailVerified' => false,
+            ];
+
+            if ($request->hasFile('photo')) {
+                $photo = $request->file('photo');
+                $photoPath = 'users/avatars/'.uniqid().'.webp';
+
+                // Upload photo to Firebase Storage
+                $this->firebaseStorage->uploadImageAsWebp($photo, $photoPath, 80, 500);
+                $avatarUrl = $this->firebaseStorage->buildUrl($photoPath);
+
+                $userProperties['photoURL'] = $avatarUrl;
+            }
+
+            $firebaseUser = Firebase::auth()->createUser($userProperties);
+            $firebaseUid = $firebaseUser->uid;
+
+            // Create user in database
+            $user = User::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'username' => $validated['username'],
+                'phone' => $validated['phone'],
+                'password' => Hash::make($validated['password']),
+                'role' => $validated['role'],
+                'is_active' => $validated['is_active'] ?? true,
+                'firebase_uid' => $firebaseUid,
+                'avatar' => $avatarUrl,
+            ]);
+
+            return redirect()->route('admin.users.index')->with('success', 'User berhasil ditambahkan.');
+
+        } catch (EmailExists $e) {
+            // If user exists in Firebase but not in database, get the Firebase UID
+            try {
+                $firebaseUser = Firebase::auth()->getUserByEmail($validated['email']);
+                $firebaseUid = $firebaseUser->uid;
+
+                // Handle photo upload if provided
+                if ($request->hasFile('photo')) {
+                    $photo = $request->file('photo');
+                    $photoPath = 'users/avatars/'.uniqid().'.webp';
+
+                    $this->firebaseStorage->uploadImageAsWebp($photo, $photoPath, 80, 500);
+                    $avatarUrl = $this->firebaseStorage->buildUrl($photoPath);
+
+                    // Update Firebase user photo
+                    Firebase::auth()->updateUser($firebaseUid, [
+                        'photoURL' => $avatarUrl,
+                    ]);
+                }
+
+                // Create user in database with existing Firebase UID
+                $user = User::create([
+                    'name' => $validated['name'],
+                    'email' => $validated['email'],
+                    'username' => $validated['username'],
+                    'phone' => $validated['phone'],
+                    'password' => Hash::make($validated['password']),
+                    'role' => $validated['role'],
+                    'is_active' => $validated['is_active'] ?? true,
+                    'firebase_uid' => $firebaseUid,
+                    'avatar' => $avatarUrl,
+                ]);
+
+                return redirect()->route('admin.users.index')->with('success', 'User berhasil ditambahkan.');
+
+            } catch (\Exception $e) {
+                Log::error('Failed to create user: '.$e->getMessage());
+
+                return back()->withErrors([
+                    'email' => 'Gagal membuat user. Email mungkin sudah terdaftar di Firebase.',
+                ])->withInput();
+            }
+        } catch (\Exception $e) {
+            Log::error('Failed to create user in Firebase: '.$e->getMessage());
+
+            // Cleanup: delete uploaded photo if exists
+            if ($avatarUrl) {
+                $photoPath = $this->firebaseStorage->extractPath($avatarUrl);
+                if ($photoPath) {
+                    $this->firebaseStorage->delete($photoPath);
+                }
+            }
+
+            return back()->withErrors([
+                'error' => 'Gagal membuat user di Firebase: '.$e->getMessage(),
+            ])->withInput();
+        }
     }
 
     /**
@@ -148,29 +236,13 @@ class UserController extends Controller
     /**
      * Update the specified user in storage.
      */
-    public function update(Request $request, User $user): RedirectResponse
+    public function update(UpdateUserRequest $request, User $user): RedirectResponse
     {
-        if (! Gate::allows('update', $user)) {
-            return back()->withErrors([
-                'authorization' => 'Kamu tidak punya hak untuk menggunakan fitur ini.',
-            ]);
-        }
-
-        $allowedRoles = RoleEnum::values();
-
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
-            'username' => ['nullable', 'string', 'max:255', Rule::unique('users')->ignore($user->id)],
-            'phone' => 'nullable|string|max:20',
-            'password' => 'nullable|string|min:8|confirmed',
-            'role' => ['required', 'string', Rule::in($allowedRoles)],
-            'is_active' => 'boolean',
-        ]);
+        $validated = $request->validated();
 
         // Check if user can change to this role
-        if ($request->role !== $user->role) {
-            if (! Gate::allows('changeRole', [$user, $request->role])) {
+        if ($validated['role'] !== $user->role) {
+            if (! Gate::allows('changeRole', [$user, $validated['role']])) {
                 return back()->withErrors([
                     'authorization' => 'Kamu tidak punya hak untuk mengubah role ini.',
                 ]);
@@ -178,16 +250,95 @@ class UserController extends Controller
         }
 
         $data = [
-            'name' => $request->name,
-            'email' => $request->email,
-            'username' => $request->username,
-            'phone' => $request->phone,
-            'role' => $request->role,
-            'is_active' => $request->has('is_active') ? $request->is_active : true,
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'username' => $validated['username'],
+            'phone' => $validated['phone'],
+            'role' => $validated['role'],
+            'is_active' => $validated['is_active'] ?? true,
         ];
 
-        if ($request->filled('password')) {
-            $data['password'] = Hash::make($request->password);
+        // Update Firebase Auth user if firebase_uid exists
+        if ($user->firebase_uid) {
+            $firebaseUpdates = [
+                'displayName' => $validated['name'],
+            ];
+
+            // Update password in Firebase Auth if changed
+            if (! empty($validated['password'])) {
+                $data['password'] = Hash::make($validated['password']);
+                $firebaseUpdates['password'] = $validated['password'];
+            }
+
+            // Update disabled status in Firebase Auth based on is_active
+            $firebaseUpdates['disabled'] = ! ($validated['is_active'] ?? true);
+
+            try {
+                Firebase::auth()->updateUser($user->firebase_uid, $firebaseUpdates);
+            } catch (\Exception $e) {
+                Log::warning('Failed to update user in Firebase Auth: '.$e->getMessage());
+            }
+        } elseif (! empty($validated['password'])) {
+            $data['password'] = Hash::make($validated['password']);
+        }
+
+        // Handle photo removal
+        if ($request->boolean('remove_photo') && $user->avatar) {
+            $oldPhotoPath = $this->firebaseStorage->extractPath($user->avatar);
+            if ($oldPhotoPath) {
+                $this->firebaseStorage->delete($oldPhotoPath);
+            }
+            $data['avatar'] = null;
+
+            // Update Firebase Auth user photo
+            if ($user->firebase_uid) {
+                try {
+                    Firebase::auth()->updateUser($user->firebase_uid, [
+                        'photoURL' => null,
+                    ]);
+                } catch (\Exception $e) {
+                    Log::warning('Failed to remove photo from Firebase Auth: '.$e->getMessage());
+                }
+            }
+        }
+
+        // Handle new photo upload
+        if ($request->hasFile('photo')) {
+            try {
+                // Delete old photo if exists
+                if ($user->avatar) {
+                    $oldPhotoPath = $this->firebaseStorage->extractPath($user->avatar);
+                    if ($oldPhotoPath) {
+                        $this->firebaseStorage->delete($oldPhotoPath);
+                    }
+                }
+
+                // Upload new photo
+                $photo = $request->file('photo');
+                $photoPath = 'users/avatars/'.uniqid().'.webp';
+
+                $this->firebaseStorage->uploadImageAsWebp($photo, $photoPath, 80, 500);
+                $avatarUrl = $this->firebaseStorage->buildUrl($photoPath);
+
+                $data['avatar'] = $avatarUrl;
+
+                // Update Firebase Auth user photo
+                if ($user->firebase_uid) {
+                    try {
+                        Firebase::auth()->updateUser($user->firebase_uid, [
+                            'photoURL' => $avatarUrl,
+                        ]);
+                    } catch (\Exception $e) {
+                        Log::warning('Failed to update photo in Firebase Auth: '.$e->getMessage());
+                    }
+                }
+            } catch (\Exception $e) {
+                Log::error('Failed to upload user photo: '.$e->getMessage());
+
+                return back()->withErrors([
+                    'photo' => 'Gagal mengupload foto: '.$e->getMessage(),
+                ])->withInput();
+            }
         }
 
         $user->update($data);

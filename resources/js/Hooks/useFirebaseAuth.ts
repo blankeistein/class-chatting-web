@@ -84,8 +84,12 @@ export function useFirebaseAuth(): UseFirebaseAuthReturn {
 
   // Auto-sync Firebase auth if Laravel user exists but Firebase user doesn't
   useEffect(() => {
-    autoSyncFirebaseAuth();
-  }, [auth, props.auth.user, autoSyncFirebaseAuth]);
+    if (loading) return;
+
+    if (!user) {
+      autoSyncFirebaseAuth();
+    }
+  }, [auth, props.auth.user, autoSyncFirebaseAuth, loading]);
 
   return {
     user,

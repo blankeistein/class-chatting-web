@@ -21,7 +21,7 @@ type User = {
   phone: string | null;
   role: string;
   is_active: boolean;
-  image: string;
+  avatar: string;
   created_at: string;
 };
 
@@ -81,7 +81,7 @@ export default function Show({ user }: { user: User }) {
         <Card className="mx-auto max-w-4xl overflow-hidden border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <CardBody className="space-y-6 p-6">
             <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
-              <Avatar src={user.image} alt={user.name} size="xxl" />
+              <Avatar src={user.avatar} alt={user.name} size="xxl" />
               <div className="space-y-1">
                 <Typography variant="h5" className="font-bold text-slate-800 dark:text-white">
                   {user.name}

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Card,
   CardBody,
@@ -12,7 +12,7 @@ import {
 } from "@material-tailwind/react";
 import AdminLayout from "@/Layouts/AdminLayout";
 import { Head, router, useForm } from "@inertiajs/react";
-import { ArrowLeftIcon, SaveIcon, UserIcon, LockIcon, MailIcon, PhoneIcon, AlertCircleIcon } from "lucide-react";
+import { ArrowLeftIcon, SaveIcon, UserIcon, LockIcon, MailIcon, PhoneIcon, AlertCircleIcon, ImageIcon, XIcon } from "lucide-react";
 import { toast, Toaster } from "react-hot-toast";
 import { PageHeader } from "@/Components/PageHeader";
 import { ROLES, ROLE_LABELS } from "@/constants/roles";
@@ -25,6 +25,8 @@ interface User {
   phone: string | null;
   role: string;
   is_active: boolean;
+  avatar?: string | null;
+  image?: string | null;
 }
 
 export default function Edit({ user }: { user: User }) {
@@ -37,8 +39,33 @@ export default function Edit({ user }: { user: User }) {
     password: "",
     password_confirmation: "",
     is_active: user.is_active,
+    photo: null as File | null,
+    remove_photo: false,
     _method: 'put',
   });
+
+  const [photoPreview, setPhotoPreview] = useState<string | null>(
+    user.image || user.avatar || null
+  );
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setData("photo", file);
+      setData("remove_photo", false);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removePhoto = () => {
+    setData("photo", null);
+    setData("remove_photo", true);
+    setPhotoPreview(null);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,6 +98,59 @@ export default function Edit({ user }: { user: User }) {
         <Card className="shadow-sm border border-slate-200 dark:border-slate-800 dark:bg-slate-900 overflow-hidden max-w-2xl mx-auto">
           <CardBody className="p-6">
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Photo Upload Section */}
+              <div className="space-y-3">
+                <Typography as="label" type="small" color="default" className="font-semibold dark:text-white">
+                  Foto Profil
+                </Typography>
+                <div className="flex items-center gap-4">
+                  {photoPreview ? (
+                    <div className="relative">
+                      <img
+                        src={photoPreview}
+                        alt="Preview"
+                        className="w-24 h-24 rounded-full object-cover border-2 border-slate-200 dark:border-slate-700"
+                      />
+                      <button
+                        type="button"
+                        onClick={removePhoto}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                      >
+                        <XIcon className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="w-24 h-24 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center border-2 border-dashed border-slate-300 dark:border-slate-600">
+                      <ImageIcon className="w-8 h-8 text-slate-400" />
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <input
+                      type="file"
+                      id="photo"
+                      accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                      onChange={handlePhotoChange}
+                      className="hidden"
+                    />
+                    <label
+                      htmlFor="photo"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                    >
+                      <ImageIcon className="w-4 h-4" />
+                      {photoPreview ? 'Ganti Foto' : 'Pilih Foto'}
+                    </label>
+                    <Typography type="small" className="mt-2 text-slate-500 dark:text-slate-400">
+                      Format: JPG, PNG, GIF, WEBP. Maksimal 2MB.
+                    </Typography>
+                  </div>
+                </div>
+                {errors.photo && (
+                  <Typography type="small" color="error" className="mt-1 block">
+                    {errors.photo}
+                  </Typography>
+                )}
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-1">
                   <Typography as="label" htmlFor="name" type="small" color="default" className="font-semibold dark:text-white">

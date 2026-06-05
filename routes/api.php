@@ -5,6 +5,7 @@ use App\Http\Controllers\API\RegionController;
 use App\Http\Controllers\API\SchoolController;
 use App\Http\Controllers\API\V1\BookController as V1BookController;
 use App\Http\Controllers\API\V2\BookController as V2BookController;
+use App\Http\Controllers\API\V2\VideoController as V2VideoController;
 use App\Http\Controllers\API\VideoController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -21,8 +22,10 @@ Route::prefix('v1')->group(function () {
 });
 
 Route::prefix('v2')->group(function () {
-    Route::post('/book/activate', [V2BookController::class, 'activate'])->middleware(['throttle:60,1', 'firebase.id_token']);
-    Route::get('/book/level/{code}', [V2BookController::class, 'activationCheckLevel'])->middleware(['throttle:500,1', 'firebase.id_token']);
+    Route::post('book/activate', [V2BookController::class, 'activate'])->middleware(['throttle:60,1', 'firebase.id_token']);
+    Route::get('book/level/{code}', [V2BookController::class, 'activationCheckLevel'])->middleware(['throttle:500,1', 'firebase.id_token']);
+
+    Route::post('video/{video}', [V2VideoController::class, 'store'])->middleware(['throttle:500,1', 'firebase.id_token']);
 });
 
 Route::prefix('v1/regions')->middleware('throttle:120,1')->group(function () {

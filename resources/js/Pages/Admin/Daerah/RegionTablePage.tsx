@@ -116,9 +116,6 @@ export default function RegionTablePage({
                     }}
                     placeholder="Cari nama daerah..."
                   />
-                  <IconButton variant="outline" color="secondary" onClick={applyFilters} className="shrink-0">
-                    <SearchIcon className="h-4 w-4" />
-                  </IconButton>
                 </div>
               </div>
 

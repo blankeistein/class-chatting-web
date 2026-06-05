@@ -3,6 +3,7 @@
 return [
     'groups' => [
         'auth' => [
+            'auth.*',
             'login',
             'logout',
             'register',
@@ -10,12 +11,13 @@ return [
             'password.email',
             'password.reset',
             'password.update',
+            'authenticate-firebase-user'
         ],
         'user' => [
-            'user.*',
+            'user.*'
         ],
         'teacher' => [
-            'teacher.*',
+            'teacher.*'
         ]
     ]
 ];

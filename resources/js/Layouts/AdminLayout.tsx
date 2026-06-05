@@ -19,15 +19,15 @@ import { Link, router, usePage } from "@inertiajs/react";
 import { route } from "ziggy-js";
 import { AuthProps } from "@/types/global";
 import { NotificationMenu } from "../Components/NotificationMenu";
-import { getFirebaseAuth, signOutFirebase, syncFirebaseAuth } from "../lib/firebase";
+import { signOutFirebase, syncFirebaseAuth } from "../lib/firebase";
 import toast from "react-hot-toast";
-import { User } from "firebase/auth";
 import ErrorHandlerProvider from "@/Components/ErrorHandlerProvider";
 import { NotificationError } from "@/utils";
 import NavList, { LinkType } from "@/Components/Navigation/NavList";
 import Sidebar from "@/Components/Navigation/Sidebar";
 import MobileNavbar from "@/Components/Navigation/MobileNavbar";
 import Footer from "./Footer";
+import { useFirebaseAuth } from "@/Hooks/useFirebaseAuth";
 
 const Links: LinkType[] = [
   {
@@ -140,7 +140,8 @@ export const AppsLinks: AppLinkType[] = [
   }
 ]
 
-function ProfileMenu({ user }: { user: User | null }) {
+function ProfileMenu() {
+  const { user } = useFirebaseAuth();
   const [isReAuthenticating, setIsReAuthenticating] = useState(false);
   const props = usePage<AuthProps>().props;
 
@@ -152,7 +153,7 @@ function ProfileMenu({ user }: { user: User | null }) {
 
   const handleReAuthentication = async (): Promise<void> => {
     setIsReAuthenticating(true);
-    router.get(route('admin.authenticate-firebase-user'), undefined, {
+    router.get(route('authenticate-firebase-user'), undefined, {
       onSuccess: async (page) => {
         const firebaseAuth = (page.props as {
           auth?: {
@@ -212,9 +213,7 @@ function ProfileMenu({ user }: { user: User | null }) {
 }
 
 function TopNavbar({ onToggleSidebar }: { onToggleSidebar: () => void }) {
-  const auth = useMemo(() => getFirebaseAuth(), []);
   const [openNav, setOpenNav] = useState(false);
-  const [user, setUser] = useState<User | null>(auth?.currentUser || null);
 
   useEffect(() => {
     const handleResize = () => {
@@ -229,16 +228,6 @@ function TopNavbar({ onToggleSidebar }: { onToggleSidebar: () => void }) {
       window.removeEventListener("resize", handleResize);
     };
   }, []);
-
-  useEffect(() => {
-    auth?.onAuthStateChanged((user) => {
-      if (user) {
-        setUser(user);
-      } else {
-        setUser(null);
-      }
-    });
-  }, [auth])
 
   const { theme, toggleTheme } = useTheme();
 
@@ -299,7 +288,7 @@ function TopNavbar({ onToggleSidebar }: { onToggleSidebar: () => void }) {
                   </div>
                 </Menu.Content>
               </Menu>
-              <ProfileMenu user={user} />
+              <ProfileMenu />
             </div>
           </div>
         </Navbar>

@@ -72,26 +72,18 @@ class AuthController extends Controller
             $firebaseAuth = $firebaseCustomTokenService->issueFor($request->user());
 
             if ($request->user()?->role === RoleEnum::Admin || $request->user()?->role === RoleEnum::Staff) {
-                return redirect()
-                    ->intended(route('admin.dashboard'))
-                    ->with('firebase_auth', $firebaseAuth);
+                return Inertia::location(route('admin.dashboard'));
             }
 
             if ($request->user()?->role === RoleEnum::Teacher) {
-                return redirect()
-                    ->intended(route('teacher.dashboard'))
-                    ->with('firebase_auth', $firebaseAuth);
+                return Inertia::location(route('teacher.dashboard'));
             }
 
             if ($request->user()?->role === RoleEnum::User || $request->user()?->role === RoleEnum::Student) {
-                return redirect()
-                    ->intended(route('user.dashboard'))
-                    ->with('firebase_auth', $firebaseAuth);
+                return Inertia::location(route('user.dashboard'));
             }
 
-            return redirect()
-                ->intended(route('home'))
-                ->with('firebase_auth', $firebaseAuth);
+            return Inertia::location(route('home'));
 
         } catch (Exception $e) {
             return back()->withErrors([

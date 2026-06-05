@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VideoController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\EmailVerificationController;
+use App\Http\Controllers\FirebaseAuthController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\Teacher\DashboardController as TeacherDashboardController;
@@ -28,22 +29,14 @@ use Inertia\Inertia;
 
 Route::get('/', function () {
     $dashboard_link = NULL;
-    switch(Auth::user()->role) {
-        case RoleEnum::Admin:
-        case RoleEnum::Staff:
-            $dashboard_link = route('admin.dashboard');
-            break;
 
-        case RoleEnum::Teacher:
-            $dashboard_link = route('teacher.dashboard');
-            break;
-        case RoleEnum::User:
-        case RoleEnum::Student:
-            $dashboard_link = route('user.dashboard');
-            break;
-        default:
-            $dashboard_link = NULL;
-            break;
+    if (Auth::check()) {
+        $dashboard_link = match (Auth::user()->role) {
+            RoleEnum::Admin, RoleEnum::Staff => route('admin.dashboard'),
+            RoleEnum::Teacher => route('teacher.dashboard'),
+            RoleEnum::User, RoleEnum::Student => route('user.dashboard'),
+            default => route('home'),
+        };
     }
 
     return view('index', [
@@ -53,6 +46,7 @@ Route::get('/', function () {
 
 Route::get('login', [AuthController::class, 'login'])->name('login')->middleware('guest');
 Route::post('login', [AuthController::class, 'loginAction'])->middleware(['guest', 'throttle:login']);
+Route::post('auth/firebase/google', [FirebaseAuthController::class, 'googleSignIn'])->name('auth.firebase.google')->middleware('guest');
 Route::delete('logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::middleware('guest')->group(function () {
@@ -72,26 +66,22 @@ Route::middleware('auth')->group(function () {
     Route::put('notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
     Route::delete('notifications/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
 
+    Route::get('re-auth-firebase', [AuthController::class, 'authenticateFirebaseUser'])->name('authenticate-firebase-user');
+
     Route::group(['prefix' => 'user', 'as' => 'user.'], function () {
         Route::get('dashboard', [UserDashboardController::class, 'index'])->name('dashboard');
         Route::get('book', [UserDashboardController::class, 'index'])->name('book');
-
-        Route::get('re-auth-firebase', [AuthController::class, 'authenticateFirebaseUser'])->name('authenticate-firebase-user');
     });
 
     Route::group(['prefix' => 'teacher', 'as' => 'teacher.'], function () {
         Route::get('dashboard', [TeacherDashboardController::class, 'index'])->name('dashboard');
         Route::get('students', [TeacherDashboardController::class, 'index'])->name('students');
-
-        Route::get('re-auth-firebase', [AuthController::class, 'authenticateFirebaseUser'])->name('authenticate-firebase-user');
     });
 
     Route::group(['prefix' => Config::get('app.admin_path'), 'as' => 'admin.', 'middleware' => 'admin'], function () {
         Route::get('/', function () {
             return redirect()->route('admin.dashboard');
         });
-
-        Route::get('re-auth-firebase', [AuthController::class, 'authenticateFirebaseUser'])->name('authenticate-firebase-user');
 
         Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 

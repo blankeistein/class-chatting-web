@@ -366,7 +366,7 @@ function ProfileMenu({ user }: { user: User | null }) {
 
   const handleReAuthentication = async (): Promise<void> => {
     setIsReAuthentication(true);
-    router.get(route('admin.authenticate-firebase-user'), undefined, {
+    router.get(route('authenticate-firebase-user'), undefined, {
       onSuccess: async (page) => {
         const firebaseAuth = (page.props as {
           auth?: {

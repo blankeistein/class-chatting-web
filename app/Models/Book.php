@@ -24,9 +24,11 @@ class Book extends Model
 
     public const TYPE_PENILAIAN = 'penilaian';
 
-    protected $casts = [
-        'tags' => 'array',
-    ];
+    protected function casts(): array {
+        return [
+            'tags' => 'array',
+        ];
+    }
 
     public function activationCodes()
     {

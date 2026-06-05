@@ -25,10 +25,12 @@ class ActivationCode extends Model
         'is_active',
     ];
 
-    protected $casts = [
-        'tier' => ActivationCodeTierEnum::class,
-        'is_active' => 'boolean',
-    ];
+    protected function casts(): array {
+        return [
+            'tier' => ActivationCodeTierEnum::class,
+            'is_active' => 'boolean',
+        ];
+    }
 
     public function user(): BelongsTo
     {

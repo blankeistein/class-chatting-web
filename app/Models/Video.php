@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\VideoProviderEnum;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Video extends Model
@@ -44,5 +45,13 @@ class Video extends Model
     public function uploader(): BelongsTo
     {
         return $this->belongsTo(User::class, 'uploaded_by');
+    }
+
+    /**
+     * Get views video
+     */
+    public function views(): HasMany
+    {
+        return $this->hasMany(VideoView::class, 'video_id');
     }
 }

@@ -10,6 +10,7 @@ use App\Models\Video;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -122,6 +123,126 @@ class VideoController extends Controller
         return Inertia::render('Admin/Video/Show', [
             'video' => $video,
         ]);
+    }
+
+    /**
+     * Get video statistics with date range filter.
+     * Results are cached for 5 minutes to reduce database load.
+     */
+    public function statistics(Request $request, Video $video)
+    {
+        $range = $request->input('range', 'month'); // week, month, year, custom
+
+        // For custom range, validate and use provided dates
+        if ($range === 'custom') {
+            $request->validate([
+                'start_date' => 'required|date',
+                'end_date' => 'required|date|after_or_equal:start_date',
+            ]);
+
+            $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
+            $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
+
+            // Cache key includes dates for custom range
+            $cacheKey = "video_stats_{$video->slug}_custom_{$startDate->format('Y-m-d')}_{$endDate->format('Y-m-d')}";
+        } else {
+            // Cache key based on video slug and range
+            $cacheKey = "video_stats_{$video->slug}_{$range}";
+        }
+
+        // Cache for 5 minutes (300 seconds)
+        return Cache::remember($cacheKey, 300, function () use ($video, $range, $request) {
+            // Calculate date range
+            if ($range === 'custom') {
+                $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
+                $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
+            } else {
+                $startDate = match($range) {
+                    'week' => now()->startOfWeek(),
+                    'month' => now()->startOfMonth(),
+                    'year' => now()->startOfYear(),
+                    default => now()->startOfMonth(),
+                };
+
+                $endDate = now();
+            }
+
+            // Get view statistics
+            $totalViews = $video->views()
+                ->whereBetween('viewed_at', [$startDate, $endDate])
+                ->count();
+
+            $uniqueViewers = $video->views()
+                ->whereBetween('viewed_at', [$startDate, $endDate])
+                ->distinct('user_id')
+                ->count('user_id');
+
+            // Views by date - use different granularity based on range
+            if ($range === 'year') {
+                // Group by month for yearly view
+                $viewsByDate = $video->views()
+                    ->selectRaw('DATE_FORMAT(viewed_at, "%Y-%m") as date, COUNT(*) as count')
+                    ->whereBetween('viewed_at', [$startDate, $endDate])
+                    ->groupBy('date')
+                    ->orderBy('date', 'asc')
+                    ->get()
+                    ->map(fn($item) => [
+                        'date' => $item->date,
+                        'count' => $item->count,
+                        'label' => date('M Y', strtotime($item->date.'-01')),
+                    ]);
+            } else {
+                // Group by day for week/month view
+                $viewsByDate = $video->views()
+                    ->selectRaw('DATE(viewed_at) as date, COUNT(*) as count')
+                    ->whereBetween('viewed_at', [$startDate, $endDate])
+                    ->groupBy('date')
+                    ->orderBy('date', 'asc')
+                    ->get()
+                    ->map(fn($item) => [
+                        'date' => $item->date,
+                        'count' => $item->count,
+                        'label' => date('d M', strtotime($item->date)),
+                    ]);
+            }
+
+            // Recent views (last 10)
+            $recentViews = $video->views()
+                ->with('user:id,name')
+                ->whereBetween('viewed_at', [$startDate, $endDate])
+                ->latest('viewed_at')
+                ->limit(10)
+                ->get()
+                ->map(fn($view) => [
+                    'id' => $view->id,
+                    'user_name' => $view->user?->name ?? 'Guest',
+                    'ip_address' => $view->ip_address,
+                    'viewed_at' => $view->viewed_at->toISOString(),
+                ]);
+
+            // Views by hour - group by hour for the selected range
+            $viewsByHour = $video->views()
+                ->selectRaw('HOUR(viewed_at) as hour, COUNT(*) as count')
+                ->whereBetween('viewed_at', [$startDate, $endDate])
+                ->groupBy('hour')
+                ->orderBy('hour', 'asc')
+                ->get()
+                ->map(fn($item) => [
+                    'hour' => $item->hour,
+                    'count' => $item->count,
+                ]);
+
+            return response()->json([
+                'total_views' => $totalViews,
+                'unique_viewers' => $uniqueViewers,
+                'views_by_date' => $viewsByDate,
+                'recent_views' => $recentViews,
+                'views_by_hour' => $viewsByHour,
+                'range' => $range,
+                'start_date' => $startDate->toISOString(),
+                'end_date' => $endDate->toISOString(),
+            ]);
+        });
     }
 
     /**

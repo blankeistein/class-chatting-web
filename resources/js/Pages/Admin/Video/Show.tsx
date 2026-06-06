@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { Head, Link, router } from "@inertiajs/react";
-import { Button, Card, Chip, IconButton, Menu, Tabs, Typography } from "@material-tailwind/react";
+import { Button, Card, Chip, IconButton, Input, Menu, Popover, Select, Tabs, Typography } from "@material-tailwind/react";
 import AdminLayout from "@/Layouts/AdminLayout";
+import axios from "axios";
 import {
   ArrowLeftIcon,
   CalendarIcon,
@@ -23,6 +24,10 @@ import { doc, onSnapshot } from "firebase/firestore";
 import { getFirebaseFirestore } from "@/lib/firebase";
 import { resolveYoutubeId } from "./Create";
 import { PageHeader } from "@/Components/PageHeader";
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { format } from "date-fns";
+import { DateRange, DayPicker } from "@daypicker/react";
+import "@daypicker/react/style.css";
 
 interface Video {
   id: number;
@@ -44,6 +49,31 @@ interface Video {
     name: string;
   } | null;
 }
+
+interface Statistics {
+  total_views: number;
+  unique_viewers: number;
+  views_by_date: Array<{
+    date: string;
+    count: number;
+    label?: string;
+  }>;
+  recent_views: Array<{
+    id: number;
+    user_name: string;
+    ip_address: string;
+    viewed_at: string;
+  }>;
+  views_by_hour: Array<{
+    hour: number;
+    count: number;
+  }>;
+  range: string;
+  start_date: string;
+  end_date: string;
+}
+
+type FilterRange = 'week' | 'month' | 'year' | 'custom';
 
 type HlsJob = {
   id: string;
@@ -179,6 +209,11 @@ export default function Show({ video }: { video: Video }) {
   const [isJobLoading, setIsJobLoading] = React.useState(true);
   const [jobLoadError, setJobLoadError] = React.useState<string | null>(null);
   const [isSyncingHls, setIsSyncingHls] = React.useState(false);
+  const [statistics, setStatistics] = React.useState<Statistics | null>(null);
+  const [isLoadingStats, setIsLoadingStats] = React.useState(false);
+  const [dateRange, setDateRange] = React.useState<string>('month');
+  const [customDate, setCustomDate] = React.useState<DateRange | undefined>();
+  const [activeTab, setActiveTab] = React.useState('umum');
   const isFirebaseVideo = video.provider === "firebase";
   const youtubeId = resolveYoutubeId(video.video_url ?? "");
   const isYoutubeVideo = !isFirebaseVideo && Boolean(youtubeId);
@@ -186,6 +221,32 @@ export default function Show({ video }: { video: Video }) {
   const providerStatusMessage = isYoutubeVideo
     ? "Video ini menggunakan sumber YouTube, jadi tidak memiliki status transcoding Firebase."
     : "Video ini menggunakan provider local, jadi tidak memiliki status transcoding Firebase.";
+
+  const fetchStatistics = React.useCallback(async (range: string, startDate?: Date, endDate?: Date) => {
+    setIsLoadingStats(true);
+    try {
+      const params: Record<string, string> = { range };
+      if (range === 'custom' && startDate && endDate) {
+        params.start_date = format(startDate.toISOString(), "yyyy-MM-dd");
+        params.end_date = format(endDate.toISOString(), "yyyy-MM-dd");
+      }
+      const url = route('admin.videos.statistics', { video: video.slug, ...params });
+      const { data } = await axios.get(url);
+      setStatistics(data);
+    } catch (error) {
+      console.error('Failed to fetch statistics:', error);
+    } finally {
+      setIsLoadingStats(false);
+    }
+  }, [video.slug]);
+
+  console.log(dateRange)
+
+  React.useEffect(() => {
+    if (activeTab === 'statistik' && !statistics) {
+      fetchStatistics(dateRange);
+    }
+  }, [activeTab, statistics, dateRange, fetchStatistics]);
 
   React.useEffect(() => {
     if (!isFirebaseVideo) {
@@ -241,6 +302,19 @@ export default function Show({ video }: { video: Video }) {
       preserveScroll: true,
       onFinish: () => setIsSyncingHls(false),
     });
+  };
+
+  const handleDateRangeChange = useCallback((range: string) => {
+    setDateRange(range);
+    if (range !== 'custom') {
+      fetchStatistics(range);
+    }
+  }, []);
+
+  const handleCustomDateSubmit = () => {
+    if (customDate?.from && customDate?.to) {
+      fetchStatistics('custom', customDate.from, customDate.to);
+    }
   };
 
   return (
@@ -337,10 +411,11 @@ export default function Show({ video }: { video: Video }) {
           </IconButton>}
         />
 
-        <Tabs defaultValue="umum">
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value)}>
           <Tabs.List className="mx-1">
             <Tabs.Trigger value="umum">Umum</Tabs.Trigger>
             <Tabs.Trigger value="status">Status</Tabs.Trigger>
+            <Tabs.Trigger value="statistik">Statistik</Tabs.Trigger>
             <Tabs.TriggerIndicator />
           </Tabs.List>
           <Tabs.Panel value="umum">
@@ -656,6 +731,289 @@ export default function Show({ video }: { video: Video }) {
                 Belum ada status job Firestore untuk video ini.
               </div>
             )}
+          </Tabs.Panel>
+          <Tabs.Panel value="statistik">
+            <div className="space-y-6">
+              {/* Date Range Selector */}
+              <Card className="border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                <Card.Body className="p-4">
+                  <div className="flex flex-col gap-4">
+                    <div className="flex flex-wrap items-center justify-between gap-4">
+                      <div>
+                        <Typography variant="small" className="font-bold text-slate-800 dark:text-white">
+                          Periode Data
+                        </Typography>
+                        <Typography className="text-xs text-slate-500 dark:text-slate-400">
+                          {statistics && `${new Date(statistics.start_date).toLocaleDateString('id-ID')} - ${new Date(statistics.end_date).toLocaleDateString('id-ID')}`}
+                        </Typography>
+                      </div>
+                      <div className="w-full sm:w-auto">
+                        <Select
+                          value={dateRange}
+                          onValueChange={(value) => handleDateRangeChange(value)}
+                          disabled={isLoadingStats}
+                        >
+                          <Select.Trigger className="w-full sm:w-48" placeholder="Pilih periode" />
+                          <Select.List>
+                            <Select.Option value="week">Minggu Ini</Select.Option>
+                            <Select.Option value="month">Bulan Ini</Select.Option>
+                            <Select.Option value="year">Tahun Ini</Select.Option>
+                            <Select.Option value="custom">Custom Range</Select.Option>
+                          </Select.List>
+                        </Select>
+                      </div>
+                    </div>
+
+                    {dateRange === 'custom' && (
+                      <div className="flex flex-col gap-3">
+                        <div className="w-full">
+                          <Typography className="mb-2 text-sm text-slate-600 dark:text-slate-400">
+                            Range Tanggal
+                          </Typography>
+                          <Popover placement="bottom">
+                            <Popover.Trigger className="w-full">
+                              <Input className="w-full" readOnly onChange={() => null} placeholder="Pilih Tanggal" value={customDate ? ((customDate.from && customDate.to) ? `${format(customDate.from, "dd/MMM/yyyy")} - ${format(customDate.to, "dd/MMM/yyyy")}` : "") : ""}>
+                                <Input.Icon>
+                                  <CalendarIcon className="h-4 w-4" />
+                                </Input.Icon>
+                              </Input>
+                            </Popover.Trigger>
+                            <Popover.Content>
+                              <Popover.Arrow />
+                              <DayPicker
+                                animate
+                                mode="range"
+                                selected={customDate}
+                                onSelect={setCustomDate}
+                                className="p-0"
+                                classNames={{
+                                  selected: "rounded-xl bg-primary dark:bg-white text-white dark:text-background font-bold",
+                                  today: "",
+                                  range_start: "!bg-warning [&_button]:rounded-xl [&_button]:bg-warning text-white dark:text-background font-bold",
+                                  range_end: "!bg-warning [&_button]:rounded-xl [&_button]:bg-warning text-white dark:text-background font-bold",
+                                }}
+                                disabled={isLoadingStats}
+                              />
+                            </Popover.Content>
+                          </Popover>
+                        </div>
+                        <Button
+                          size="sm"
+                          color="primary"
+                          onClick={handleCustomDateSubmit}
+                          disabled={isLoadingStats || !customDate}
+                          className="w-full sm:w-auto"
+                        >
+                          Terapkan
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </Card.Body>
+              </Card>
+
+              <div>
+
+              </div>
+
+
+              {isLoadingStats ? (
+                <div className="space-y-4">
+                  <div className="h-32 animate-pulse rounded-xl bg-slate-200 dark:bg-slate-800" />
+                  <div className="h-96 animate-pulse rounded-xl bg-slate-200 dark:bg-slate-800" />
+                </div>
+              ) : !statistics ? (
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-8 text-center text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400">
+                  Klik tab Statistik untuk memuat data
+                </div>
+              ) : (
+                <>
+                  {/* Summary Cards */}
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <Card className="border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                      <Card.Body className="p-5">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <Typography className="text-sm text-slate-500 dark:text-slate-400">
+                              Jumlah Tayangan Total
+                            </Typography>
+                            <Typography variant="h3" className="mt-2 font-bold text-slate-800 dark:text-white">
+                              {statistics.total_views.toLocaleString()}
+                            </Typography>
+                          </div>
+                          <div className="rounded-lg bg-primary/10 p-3">
+                            <PlayCircleIcon className="h-8 w-8 text-primary" />
+                          </div>
+                        </div>
+                      </Card.Body>
+                    </Card>
+
+                    <Card className="border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                      <Card.Body className="p-5">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <Typography className="text-sm text-slate-500 dark:text-slate-400">
+                              Jumlah Penonton
+                            </Typography>
+                            <Typography variant="h3" className="mt-2 font-bold text-slate-800 dark:text-white">
+                              {statistics.unique_viewers.toLocaleString()}
+                            </Typography>
+                          </div>
+                          <div className="rounded-lg bg-success/10 p-3">
+                            <UserIcon className="h-8 w-8 text-success" />
+                          </div>
+                        </div>
+                      </Card.Body>
+                    </Card>
+                  </div>
+
+                  {/* Views by Date Chart */}
+                  <Card className="border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                    <div className="border-b border-slate-100 p-4 dark:border-slate-800">
+                      <Typography variant="h6" className="font-bold text-slate-800 dark:text-white">
+                        Trend Tayangan ({dateRange === 'week' ? 'Minggu Ini' : dateRange === 'month' ? 'Bulan Ini' : 'Tahun Ini'})
+                      </Typography>
+                      <Typography className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                        Jumlah tayangan {dateRange === 'year' ? 'bulanan' : 'harian'} untuk periode yang dipilih
+                      </Typography>
+                    </div>
+                    <Card.Body className="p-5">
+                      {statistics.views_by_date.length > 0 ? (
+                        <ResponsiveContainer width="100%" height={300}>
+                          <LineChart data={statistics.views_by_date.map(item => ({
+                            date: item.label || new Date(item.date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' }),
+                            views: item.count
+                          }))}>
+                            <CartesianGrid strokeDasharray="3 3" className="stroke-slate-200 dark:stroke-slate-700" />
+                            <XAxis
+                              dataKey="date"
+                              className="text-xs text-slate-600 dark:text-slate-400"
+                              angle={-45}
+                              textAnchor="end"
+                              height={80}
+                            />
+                            <YAxis className="text-xs text-slate-600 dark:text-slate-400" />
+                            <Tooltip
+                              contentStyle={{
+                                backgroundColor: 'rgb(15 23 42)',
+                                border: '1px solid rgb(51 65 85)',
+                                borderRadius: '0.5rem'
+                              }}
+                              labelStyle={{ color: 'rgb(226 232 240)' }}
+                              itemStyle={{ color: 'rgb(147 197 253)' }}
+                            />
+                            <Line
+                              type="monotone"
+                              dataKey="views"
+                              stroke="rgb(59 130 246)"
+                              strokeWidth={2}
+                              dot={{ fill: 'rgb(59 130 246)', r: 4 }}
+                              activeDot={{ r: 6 }}
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+                          No view data available for the last 30 days
+                        </div>
+                      )}
+                    </Card.Body>
+                  </Card>
+
+                  {/* Views by Hour */}
+                  <Card className="border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                    <div className="border-b border-slate-100 p-4 dark:border-slate-800">
+                      <Typography variant="h6" className="font-bold text-slate-800 dark:text-white">
+                        Jumlah Tayangan per Jam
+                      </Typography>
+                      <Typography className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                        Distribusi jumlah penonton per jam
+                      </Typography>
+                    </div>
+                    <Card.Body className="p-5">
+                      {statistics.views_by_hour.length > 0 ? (
+                        <ResponsiveContainer width="100%" height={250}>
+                          <BarChart data={Array.from({ length: 24 }, (_, i) => {
+                            const hourData = statistics.views_by_hour.find(h => h.hour === i);
+                            return {
+                              hour: `${i}:00`,
+                              views: hourData?.count || 0
+                            };
+                          })}>
+                            <CartesianGrid strokeDasharray="3 3" className="stroke-slate-200 dark:stroke-slate-700" />
+                            <XAxis
+                              dataKey="hour"
+                              className="text-xs text-slate-600 dark:text-slate-400"
+                            />
+                            <YAxis className="text-xs text-slate-600 dark:text-slate-400" />
+                            <Tooltip
+                              contentStyle={{
+                                backgroundColor: 'rgb(15 23 42)',
+                                border: '1px solid rgb(51 65 85)',
+                                borderRadius: '0.5rem'
+                              }}
+                              labelStyle={{ color: 'rgb(226 232 240)' }}
+                              itemStyle={{ color: 'rgb(147 197 253)' }}
+                            />
+                            <Bar
+                              dataKey="views"
+                              fill="rgb(59 130 246)"
+                              radius={[8, 8, 0, 0]}
+                            />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+                          No view data available for the last 24 hours
+                        </div>
+                      )}
+                    </Card.Body>
+                  </Card>
+
+                  {/* Recent Views */}
+                  <Card className="border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                    <div className="border-b border-slate-100 p-4 dark:border-slate-800">
+                      <Typography variant="h6" className="font-bold text-slate-800 dark:text-white">
+                        Penonton Terakhir
+                      </Typography>
+                      <Typography className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                        10 penonton video terakhir
+                      </Typography>
+                    </div>
+                    <Card.Body className="p-0">
+                      {statistics.recent_views.length > 0 ? (
+                        <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                          {statistics.recent_views.map((view) => (
+                            <div key={view.id} className="flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                              <div className="flex items-center gap-3">
+                                <div className="rounded-lg bg-slate-100 p-2 dark:bg-slate-800">
+                                  <UserIcon className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                                </div>
+                                <div>
+                                  <Typography className="font-medium text-slate-700 dark:text-slate-200">
+                                    {view.user_name}
+                                  </Typography>
+                                  <Typography className="text-xs text-slate-500 dark:text-slate-400">
+                                    {view.ip_address}
+                                  </Typography>
+                                </div>
+                              </div>
+                              <Typography className="text-sm text-slate-500 dark:text-slate-400">
+                                {formatDateTime(view.viewed_at)}
+                              </Typography>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+                          No recent views available
+                        </div>
+                      )}
+                    </Card.Body>
+                  </Card>
+                </>
+              )}
+            </div>
           </Tabs.Panel>
         </Tabs>
 

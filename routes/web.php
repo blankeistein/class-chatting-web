@@ -125,6 +125,7 @@ Route::middleware('auth')->group(function () {
         Route::delete('regions/villages/{village}', [AdminRegionController::class, 'destroyVillage'])->name('regions.villages.destroy');
 
         Route::resource('videos', VideoController::class);
+        Route::get('videos/{video}/statistics', [VideoController::class, 'statistics'])->name('videos.statistics');
         Route::post('videos/{video}/sync-hls', [VideoController::class, 'syncHlsUrl'])->name('videos.sync-hls');
         Route::patch('videos/{video}/upload-video', [VideoController::class, 'uploadVideo'])->name('videos.upload-video');
         Route::patch('videos/{video}/upload-thumbnail', [VideoController::class, 'uploadThumbnail'])->name('videos.upload-thumbnail');

@@ -13,6 +13,7 @@ import AdminLayout from "@/Layouts/AdminLayout";
 import Autocomplete from "@/Components/Autocomplete";
 import Checkbox from "@/Components/Checkbox";
 import { Head, Link, router, useForm, usePage } from "@inertiajs/react";
+import axios from "axios";
 import {
   Building2Icon,
   EditIcon,
@@ -142,10 +143,10 @@ export default function Index({ schools: paginatedSchools, filters, filterOption
     }
 
     setIsRegenciesLoading(true);
-    fetch(`/api/v1/regions/provinces/${provinceCode}/regencies?per_page=100`)
-      .then((response) => response.json())
-      .then((json: { data: Regency[] }) => {
-        setRegencies(json.data || []);
+    axios
+      .get<{ data: Regency[] }>(`/api/v1/regions/provinces/${provinceCode}/regencies?per_page=100`)
+      .then((response) => {
+        setRegencies(response.data.data || []);
         setIsRegenciesLoading(false);
       })
       .catch(() => setIsRegenciesLoading(false));
@@ -159,10 +160,10 @@ export default function Index({ schools: paginatedSchools, filters, filterOption
     }
 
     setIsDistrictsLoading(true);
-    fetch(`/api/v1/regions/regencies/${regencyCode}/districts?per_page=100`)
-      .then((response) => response.json())
-      .then((json: { data: District[] }) => {
-        setDistricts(json.data || []);
+    axios
+      .get<{ data: District[] }>(`/api/v1/regions/regencies/${regencyCode}/districts?per_page=100`)
+      .then((response) => {
+        setDistricts(response.data.data || []);
         setIsDistrictsLoading(false);
       })
       .catch(() => setIsDistrictsLoading(false));

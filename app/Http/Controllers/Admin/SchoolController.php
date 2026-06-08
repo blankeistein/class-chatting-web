@@ -12,6 +12,7 @@ use App\Models\Regency;
 use App\Models\School;
 use App\Models\Village;
 use Illuminate\Database\QueryException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -216,43 +217,44 @@ class SchoolController extends Controller
         }, 200, $headers);
     }
 
-    public function import(SchoolImportRequest $request): RedirectResponse
+    public function import(SchoolImportRequest $request): JsonResponse
     {
         if (! Gate::allows('create', School::class)) {
-            return back()->withErrors([
-                'authorization' => 'Kamu tidak punya hak untuk menggunakan fitur ini.',
-            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Kamu tidak punya hak untuk menggunakan fitur ini.',
+            ], 403);
         }
 
         $file = $request->file('file');
 
         if (! $file instanceof UploadedFile) {
-            return redirect()->back()->withErrors('File CSV tidak ditemukan.');
+            return response()->json([
+                'success' => false,
+                'message' => 'File CSV tidak ditemukan.',
+            ], 400);
         }
 
         try {
             $result = $this->importSchoolsFromCsv($file);
         } catch (\RuntimeException|QueryException $exception) {
-            return redirect()->back()->withErrors($exception->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage(),
+            ], 400);
         }
 
-        $summary = sprintf(
-            'Import selesai. %d data diproses (%d baru, %d diperbarui, %d dilewati).',
-            $result['processed'],
-            $result['created'],
-            $result['updated'],
-            $result['skipped']
-        );
-
-        dd($summary);
-
-        $redirect = redirect()->back()->with('success', $summary);
-
-        if ($result['errors'] !== []) {
-            $redirect->with('warning', 'Beberapa baris dilewati: '.implode(' | ', array_slice($result['errors'], 0, 5)));
-        }
-
-        return $redirect;
+        return response()->json([
+            'success' => true,
+            'message' => 'Import sekolah berhasil diproses.',
+            'data' => [
+                'processed' => $result['processed'],
+                'created' => $result['created'],
+                'updated' => $result['updated'],
+                'skipped' => $result['skipped'],
+                'errors' => $result['errors'],
+            ],
+        ]);
     }
 
     /**
@@ -277,14 +279,12 @@ class SchoolController extends Controller
         $headerMap = $this->buildHeaderMap($header);
 
         $requiredColumns = [
-            'id',
             'nama',
             'bentuk_pendidikan',
             'status_sekolah',
             'provinsi_id',
             'kabupaten_id',
             'kecamatan_id',
-            'old_id',
         ];
 
         $missingColumns = array_values(array_filter($requiredColumns, fn (string $column): bool => ! array_key_exists($column, $headerMap)));
@@ -343,7 +343,12 @@ class SchoolController extends Controller
                 $regencyId = $regencyCodeMap[$regencyCode] ?? null;
                 $districtId = $districtCodeMap[$districtCode] ?? null;
 
-                if ($code === '' || $name === '' || $bentukPendidikan === '' || $status === '' || $provinceId === null || $regencyId === null || $districtId === null) {
+                // Generate unique code if 'id' column is empty
+                if ($code === '') {
+                    $code = $this->generateUniqueSchoolCode();
+                }
+
+                if ($name === '' || $bentukPendidikan === '' || $status === '' || $provinceId === null || $regencyId === null || $districtId === null) {
                     $result['skipped']++;
                     $result['errors'][] = "Baris {$rowNumber} gagal diproses.";
 
@@ -421,6 +426,32 @@ class SchoolController extends Controller
         }
 
         return trim((string) ($row[$index] ?? ''));
+    }
+
+    /**
+     * Generate a unique 6-character alphanumeric code for school.
+     */
+    private function generateUniqueSchoolCode(): string
+    {
+        $characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        $maxAttempts = 100;
+        $attempt = 0;
+
+        do {
+            $code = '';
+            for ($i = 0; $i < 6; $i++) {
+                $code .= $characters[random_int(0, strlen($characters) - 1)];
+            }
+
+            $exists = School::query()->where('code', $code)->exists();
+            $attempt++;
+
+            if ($attempt >= $maxAttempts) {
+                throw new \RuntimeException('Gagal generate kode unik setelah '.$maxAttempts.' percobaan.');
+            }
+        } while ($exists);
+
+        return $code;
     }
 
     /**

@@ -312,7 +312,7 @@ export default function Index({
           description="Kelola dan generate kode aktivasi untuk akses aplikasi."
           actions={
             <Button
-              className="flex items-center gap-2 bg-slate-900 dark:bg-white dark:text-slate-900"
+              className="flex items-center gap-2"
               size="sm"
               onClick={() => setOpenGenerateDialog(true)}
             >

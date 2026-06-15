@@ -48,6 +48,12 @@ class FirebaseAuthController extends Controller
             $user = User::where('email', $email)->first();
 
             if ($user) {
+                if (! $user->is_active) {
+                    return response()->json([
+                        'message' => 'Autentikasi gagal. Silakan coba lagi.',
+                    ], 401);
+                }
+
                 // User exists - update Firebase UID and avatar if needed
                 $user->update([
                     'firebase_uid' => $uid,

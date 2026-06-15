@@ -143,7 +143,7 @@ class UserController extends Controller
             $firebaseUid = $firebaseUser->uid;
 
             // Create user in database
-            $user = User::create([
+            User::create([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
                 'username' => $validated['username'],
@@ -178,7 +178,7 @@ class UserController extends Controller
                 }
 
                 // Create user in database with existing Firebase UID
-                $user = User::create([
+                User::create([
                     'name' => $validated['name'],
                     'email' => $validated['email'],
                     'username' => $validated['username'],

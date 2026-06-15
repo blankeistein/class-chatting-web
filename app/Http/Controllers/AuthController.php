@@ -44,6 +44,7 @@ class AuthController extends Controller
         $auth = [
             'email' => $validatedData['email'],
             'password' => $validatedData['password'],
+            'is_active' => true,
         ];
 
         try {
@@ -69,7 +70,7 @@ class AuthController extends Controller
 
             $request->session()->regenerate();
 
-            $firebaseAuth = $firebaseCustomTokenService->issueFor($request->user());
+            $firebaseCustomTokenService->issueFor($request->user());
 
             if ($request->user()?->role === RoleEnum::Admin || $request->user()?->role === RoleEnum::Staff) {
                 return Inertia::location(route('admin.dashboard'));

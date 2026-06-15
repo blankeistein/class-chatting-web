@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\API\V2;
 
-use App\Enums\ActivationCodeTierEnum;
 use App\Http\Controllers\Controller;
 use App\Models\ActivationCode;
+use App\Models\User;
 use App\Models\Video;
 use App\Models\VideoView;
 use Dedoc\Scramble\Attributes\BodyParameter;
@@ -29,10 +29,13 @@ class VideoController extends Controller
     #[BodyParameter('activation_code', 'Kode aktivasi yang valid dan aktif untuk mengakses video.', required: true, example: 'AKTIVASI-001')]
     public function store(Request $request, Video $video): JsonResponse
     {
-        // Get authenticated user
-        $user = $request->user();
+        $firebaseUid = $request->attributes->get('firebase_uid');
+        $user = User::query()
+            ->where('firebase_uid', $firebaseUid)
+            ->where('is_active', true)
+            ->first();
 
-        if (!$user) {
+        if (! $user) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthenticated',
@@ -56,7 +59,7 @@ class VideoController extends Controller
             ->where('is_active', true)
             ->first();
 
-        if (!$activationCode) {
+        if (! $activationCode) {
             return response()->json([
                 'success' => false,
                 'message' => 'Kode aktivasi tidak aktif atau tidak ditemukan.',
@@ -64,7 +67,7 @@ class VideoController extends Controller
         }
 
         // Check if activation code is activated
-        if (!$activationCode->activated_at) {
+        if (! $activationCode->activated_at) {
             return response()->json([
                 'success' => false,
                 'message' => 'Kode aktivasi belum diaktifkan',

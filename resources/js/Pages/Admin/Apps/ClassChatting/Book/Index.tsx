@@ -37,7 +37,7 @@ import {
   SearchIcon,
 } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
-import { collection, onSnapshot } from "firebase/firestore";
+import { collection, doc, onSnapshot } from "firebase/firestore";
 import AdminAppLayout from "@/Layouts/AdminAppLayout";
 import { getFirebaseFirestore } from "@/lib/firebase";
 import BookEditDialog from "@/Pages/Admin/Apps/Partials/Book/EditBookDialog";
@@ -80,20 +80,17 @@ export type FirebaseBook = {
 };
 
 type BookCategory = {
-  id: string;
   name: string;
   keyword: string;
-  order: number;
 };
 
 type FirebaseBookCategory = {
   name: string;
   keyword: string;
-  order: number;
 };
 
 const BOOKS_COLLECTION = "books";
-const BOOK_CATEGORIES_COLLECTION = "book_categories";
+const BOOK_CATEGORIES_COLLECTION = "settings";
 
 const normalizeBook = (key: string, value: Partial<FirebaseBook>): Book => {
   return {
@@ -174,23 +171,11 @@ const restoreBookOrders = (items: Book[]) => {
     }));
 };
 
-const normalizeBookCategory = (key: string, value: Partial<FirebaseBookCategory>): BookCategory => {
+const normalizeBookCategory = (value: Partial<FirebaseBookCategory>): BookCategory => {
   return {
-    id: key,
     name: value.name ?? "-",
     keyword: value.keyword ?? "",
-    order: typeof value.order === "number" ? value.order : Number.MAX_SAFE_INTEGER,
   };
-};
-
-const sortBookCategories = (items: BookCategory[]) => {
-  return [...items].sort((left, right) => {
-    if (left.order !== right.order) {
-      return left.order - right.order;
-    }
-
-    return left.name.localeCompare(right.name);
-  });
 };
 
 const extractBookKeywords = (keywordValue: string): string[] => {
@@ -248,7 +233,7 @@ export default function Index() {
     }
 
     const booksCollection = collection(firestore, BOOKS_COLLECTION);
-    const bookCategoriesCollection = collection(firestore, BOOK_CATEGORIES_COLLECTION);
+    const bookCategoriesCollection = doc(firestore, BOOK_CATEGORIES_COLLECTION, "filterBook");
     const unsubscribeBooks = onSnapshot(
       booksCollection,
       (snapshot) => {
@@ -266,8 +251,13 @@ export default function Index() {
     const unsubscribeCategories = onSnapshot(
       bookCategoriesCollection,
       (snapshot) => {
-        const items = snapshot.docs.map((item) => normalizeBookCategory(item.id, item.data() as Partial<FirebaseBookCategory>));
-        setCategories(sortBookCategories(items));
+        if (snapshot.exists()) {
+          const items: FirebaseBookCategory[] = (snapshot.data().items || []).map((item: FirebaseBookCategory) => {
+            return normalizeBookCategory(item);
+          });
+
+          setCategories(items);
+        }
       },
       (error) => {
         console.error("Error fetching book categories:", error);
@@ -439,10 +429,10 @@ export default function Index() {
         keyword: newForm.keyword,
         lock: newForm.lock,
         name: newForm.name,
-        order: newForm.order,
-        price: newForm.price,
+        order: Number(newForm.order),
+        price: Number(newForm.price),
         status: newForm.status,
-        version: newForm.version,
+        version: Number(newForm.version),
         downloadLink: newForm.downloadLink,
       });
       toast.success("Data buku berhasil diperbarui.");
@@ -623,7 +613,7 @@ export default function Index() {
                       Semua kategori
                     </Select.Option>
                     {categories.map((category) => (
-                      <Select.Option key={category.id} value={category.keyword}>
+                      <Select.Option key={category.keyword} value={category.keyword}>
                         {category.name}
                       </Select.Option>
                     ))}

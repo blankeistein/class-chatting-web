@@ -439,10 +439,10 @@ export default function Index() {
         keyword: newForm.keyword,
         lock: newForm.lock,
         name: newForm.name,
-        order: newForm.order,
-        price: newForm.price,
+        order: Number(newForm.order),
+        price: Number(newForm.price),
         status: newForm.status,
-        version: newForm.version,
+        version: Number(newForm.version),
         downloadLink: newForm.downloadLink,
       });
       toast.success("Data buku berhasil diperbarui.");

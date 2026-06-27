@@ -389,11 +389,11 @@ export default function IndexRTDB() {
         keyword: newForm.keyword.join(","),
         lock: newForm.lock,
         nameBook: newForm.name,
-        orderBook: newForm.order,
-        price: newForm.price,
+        orderBook: Number(newForm.order),
+        price: Number(newForm.price),
         status: newForm.status,
         urlBook: newForm.downloadLink,
-        version: newForm.version,
+        version: Number(newForm.version),
       });
       toast.success("Data buku berhasil diperbarui.");
       setIsEditDialogOpen(false);

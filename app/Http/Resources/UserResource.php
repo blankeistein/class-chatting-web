@@ -24,6 +24,20 @@ class UserResource extends JsonResource
             'avatar' => $this->image,
             'role' => $this->role?->value ?? $this->role,
             'is_active' => (bool) $this->is_active,
+            'schoolId' => $this->whenLoaded('student', fn () => $this->student?->school_id),
+            'school' => $this->when(
+                $this->relationLoaded('student') && $this->student?->relationLoaded('school') && $this->student->school,
+                function (): array {
+                    $school = $this->student->school;
+
+                    return [
+                        'id' => $school->id,
+                        'code' => $school->code,
+                        'npsn' => $school->npsn,
+                        'name' => $school->name,
+                    ];
+                }
+            ),
             'email_verified_at' => $this->email_verified_at?->toIso8601String(),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),

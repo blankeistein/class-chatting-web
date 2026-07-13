@@ -21,6 +21,14 @@ export interface AutocompleteProps {
   loading?: boolean;
   className?: string;
   id?: string;
+  /**
+   * When provided, options are treated as server-driven.
+   * Local label filtering is skipped and the query is passed to the parent.
+   */
+  onSearchChange?: (query: string) => void;
+  /** Label for the selected value when it is not present in `options` yet. */
+  selectedLabel?: string;
+  emptyMessage?: string;
 }
 
 export default function Autocomplete({
@@ -32,6 +40,9 @@ export default function Autocomplete({
   loading = false,
   className,
   id,
+  onSearchChange,
+  selectedLabel,
+  emptyMessage,
 }: AutocompleteProps) {
   const generatedId = useId();
   const inputId = id || generatedId;
@@ -42,15 +53,23 @@ export default function Autocomplete({
   const [search, setSearch] = useState("");
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
 
-  const selectedOption = options.find((opt) => opt.value === value);
+  const isAsync = typeof onSearchChange === "function";
 
-  const filtered = search
-    ? options.filter((opt) => opt.label.toLowerCase().includes(search.toLowerCase()))
-    : options;
+  const selectedOption =
+    options.find((opt) => opt.value === value) ??
+    (value && selectedLabel
+      ? { value, label: selectedLabel }
+      : undefined);
+
+  const filtered = isAsync
+    ? options
+    : search
+      ? options.filter((opt) => opt.label.toLowerCase().includes(search.toLowerCase()))
+      : options;
 
   useEffect(() => {
     setHighlightedIndex(-1);
-  }, [search]);
+  }, [search, options]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -151,13 +170,16 @@ export default function Autocomplete({
           placeholder={selectedOption ? selectedOption.label : placeholder}
           value={isOpen ? search : (selectedOption?.label || "")}
           onChange={(e) => {
-            setSearch(e.target.value);
+            const next = e.target.value;
+            setSearch(next);
             if (!isOpen) setIsOpen(true);
+            onSearchChange?.(next);
           }}
           onFocus={() => {
             if (!disabled) {
               setIsOpen(true);
               if (selectedOption) setSearch("");
+              onSearchChange?.(selectedOption ? "" : search);
             }
           }}
           onKeyDown={handleKeyDown}
@@ -203,7 +225,7 @@ export default function Autocomplete({
             <li className="px-3 py-2 text-sm text-slate-400 dark:text-slate-500">Memuat...</li>
           ) : filtered.length === 0 ? (
             <li className="px-3 py-2 text-sm text-slate-400 dark:text-slate-500">
-              {search ? "Tidak ditemukan" : "Tidak ada opsi"}
+              {emptyMessage || (search ? "Tidak ditemukan" : "Tidak ada opsi")}
             </li>
           ) : (
             filtered.map((option, index) => (

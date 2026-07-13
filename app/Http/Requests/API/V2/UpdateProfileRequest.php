@@ -33,6 +33,7 @@ class UpdateProfileRequest extends FormRequest
             'phone' => ['nullable', 'string', 'max:20', Rule::unique('users', 'phone')->ignore($userId)],
             'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'remove_avatar' => ['nullable', 'boolean'],
+            'schoolId' => ['nullable', 'integer', 'exists:schools,id'],
         ];
     }
 
@@ -51,6 +52,8 @@ class UpdateProfileRequest extends FormRequest
             'avatar.image' => 'File harus berupa gambar.',
             'avatar.mimes' => 'Format gambar harus jpg, jpeg, png, atau webp.',
             'avatar.max' => 'Ukuran gambar maksimal 2MB.',
+            'schoolId.integer' => 'schoolId harus berupa angka.',
+            'schoolId.exists' => 'Sekolah tidak ditemukan.',
         ];
     }
 
@@ -59,6 +62,12 @@ class UpdateProfileRequest extends FormRequest
         if ($this->has('remove_avatar') && is_string($this->remove_avatar)) {
             $this->merge([
                 'remove_avatar' => filter_var($this->remove_avatar, FILTER_VALIDATE_BOOLEAN),
+            ]);
+        }
+
+        if ($this->has('school_id') && ! $this->has('schoolId')) {
+            $this->merge([
+                'schoolId' => $this->input('school_id'),
             ]);
         }
     }

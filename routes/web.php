@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\EmailConfigController;
 use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\RegionController as AdminRegionController;
 use App\Http\Controllers\Admin\SchoolController as AdminSchoolController;
+use App\Http\Controllers\Admin\StudentController as AdminStudentController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VideoController;
 use App\Http\Controllers\AuthController;
@@ -28,7 +29,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', function () {
-    $dashboard_link = NULL;
+    $dashboard_link = null;
 
     if (Auth::check()) {
         $dashboard_link = match (Auth::user()->role) {
@@ -40,7 +41,7 @@ Route::get('/', function () {
     }
 
     return view('index', [
-        'dashboard_link' => $dashboard_link
+        'dashboard_link' => $dashboard_link,
     ]);
 })->name('home');
 
@@ -105,6 +106,8 @@ Route::middleware('auth')->group(function () {
         Route::get('schools/bulk-export', [AdminSchoolController::class, 'bulkExport'])->name('schools.bulk-export');
         Route::delete('schools/bulk-delete', [AdminSchoolController::class, 'bulkDelete'])->name('schools.bulk-delete');
         Route::resource('schools', AdminSchoolController::class);
+        Route::get('students/available-users', [AdminStudentController::class, 'availableUsers'])->name('students.available-users');
+        Route::resource('students', AdminStudentController::class);
 
         Route::get('regions', [AdminRegionController::class, 'index'])->name('regions.index');
         Route::get('regions/provinces', [AdminRegionController::class, 'provinces'])->name('regions.provinces.index');

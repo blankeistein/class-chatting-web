@@ -1,7 +1,11 @@
 <?php
 
+use App\Enums\RoleEnum;
+use App\Models\School;
+use App\Models\Student;
 use App\Models\User;
 use App\Services\FirebaseStorageService;
+use App\Services\SyncStudentSchoolToFirestoreService;
 use Google\Cloud\Firestore\FirestoreClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -215,6 +219,128 @@ it('updates the user profile and syncs changes to firebase auth and firestore', 
         'username' => 'newuser',
         'phone' => '+6282222222222',
     ]);
+});
+
+it('assigns school from schoolId and syncs school data to firestore', function () {
+    $user = User::factory()->create([
+        'name' => 'Siswa Baru',
+        'email' => 'siswa@example.com',
+        'firebase_uid' => 'firebase-user-profile-001',
+        'role' => RoleEnum::User,
+        'is_active' => true,
+    ]);
+    $school = School::factory()->create([
+        'name' => 'SMAN 8 Kota',
+        'address' => 'Jl. Pendidikan 8',
+    ]);
+
+    mockValidFirebaseToken($user->firebase_uid, function ($auth): void {
+        $auth->shouldReceive('updateUser')->once();
+    });
+
+    expectFirestoreProfileSync(
+        $user->firebase_uid,
+        'Siswa Baru',
+        ['siswa baru', 'siswa', 'baru'],
+    );
+
+    $this->mock(SyncStudentSchoolToFirestoreService::class, function (MockInterface $mock) use ($user, $school): void {
+        $mock->shouldReceive('syncUserSchool')
+            ->once()
+            ->withArgs(function (User $syncedUser, School $syncedSchool, bool $onlyIfDocumentExists) use ($user, $school): bool {
+                return $syncedUser->is($user)
+                    && $syncedSchool->is($school)
+                    && $onlyIfDocumentExists === false;
+            });
+    });
+
+    $response = $this
+        ->withHeader('Authorization', 'Bearer valid-firebase-token')
+        ->putJson('/api/v2/profile', [
+            'name' => 'Siswa Baru',
+            'email' => 'siswa@example.com',
+            'schoolId' => $school->id,
+        ]);
+
+    $response
+        ->assertSuccessful()
+        ->assertJsonPath('data.schoolId', $school->id)
+        ->assertJsonPath('data.school.name', 'SMAN 8 Kota')
+        ->assertJsonPath('data.role', 'student');
+
+    $this->assertDatabaseHas('students', [
+        'user_id' => $user->id,
+        'school_id' => $school->id,
+        'is_active' => 1,
+    ]);
+
+    expect($user->fresh()->role)->toBe(RoleEnum::Student);
+});
+
+it('updates existing student school when schoolId is sent on profile update', function () {
+    $user = User::factory()->create([
+        'name' => 'Siswa Pindah',
+        'email' => 'pindah@example.com',
+        'firebase_uid' => 'firebase-user-profile-001',
+        'role' => RoleEnum::Student,
+        'is_active' => true,
+    ]);
+    $oldSchool = School::factory()->create();
+    $newSchool = School::factory()->create(['name' => 'SMP Baru']);
+    Student::factory()->forUser($user)->forSchool($oldSchool)->create();
+
+    mockValidFirebaseToken($user->firebase_uid, function ($auth): void {
+        $auth->shouldReceive('updateUser')->once();
+    });
+
+    expectFirestoreProfileSync(
+        $user->firebase_uid,
+        'Siswa Pindah',
+        ['siswa pindah', 'siswa', 'pindah'],
+    );
+
+    $this->mock(SyncStudentSchoolToFirestoreService::class, function (MockInterface $mock) use ($newSchool): void {
+        $mock->shouldReceive('syncUserSchool')
+            ->once()
+            ->withArgs(fn (User $u, School $s, bool $onlyIf): bool => $s->is($newSchool) && $onlyIf === false);
+    });
+
+    $this
+        ->withHeader('Authorization', 'Bearer valid-firebase-token')
+        ->putJson('/api/v2/profile', [
+            'name' => 'Siswa Pindah',
+            'email' => 'pindah@example.com',
+            'schoolId' => $newSchool->id,
+        ])
+        ->assertSuccessful()
+        ->assertJsonPath('data.schoolId', $newSchool->id);
+
+    $this->assertDatabaseHas('students', [
+        'user_id' => $user->id,
+        'school_id' => $newSchool->id,
+    ]);
+
+    expect(Student::query()->where('user_id', $user->id)->count())->toBe(1);
+});
+
+it('rejects invalid schoolId on profile update', function () {
+    $user = User::factory()->create([
+        'email' => 'invalid-school@example.com',
+        'firebase_uid' => 'firebase-user-profile-001',
+        'is_active' => true,
+    ]);
+
+    mockValidFirebaseToken($user->firebase_uid);
+
+    $this
+        ->withHeader('Authorization', 'Bearer valid-firebase-token')
+        ->putJson('/api/v2/profile', [
+            'name' => 'Invalid School',
+            'email' => 'invalid-school@example.com',
+            'schoolId' => 999999,
+        ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['schoolId']);
 });
 
 it('builds searchUserName with full lowercase name and space-separated parts', function () {

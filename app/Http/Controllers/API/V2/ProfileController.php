@@ -2,11 +2,15 @@
 
 namespace App\Http\Controllers\API\V2;
 
+use App\Enums\RoleEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\API\V2\UpdateProfileRequest;
 use App\Http\Resources\UserResource;
+use App\Models\School;
+use App\Models\Student;
 use App\Models\User;
 use App\Services\FirebaseStorageService;
+use App\Services\SyncStudentSchoolToFirestoreService;
 use Dedoc\Scramble\Attributes\BodyParameter;
 use Dedoc\Scramble\Attributes\Endpoint;
 use Dedoc\Scramble\Attributes\Group;
@@ -24,6 +28,7 @@ class ProfileController extends Controller
     public function __construct(
         private FirebaseStorageService $storage,
         private FirestoreClient $firestore,
+        private SyncStudentSchoolToFirestoreService $syncStudentSchoolToFirestore,
     ) {}
 
     #[Endpoint(
@@ -40,6 +45,8 @@ class ProfileController extends Controller
             return $this->errorResponse(401, 401, 'Pengguna tidak ditemukan atau tidak aktif.');
         }
 
+        $user->load(['student.school:id,code,npsn,name']);
+
         return $this->successResponse([
             'message' => 'Profil berhasil diambil.',
             'data' => (new UserResource($user))->resolve(),
@@ -49,7 +56,7 @@ class ProfileController extends Controller
     #[Endpoint(
         operationId: 'publicProfileUpdateV2',
         title: 'Update current user profile v2',
-        description: 'Memperbarui profil pengguna di database lokal lalu menyinkronkan perubahan ke Firebase Auth, Firebase Storage (avatar), dan Firestore di path `users/{uuid}` (field `name` dan `searchUserName`).'
+        description: 'Memperbarui profil pengguna di database lokal lalu menyinkronkan perubahan ke Firebase Auth, Firebase Storage (avatar), dan Firestore di path `users/{uuid}` (field `name`, `searchUserName`, serta `schoolId`/`schoolName`/`schoolAddress` bila `schoolId` dikirim).'
     )]
     #[HeaderParameter('Authorization', 'Firebase ID token bearer. Format: `Bearer <firebase_id_token>`.', required: true, example: 'Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6Ij...')]
     #[BodyParameter('name', 'Nama lengkap pengguna.', required: true, example: 'Budi Santoso')]
@@ -58,6 +65,7 @@ class ProfileController extends Controller
     #[BodyParameter('phone', 'Nomor telepon pengguna.', required: false, example: '+6281234567890')]
     #[BodyParameter('avatar', 'File gambar avatar (jpg, jpeg, png, webp). Maksimal 2MB.', required: false, type: 'string', format: 'binary')]
     #[BodyParameter('remove_avatar', 'Set true untuk menghapus avatar saat ini.', required: false, type: 'boolean', example: false)]
+    #[BodyParameter('schoolId', 'ID sekolah di server. Menyimpan/memperbarui relasi murid dan menyinkronkan schoolId, schoolName, schoolAddress ke Firestore.', required: false, type: 'integer', example: 12)]
     public function update(UpdateProfileRequest $request): JsonResponse
     {
         $user = $request->authenticatedUser() ?? $this->resolveActiveUser($request);
@@ -95,6 +103,11 @@ class ProfileController extends Controller
 
         $this->syncFirebaseProfile($user);
         $this->syncFirestoreProfile($user);
+
+        if (array_key_exists('schoolId', $validated) && $validated['schoolId'] !== null) {
+            $this->syncSchoolAssignment($user, (int) $validated['schoolId']);
+            $user->load(['student.school']);
+        }
 
         return $this->successResponse([
             'message' => 'Profil berhasil diperbarui.',
@@ -200,6 +213,39 @@ class ProfileController extends Controller
                 'error' => $e->getMessage(),
             ]);
         }
+    }
+
+    /**
+     * Persist school assignment on the server and sync school fields to Firestore.
+     */
+    private function syncSchoolAssignment(User $user, int $schoolId): void
+    {
+        $school = School::query()->find($schoolId);
+
+        if (! $school) {
+            return;
+        }
+
+        $student = Student::query()->updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'school_id' => $school->id,
+                'is_active' => true,
+            ]
+        );
+
+        if ($user->role === RoleEnum::User) {
+            $user->forceFill(['role' => RoleEnum::Student])->save();
+        }
+
+        $this->syncStudentSchoolToFirestore->syncUserSchool(
+            $user,
+            $school,
+            onlyIfDocumentExists: false,
+        );
+
+        $student->setRelation('school', $school);
+        $user->setRelation('student', $student);
     }
 
     /**

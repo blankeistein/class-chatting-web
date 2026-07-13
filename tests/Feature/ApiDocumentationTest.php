@@ -15,6 +15,7 @@ it('stores a machine readable openapi document for ai tooling', function () {
             '/v1/book/level/{code}',
             '/v2/book/activate',
             '/v2/book/level/{code}',
+            '/v2/profile',
             '/v1/regions/provinces',
             '/firebase/webhook/user-created',
             '/video/update-hls-url',

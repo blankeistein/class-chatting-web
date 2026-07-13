@@ -2,7 +2,7 @@
     "openapi": "3.1.0",
     "info": {
         "title": "Class Chatting API",
-        "version": "1.0.0",
+        "version": "0.0.1",
         "description": "Dokumen OpenAPI 3.1 untuk Class Chatting.\n\nDokumentasi ini mencakup:\n- Public API di bawah prefix `/api`\n- Private API di bawah prefix `/private-api/{api_key}`\n- Firebase webhook di bawah prefix `/api/firebase`\n\nGunakan `/docs/api` untuk dokumentasi interaktif, `/docs/api.json` untuk OpenAPI JSON runtime, dan `openapi.json` untuk artefak yang dapat dikonsumsi AI, generator SDK, atau automation tooling."
     },
     "servers": [
@@ -14,19 +14,31 @@
     "tags": [
         {
             "name": "Regions",
-            "description": "Referensi wilayah Indonesia: provinsi, kabupaten atau kota, dan kecamatan."
+            "description": "Referensi wilayah Indonesia: provinsi, kabupaten atau kota, kecamatan, dan desa."
         },
         {
-            "name": "Public Books",
-            "description": "Endpoint publik untuk aktivasi buku dan pengecekan level kode aktivasi."
+            "name": "Schools",
+            "description": "Referensi data sekolah beserta konteks wilayah administratif."
+        },
+        {
+            "name": "Public Books V1",
+            "description": "Endpoint publik versi 1 untuk aktivasi buku dan pengecekan level kode aktivasi."
+        },
+        {
+            "name": "Public Books V2",
+            "description": "Endpoint publik versi 2 untuk aktivasi buku dengan pengamanan transaksi."
+        },
+        {
+            "name": "Video V2",
+            "description": "Endpoint versi 2 untuk video dengan pengaman."
+        },
+        {
+            "name": "Profile V2",
+            "description": "Endpoint versi 2 untuk melihat dan memperbarui profil pengguna yang terautentikasi Firebase."
         },
         {
             "name": "Firebase Webhooks",
-            "description": "Webhook untuk sinkronisasi data pengguna dari Firebase. Memerlukan Firebase ID token sebagai Bearer token."
-        },
-        {
-            "name": "Videos",
-            "description": "Endpoint API untuk sinkronisasi data video dari service internal."
+            "description": "Webhook internal untuk sinkronisasi data pengguna dari Firebase."
         },
         {
             "name": "Private Books",
@@ -50,24 +62,26 @@
                     {
                         "name": "search",
                         "in": "query",
-                        "description": "Kata kunci pencarian berdasarkan kode atau nama provinsi.",
                         "schema": {
                             "type": [
                                 "string",
                                 "null"
                             ],
+                            "minLength": 3,
                             "maxLength": 100
-                        },
-                        "example": "jakarta"
+                        }
                     },
                     {
                         "name": "per_page",
                         "in": "query",
-                        "description": "Jumlah item per halaman. Nilai yang valid antara 1 sampai 100.",
                         "schema": {
-                            "type": "integer"
-                        },
-                        "example": 25
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100
+                        }
                     }
                 ],
                 "responses": {
@@ -271,6 +285,30 @@
                 ],
                 "parameters": [
                     {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "minLength": 3,
+                            "maxLength": 100
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    },
+                    {
                         "name": "province",
                         "in": "path",
                         "required": true,
@@ -279,28 +317,6 @@
                             "type": "string"
                         },
                         "example": "31"
-                    },
-                    {
-                        "name": "search",
-                        "in": "query",
-                        "description": "Kata kunci pencarian berdasarkan kode atau nama kabupaten atau kota.",
-                        "schema": {
-                            "type": [
-                                "string",
-                                "null"
-                            ],
-                            "maxLength": 100
-                        },
-                        "example": "selatan"
-                    },
-                    {
-                        "name": "per_page",
-                        "in": "query",
-                        "description": "Jumlah item per halaman. Nilai yang valid antara 1 sampai 100.",
-                        "schema": {
-                            "type": "integer"
-                        },
-                        "example": 25
                     }
                 ],
                 "responses": {
@@ -464,24 +480,26 @@
                     {
                         "name": "search",
                         "in": "query",
-                        "description": "Kata kunci pencarian berdasarkan kode atau nama kabupaten atau kota.",
                         "schema": {
                             "type": [
                                 "string",
                                 "null"
                             ],
+                            "minLength": 3,
                             "maxLength": 100
-                        },
-                        "example": "bandung"
+                        }
                     },
                     {
                         "name": "per_page",
                         "in": "query",
-                        "description": "Jumlah item per halaman. Nilai yang valid antara 1 sampai 100.",
                         "schema": {
-                            "type": "integer"
-                        },
-                        "example": 25
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100
+                        }
                     }
                 ],
                 "responses": {
@@ -685,6 +703,30 @@
                 ],
                 "parameters": [
                     {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "minLength": 3,
+                            "maxLength": 100
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    },
+                    {
                         "name": "regency",
                         "in": "path",
                         "required": true,
@@ -693,28 +735,6 @@
                             "type": "string"
                         },
                         "example": "3171"
-                    },
-                    {
-                        "name": "search",
-                        "in": "query",
-                        "description": "Kata kunci pencarian berdasarkan kode atau nama kecamatan.",
-                        "schema": {
-                            "type": [
-                                "string",
-                                "null"
-                            ],
-                            "maxLength": 100
-                        },
-                        "example": "baru"
-                    },
-                    {
-                        "name": "per_page",
-                        "in": "query",
-                        "description": "Jumlah item per halaman. Nilai yang valid antara 1 sampai 100.",
-                        "schema": {
-                            "type": "integer"
-                        },
-                        "example": 25
                     }
                 ],
                 "responses": {
@@ -878,24 +898,26 @@
                     {
                         "name": "search",
                         "in": "query",
-                        "description": "Kata kunci pencarian berdasarkan kode atau nama kecamatan.",
                         "schema": {
                             "type": [
                                 "string",
                                 "null"
                             ],
+                            "minLength": 3,
                             "maxLength": 100
-                        },
-                        "example": "kebayoran"
+                        }
                     },
                     {
                         "name": "per_page",
                         "in": "query",
-                        "description": "Jumlah item per halaman. Nilai yang valid antara 1 sampai 100.",
                         "schema": {
-                            "type": "integer"
-                        },
-                        "example": 25
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100
+                        }
                     }
                 ],
                 "responses": {
@@ -1089,13 +1111,656 @@
                 }
             }
         },
+        "/v1/regions/districts/{district}/villages": {
+            "get": {
+                "operationId": "regionsListVillagesByDistrict",
+                "description": "Mengambil daftar desa untuk satu kecamatan tertentu.",
+                "summary": "List villages by district",
+                "tags": [
+                    "Regions"
+                ],
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "minLength": 3,
+                            "maxLength": 100
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    },
+                    {
+                        "name": "district",
+                        "in": "path",
+                        "required": true,
+                        "description": "Kode kecamatan Indonesia yang menjadi induk data desa.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "3171010"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated set of `VillageResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/VillageResource"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "properties": {
+                                                "first": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "last": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "first",
+                                                "last",
+                                                "prev",
+                                                "next"
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "from": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "minimum": 1
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "links": {
+                                                    "type": "array",
+                                                    "description": "Generated paginator links.",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "url": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "label": {
+                                                                "type": "string"
+                                                            },
+                                                            "active": {
+                                                                "type": "boolean"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "url",
+                                                            "label",
+                                                            "active"
+                                                        ]
+                                                    }
+                                                },
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Base path for paginator generated URLs."
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items shown per page.",
+                                                    "minimum": 0
+                                                },
+                                                "to": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "description": "Number of the last item in the slice.",
+                                                    "minimum": 1
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items being paginated.",
+                                                    "minimum": 0
+                                                }
+                                            },
+                                            "required": [
+                                                "current_page",
+                                                "from",
+                                                "last_page",
+                                                "links",
+                                                "path",
+                                                "per_page",
+                                                "to",
+                                                "total"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/regions/villages": {
+            "get": {
+                "operationId": "regionsListVillages",
+                "description": "Mengambil daftar desa dalam format paginasi beserta konteks kecamatan, kabupaten atau kota, dan provinsinya.",
+                "summary": "List villages",
+                "tags": [
+                    "Regions"
+                ],
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "minLength": 3,
+                            "maxLength": 100
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated set of `VillageResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/VillageResource"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "properties": {
+                                                "first": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "last": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "first",
+                                                "last",
+                                                "prev",
+                                                "next"
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "from": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "minimum": 1
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "links": {
+                                                    "type": "array",
+                                                    "description": "Generated paginator links.",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "url": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "label": {
+                                                                "type": "string"
+                                                            },
+                                                            "active": {
+                                                                "type": "boolean"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "url",
+                                                            "label",
+                                                            "active"
+                                                        ]
+                                                    }
+                                                },
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Base path for paginator generated URLs."
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items shown per page.",
+                                                    "minimum": 0
+                                                },
+                                                "to": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "description": "Number of the last item in the slice.",
+                                                    "minimum": 1
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items being paginated.",
+                                                    "minimum": 0
+                                                }
+                                            },
+                                            "required": [
+                                                "current_page",
+                                                "from",
+                                                "last_page",
+                                                "links",
+                                                "path",
+                                                "per_page",
+                                                "to",
+                                                "total"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/regions/villages/{village}": {
+            "get": {
+                "operationId": "regionsShowVillage",
+                "description": "Mengambil detail satu desa berdasarkan kode wilayah Indonesia.",
+                "summary": "Get village detail",
+                "tags": [
+                    "Regions"
+                ],
+                "parameters": [
+                    {
+                        "name": "village",
+                        "in": "path",
+                        "required": true,
+                        "description": "Kode desa Indonesia yang dipakai route model binding.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "3171010001"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`VillageResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/VillageResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/v1/schools": {
+            "get": {
+                "operationId": "schoolsList",
+                "description": "Mengambil daftar sekolah dalam format paginasi dengan dukungan pencarian NPSN atau nama sekolah.",
+                "summary": "List schools",
+                "tags": [
+                    "Schools"
+                ],
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "minLength": 3,
+                            "maxLength": 100
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated set of `SchoolResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/SchoolResource"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "properties": {
+                                                "first": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "last": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "first",
+                                                "last",
+                                                "prev",
+                                                "next"
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "from": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "minimum": 1
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "links": {
+                                                    "type": "array",
+                                                    "description": "Generated paginator links.",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "url": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "label": {
+                                                                "type": "string"
+                                                            },
+                                                            "active": {
+                                                                "type": "boolean"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "url",
+                                                            "label",
+                                                            "active"
+                                                        ]
+                                                    }
+                                                },
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Base path for paginator generated URLs."
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items shown per page.",
+                                                    "minimum": 0
+                                                },
+                                                "to": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "description": "Number of the last item in the slice.",
+                                                    "minimum": 1
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items being paginated.",
+                                                    "minimum": 0
+                                                }
+                                            },
+                                            "required": [
+                                                "current_page",
+                                                "from",
+                                                "last_page",
+                                                "links",
+                                                "path",
+                                                "per_page",
+                                                "to",
+                                                "total"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/schools/{school}": {
+            "get": {
+                "operationId": "schoolsShow",
+                "description": "Mengambil detail satu sekolah berdasarkan id.",
+                "summary": "Get school detail",
+                "tags": [
+                    "Schools"
+                ],
+                "parameters": [
+                    {
+                        "name": "school",
+                        "in": "path",
+                        "required": true,
+                        "description": "Id sekolah yang dipakai route model binding.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "1"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`SchoolResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/SchoolResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
         "/v1/book/activate": {
             "post": {
-                "operationId": "publicBooksActivate",
-                "description": "Memvalidasi kode aktivasi untuk sebuah buku dan mengaitkannya ke pengguna. Error bisnis dikembalikan pada body JSON, bukan response validasi 422 standar.",
-                "summary": "Activate book code",
+                "operationId": "publicBooksActivateV1",
+                "description": "Memvalidasi kode aktivasi untuk sebuah buku dan mengaitkannya ke pengguna pada endpoint versi 1.",
+                "summary": "Activate book code v1",
                 "tags": [
-                    "Public Books"
+                    "Public Books V1"
                 ],
                 "requestBody": {
                     "required": true,
@@ -1119,7 +1784,7 @@
                                         "description": "Firebase UID atau identifier unik pengguna yang melakukan aktivasi.",
                                         "example": "firebase-user-001"
                                     },
-                                    "id": {
+                                    "package_name": {
                                         "type": "string",
                                         "description": "UUID buku yang akan diaktivasi.",
                                         "example": "book-uuid-001"
@@ -1134,7 +1799,7 @@
                                     "api_key",
                                     "code",
                                     "uid",
-                                    "id",
+                                    "package_name",
                                     "tier"
                                 ]
                             }
@@ -1147,354 +1812,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "anyOf": [
-                                        {
-                                            "type": "object",
-                                            "properties": {
-                                                "status": {
-                                                    "type": "string",
-                                                    "const": "success"
-                                                },
-                                                "message": {
-                                                    "type": "string"
-                                                },
-                                                "version": {
-                                                    "type": "integer",
-                                                    "const": 1
-                                                }
-                                            },
-                                            "required": [
-                                                "status",
-                                                "message",
-                                                "version"
-                                            ]
-                                        },
-                                        {
-                                            "type": "object",
-                                            "properties": {
-                                                "status": {
-                                                    "type": "string",
-                                                    "const": "error"
-                                                },
-                                                "error_code": {
-                                                    "type": "integer",
-                                                    "const": 110
-                                                },
-                                                "message": {
-                                                    "type": "string"
-                                                },
-                                                "version": {
-                                                    "type": "integer",
-                                                    "const": 1
-                                                }
-                                            },
-                                            "required": [
-                                                "status",
-                                                "error_code",
-                                                "message",
-                                                "version"
-                                            ]
-                                        },
-                                        {
-                                            "type": "object",
-                                            "properties": {
-                                                "status": {
-                                                    "type": "string",
-                                                    "const": "error"
-                                                },
-                                                "error_code": {
-                                                    "type": "integer",
-                                                    "const": 109
-                                                },
-                                                "message": {
-                                                    "type": "string",
-                                                    "const": "Maaf kode yang anda masukkan sudah diaktifkan di akun lain [109]"
-                                                },
-                                                "version": {
-                                                    "type": "integer",
-                                                    "const": 1
-                                                }
-                                            },
-                                            "required": [
-                                                "status",
-                                                "error_code",
-                                                "message",
-                                                "version"
-                                            ]
-                                        },
-                                        {
-                                            "type": "object",
-                                            "properties": {
-                                                "status": {
-                                                    "type": "string",
-                                                    "const": "error"
-                                                },
-                                                "error_code": {
-                                                    "type": "integer",
-                                                    "const": 114
-                                                },
-                                                "message": {
-                                                    "type": "string",
-                                                    "const": "Kode tidak cocok diaktifkan disini. [114]"
-                                                },
-                                                "version": {
-                                                    "type": "integer",
-                                                    "const": 1
-                                                }
-                                            },
-                                            "required": [
-                                                "status",
-                                                "error_code",
-                                                "message",
-                                                "version"
-                                            ]
-                                        },
-                                        {
-                                            "type": "object",
-                                            "properties": {
-                                                "status": {
-                                                    "type": "string",
-                                                    "const": "error"
-                                                },
-                                                "error_code": {
-                                                    "type": "integer",
-                                                    "const": 108
-                                                },
-                                                "message": {
-                                                    "type": "string"
-                                                },
-                                                "version": {
-                                                    "type": "integer",
-                                                    "const": 1
-                                                }
-                                            },
-                                            "required": [
-                                                "status",
-                                                "error_code",
-                                                "message",
-                                                "version"
-                                            ]
-                                        },
-                                        {
-                                            "type": "object",
-                                            "properties": {
-                                                "status": {
-                                                    "type": "string",
-                                                    "const": "error"
-                                                },
-                                                "error_code": {
-                                                    "type": "integer",
-                                                    "const": 107
-                                                },
-                                                "message": {
-                                                    "type": "string",
-                                                    "const": "Buku belum terdaftar, Mohon laporkan ini ke Customer Service kami. Terima Kasih :) [107]"
-                                                },
-                                                "version": {
-                                                    "type": "integer",
-                                                    "const": 1
-                                                }
-                                            },
-                                            "required": [
-                                                "status",
-                                                "error_code",
-                                                "message",
-                                                "version"
-                                            ]
-                                        },
-                                        {
-                                            "type": "object",
-                                            "properties": {
-                                                "status": {
-                                                    "type": "string",
-                                                    "const": "error"
-                                                },
-                                                "error_code": {
-                                                    "type": "integer",
-                                                    "const": 113
-                                                },
-                                                "message": {
-                                                    "type": "string",
-                                                    "const": "Mohon maaf, Kode sudah mencapai batas pengaktifan. [113]"
-                                                },
-                                                "version": {
-                                                    "type": "integer",
-                                                    "const": 1
-                                                }
-                                            },
-                                            "required": [
-                                                "status",
-                                                "error_code",
-                                                "message",
-                                                "version"
-                                            ]
-                                        },
-                                        {
-                                            "type": "object",
-                                            "properties": {
-                                                "status": {
-                                                    "type": "string",
-                                                    "const": "error"
-                                                },
-                                                "error_code": {
-                                                    "type": "integer",
-                                                    "const": 108
-                                                },
-                                                "message": {
-                                                    "type": "string",
-                                                    "const": "Mohon maaf, Kode ini tidak aktif atau sudah dinonaktifkan. [108]"
-                                                },
-                                                "version": {
-                                                    "type": "integer",
-                                                    "const": 1
-                                                }
-                                            },
-                                            "required": [
-                                                "status",
-                                                "error_code",
-                                                "message",
-                                                "version"
-                                            ]
-                                        },
-                                        {
-                                            "type": "object",
-                                            "properties": {
-                                                "status": {
-                                                    "type": "string",
-                                                    "const": "error"
-                                                },
-                                                "error_code": {
-                                                    "type": "integer",
-                                                    "const": 106
-                                                },
-                                                "message": {
-                                                    "type": "string",
-                                                    "const": "Kode yang anda masukkan tidak valid. [106]"
-                                                },
-                                                "version": {
-                                                    "type": "integer",
-                                                    "const": 1
-                                                }
-                                            },
-                                            "required": [
-                                                "status",
-                                                "error_code",
-                                                "message",
-                                                "version"
-                                            ]
-                                        },
-                                        {
-                                            "type": "object",
-                                            "properties": {
-                                                "status": {
-                                                    "type": "string",
-                                                    "const": "error"
-                                                },
-                                                "error_code": {
-                                                    "type": "integer",
-                                                    "const": 102
-                                                },
-                                                "message": {
-                                                    "type": "string",
-                                                    "const": "Mohon maaf aplikasi anda sudah usang, update aplikasi ke versi paling baru. [102]"
-                                                },
-                                                "version": {
-                                                    "type": "integer",
-                                                    "const": 1
-                                                }
-                                            },
-                                            "required": [
-                                                "status",
-                                                "error_code",
-                                                "message",
-                                                "version"
-                                            ]
-                                        },
-                                        {
-                                            "type": "object",
-                                            "properties": {
-                                                "status": {
-                                                    "type": "string",
-                                                    "const": "error"
-                                                },
-                                                "error_code": {
-                                                    "type": "integer",
-                                                    "const": 999
-                                                },
-                                                "message": {
-                                                    "type": "string",
-                                                    "const": "[999] Anda tidak tergabung dengan team pengembang. Kode tidak bisa diaktivasi"
-                                                },
-                                                "version": {
-                                                    "type": "integer",
-                                                    "const": 1
-                                                }
-                                            },
-                                            "required": [
-                                                "status",
-                                                "error_code",
-                                                "message",
-                                                "version"
-                                            ]
-                                        },
-                                        {
-                                            "type": "object",
-                                            "properties": {
-                                                "status": {
-                                                    "type": "string",
-                                                    "const": "success"
-                                                },
-                                                "error_code": {
-                                                    "type": "integer",
-                                                    "const": 200
-                                                },
-                                                "message": {
-                                                    "type": "string",
-                                                    "const": "[Anda adalah seorang Tester] Kode berhasil diaktifkan."
-                                                }
-                                            },
-                                            "required": [
-                                                "status",
-                                                "error_code",
-                                                "message"
-                                            ]
-                                        },
-                                        {
-                                            "type": "object",
-                                            "properties": {
-                                                "status": {
-                                                    "type": "string",
-                                                    "const": "error"
-                                                },
-                                                "error_code": {
-                                                    "anyOf": [
-                                                        {
-                                                            "type": "string"
-                                                        },
-                                                        {
-                                                            "type": "integer",
-                                                            "enum": [
-                                                                101
-                                                            ]
-                                                        }
-                                                    ]
-                                                },
-                                                "message": {
-                                                    "type": "string"
-                                                },
-                                                "version": {
-                                                    "type": "integer",
-                                                    "const": 1
-                                                }
-                                            },
-                                            "required": [
-                                                "status",
-                                                "error_code",
-                                                "message",
-                                                "version"
-                                            ]
-                                        }
-                                    ]
+                                    "type": "object"
                                 }
                             }
                         }
@@ -1505,17 +1823,351 @@
                 }
             }
         },
+        "/v1/book/level": {
+            "get": {
+                "operationId": "v1.book.activationCheckLevel_0",
+                "description": "Mengembalikan tier atau level dari sebuah kode aktivasi apabila kode tersebut valid pada endpoint versi 1.",
+                "summary": "Check activation code level v1",
+                "tags": [
+                    "Public Books V1"
+                ],
+                "parameters": [
+                    {
+                        "name": "code",
+                        "in": "path",
+                        "required": true,
+                        "description": "Kode aktivasi yang akan dicek levelnya.",
+                        "schema": {},
+                        "example": "AKTIVASI-001"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "const": "error"
+                                                },
+                                                "message": {
+                                                    "type": "string"
+                                                },
+                                                "version": {
+                                                    "type": "integer",
+                                                    "const": 1
+                                                },
+                                                "error_code": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "status",
+                                                "message",
+                                                "version",
+                                                "error_code"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "const": "success"
+                                                },
+                                                "level": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "slug": {
+                                                            "type": "string"
+                                                        },
+                                                        "name": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "slug",
+                                                        "name"
+                                                    ]
+                                                },
+                                                "version": {
+                                                    "type": "integer",
+                                                    "const": 1
+                                                }
+                                            },
+                                            "required": [
+                                                "status",
+                                                "level",
+                                                "version"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "const": "error"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "const": "Kode aktivasi tidak valid."
+                                                },
+                                                "version": {
+                                                    "type": "integer",
+                                                    "const": 1
+                                                },
+                                                "error_code": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "status",
+                                                "message",
+                                                "version",
+                                                "error_code"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "const": "error"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "const": "Update Aplikasi Class Chatting Anda"
+                                                },
+                                                "version": {
+                                                    "type": "integer",
+                                                    "const": 1
+                                                },
+                                                "error_code": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "status",
+                                                "message",
+                                                "version",
+                                                "error_code"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/book/level/{code}": {
+            "get": {
+                "operationId": "v1.book.activationCheckLevel_0",
+                "description": "Mengembalikan tier atau level dari sebuah kode aktivasi apabila kode tersebut valid pada endpoint versi 1.",
+                "summary": "Check activation code level v1",
+                "tags": [
+                    "Public Books V1"
+                ],
+                "parameters": [
+                    {
+                        "name": "code",
+                        "in": "path",
+                        "required": true,
+                        "description": "Kode aktivasi yang akan dicek levelnya.",
+                        "schema": {
+                            "type": "string",
+                            "default": ""
+                        },
+                        "example": "AKTIVASI-001"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "const": "error"
+                                                },
+                                                "message": {
+                                                    "type": "string"
+                                                },
+                                                "version": {
+                                                    "type": "integer",
+                                                    "const": 1
+                                                },
+                                                "error_code": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "status",
+                                                "message",
+                                                "version",
+                                                "error_code"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "const": "success"
+                                                },
+                                                "level": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "slug": {
+                                                            "type": "string"
+                                                        },
+                                                        "name": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "slug",
+                                                        "name"
+                                                    ]
+                                                },
+                                                "version": {
+                                                    "type": "integer",
+                                                    "const": 1
+                                                }
+                                            },
+                                            "required": [
+                                                "status",
+                                                "level",
+                                                "version"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "const": "error"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "const": "Kode aktivasi tidak valid."
+                                                },
+                                                "version": {
+                                                    "type": "integer",
+                                                    "const": 1
+                                                },
+                                                "error_code": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "status",
+                                                "message",
+                                                "version",
+                                                "error_code"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "const": "error"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "const": "Update Aplikasi Class Chatting Anda"
+                                                },
+                                                "version": {
+                                                    "type": "integer",
+                                                    "const": 1
+                                                },
+                                                "error_code": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "status",
+                                                "message",
+                                                "version",
+                                                "error_code"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/books": {
+            "get": {
+                "operationId": "v1.book.index",
+                "tags": [
+                    "Public Books V1"
+                ],
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `BookResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/BookResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/v2/book/activate": {
             "post": {
                 "operationId": "publicBooksActivateV2",
                 "description": "Memvalidasi kode aktivasi untuk sebuah buku dan mengaitkannya ke pengguna pada endpoint versi 2 dengan Firebase bearer token dan transaksi database untuk mencegah race condition.",
                 "summary": "Activate book code v2",
                 "tags": [
-                    "Public Books"
+                    "Public Books V2"
                 ],
-                "security": [
+                "parameters": [
                     {
-                        "firebaseIdToken": []
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true,
+                        "description": "Firebase ID token bearer. Format: `Bearer <firebase_id_token>`.",
+                        "schema": {},
+                        "example": "Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6Ij..."
                     }
                 ],
                 "requestBody": {
@@ -1573,12 +2225,7 @@
                 "description": "Mengembalikan tier atau level dari sebuah kode aktivasi apabila kode tersebut valid pada endpoint versi 2.",
                 "summary": "Check activation code level v2",
                 "tags": [
-                    "Public Books"
-                ],
-                "security": [
-                    {
-                        "firebaseIdToken": []
-                    }
+                    "Public Books V2"
                 ],
                 "parameters": [
                     {
@@ -1593,66 +2240,105 @@
                     }
                 ],
                 "responses": {
+                    "500": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean"
+                                        },
+                                        "errorCode": {
+                                            "type": "integer",
+                                            "const": 500
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "version": {
+                                            "type": "integer",
+                                            "const": 2
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "errorCode",
+                                        "message",
+                                        "version"
+                                    ]
+                                }
+                            }
+                        }
+                    },
                     "200": {
                         "description": "",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "anyOf": [
-                                        {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean"
+                                        },
+                                        "level": {
                                             "type": "object",
                                             "properties": {
-                                                "status": {
-                                                    "type": "string",
-                                                    "const": "error"
-                                                },
-                                                "message": {
+                                                "slug": {
                                                     "type": "string"
                                                 },
-                                                "version": {
-                                                    "type": "integer",
-                                                    "const": 2
+                                                "name": {
+                                                    "type": "string"
                                                 }
                                             },
                                             "required": [
-                                                "status",
-                                                "message",
-                                                "version"
+                                                "slug",
+                                                "name"
                                             ]
                                         },
-                                        {
-                                            "type": "object",
-                                            "properties": {
-                                                "status": {
-                                                    "type": "string",
-                                                    "const": "success"
-                                                },
-                                                "level": {
-                                                    "type": "object",
-                                                    "properties": {
-                                                        "slug": {
-                                                            "type": "integer"
-                                                        },
-                                                        "name": {
-                                                            "type": "string"
-                                                        }
-                                                    },
-                                                    "required": [
-                                                        "slug",
-                                                        "name"
-                                                    ]
-                                                },
-                                                "version": {
-                                                    "type": "integer",
-                                                    "const": 2
-                                                }
-                                            },
-                                            "required": [
-                                                "status",
-                                                "level",
-                                                "version"
-                                            ]
+                                        "version": {
+                                            "type": "integer",
+                                            "const": 2
                                         }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "level",
+                                        "version"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean"
+                                        },
+                                        "errorCode": {
+                                            "type": "integer",
+                                            "const": 106
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Kode aktivasi tidak valid."
+                                        },
+                                        "version": {
+                                            "type": "integer",
+                                            "const": 2
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "errorCode",
+                                        "message",
+                                        "version"
                                     ]
                                 }
                             }
@@ -1661,135 +2347,35 @@
                 }
             }
         },
-        "/v1/book/level/{code}": {
-            "get": {
-                "operationId": "publicBooksActivationLevel",
-                "description": "Mengembalikan tier atau level dari sebuah kode aktivasi apabila kode tersebut valid.",
-                "summary": "Check activation code level",
-                "tags": [
-                    "Public Books"
-                ],
-                "parameters": [
-                    {
-                        "name": "code",
-                        "in": "path",
-                        "required": true,
-                        "description": "Kode aktivasi yang akan dicek levelnya.",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "example": "AKTIVASI-001"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "anyOf": [
-                                        {
-                                            "type": "object",
-                                            "properties": {
-                                                "status": {
-                                                    "type": "string",
-                                                    "const": "error"
-                                                },
-                                                "message": {
-                                                    "type": "string"
-                                                },
-                                                "version": {
-                                                    "type": "integer",
-                                                    "const": 1
-                                                }
-                                            },
-                                            "required": [
-                                                "status",
-                                                "message",
-                                                "version"
-                                            ]
-                                        },
-                                        {
-                                            "type": "object",
-                                            "properties": {
-                                                "status": {
-                                                    "type": "string",
-                                                    "const": "success"
-                                                },
-                                                "level": {
-                                                    "type": "object",
-                                                    "properties": {
-                                                        "slug": {
-                                                            "type": "string"
-                                                        },
-                                                        "name": {
-                                                            "type": "string"
-                                                        }
-                                                    },
-                                                    "required": [
-                                                        "slug",
-                                                        "name"
-                                                    ]
-                                                },
-                                                "version": {
-                                                    "type": "integer",
-                                                    "const": 1
-                                                }
-                                            },
-                                            "required": [
-                                                "status",
-                                                "level",
-                                                "version"
-                                            ]
-                                        },
-                                        {
-                                            "type": "object",
-                                            "properties": {
-                                                "status": {
-                                                    "type": "string",
-                                                    "const": "error"
-                                                },
-                                                "message": {
-                                                    "type": "string",
-                                                    "const": "Kode aktivasi tidak valid."
-                                                },
-                                                "version": {
-                                                    "type": "integer",
-                                                    "const": 1
-                                                }
-                                            },
-                                            "required": [
-                                                "status",
-                                                "message",
-                                                "version"
-                                            ]
-                                        }
-                                    ]
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/video/update-hls-url": {
+        "/v2/video/{video}": {
             "post": {
-                "operationId": "videosUpdateHlsUrl",
-                "description": "Dipakai service transcoding untuk mengisi `video_url` dengan URL Firebase `.m3u8` berdasarkan `slug` video yang sudah dibuat saat upload awal.",
-                "summary": "Update video HLS URL",
+                "operationId": "publicVideosTrackViewV2",
+                "description": "Mencatat view video dengan validasi kode aktivasi dan autentikasi pengguna pada endpoint versi 2.",
+                "summary": "Track video view v2",
                 "tags": [
-                    "Videos"
+                    "Video V2"
                 ],
                 "parameters": [
                     {
-                        "name": "X-API-KEY",
+                        "name": "Authorization",
                         "in": "header",
                         "required": true,
-                        "description": "API key internal untuk mengamankan callback HLS.",
+                        "description": "Bearer token untuk autentikasi pengguna. Format: `Bearer <token>`.",
+                        "schema": {},
+                        "example": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    },
+                    {
+                        "name": "video",
+                        "in": "path",
+                        "required": true,
+                        "description": "UUID atau ID video yang akan ditonton.",
                         "schema": {
-                            "type": "string"
+                            "type": [
+                                "string",
+                                "null"
+                            ]
                         },
-                        "example": "test-private-key"
+                        "example": "video-uuid-001"
                     }
                 ],
                 "requestBody": {
@@ -1799,19 +2385,328 @@
                             "schema": {
                                 "type": "object",
                                 "properties": {
-                                    "slug": {
+                                    "activation_code": {
                                         "type": "string",
-                                        "example": "abc123def45"
-                                    },
-                                    "video_url": {
-                                        "type": "string",
-                                        "format": "uri",
-                                        "example": "https://firebasestorage.googleapis.com/v0/b/example-bucket/o/hls%2Fabc123def45%2Findex.m3u8?alt=media"
+                                        "description": "Kode aktivasi yang valid dan aktif untuk mengakses video.",
+                                        "example": "AKTIVASI-001"
                                     }
                                 },
                                 "required": [
-                                    "slug",
-                                    "video_url"
+                                    "activation_code"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Video view tracked successfully"
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "video_id": {
+                                                    "type": "integer"
+                                                },
+                                                "video_title": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "view_id": {
+                                                    "type": "integer"
+                                                },
+                                                "viewed_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "level": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "slug": {
+                                                            "type": "string"
+                                                        },
+                                                        "name": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "slug",
+                                                        "name"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "video_id",
+                                                "video_title",
+                                                "view_id",
+                                                "viewed_at",
+                                                "level"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "success",
+                                        "message",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Kode aktivasi belum diaktifkan"
+                                        }
+                                    },
+                                    "required": [
+                                        "success",
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "422": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Validation failed"
+                                        },
+                                        "errors": {
+                                            "$ref": "#/components/schemas/MessageBag"
+                                        }
+                                    },
+                                    "required": [
+                                        "success",
+                                        "message",
+                                        "errors"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Unauthenticated"
+                                        }
+                                    },
+                                    "required": [
+                                        "success",
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/profile": {
+            "get": {
+                "operationId": "publicProfileShowV2",
+                "description": "Mengambil data profil pengguna yang sedang login berdasarkan Firebase ID token.",
+                "summary": "Get current user profile v2",
+                "tags": [
+                    "Profile V2"
+                ],
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true,
+                        "description": "Firebase ID token bearer. Format: `Bearer <firebase_id_token>`.",
+                        "schema": {},
+                        "example": "Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6Ij..."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Profil berhasil diambil."
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {}
+                                        },
+                                        "version": {
+                                            "type": "integer",
+                                            "const": 2
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message",
+                                        "data",
+                                        "version"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean"
+                                        },
+                                        "errorCode": {
+                                            "type": "integer",
+                                            "const": 401
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Pengguna tidak ditemukan atau tidak aktif."
+                                        },
+                                        "version": {
+                                            "type": "integer",
+                                            "const": 2
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "errorCode",
+                                        "message",
+                                        "version"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "operationId": "publicProfileUpdateV2",
+                "description": "Memperbarui profil pengguna di database lokal lalu menyinkronkan perubahan ke Firebase Auth, Firebase Storage (avatar), dan Firestore di path `users/{uuid}` (field `name` dan `searchUserName`).",
+                "summary": "Update current user profile v2",
+                "tags": [
+                    "Profile V2"
+                ],
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true,
+                        "description": "Firebase ID token bearer. Format: `Bearer <firebase_id_token>`.",
+                        "schema": {},
+                        "example": "Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6Ij..."
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "allOf": [
+                                    {
+                                        "$ref": "#/components/schemas/UpdateProfileRequest"
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "name": {
+                                                "type": "string",
+                                                "description": "Nama lengkap pengguna.",
+                                                "example": "Budi Santoso",
+                                                "maxLength": 255
+                                            },
+                                            "email": {
+                                                "type": "string",
+                                                "format": "email",
+                                                "description": "Alamat email pengguna.",
+                                                "example": "budi@example.com",
+                                                "maxLength": 255
+                                            },
+                                            "username": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "description": "Username unik pengguna.",
+                                                "example": "budi_santoso",
+                                                "maxLength": 255
+                                            },
+                                            "phone": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "description": "Nomor telepon pengguna.",
+                                                "example": "+6281234567890",
+                                                "maxLength": 20
+                                            },
+                                            "avatar": {
+                                                "type": "string",
+                                                "format": "binary",
+                                                "description": "File gambar avatar (jpg, jpeg, png, webp). Maksimal 2MB."
+                                            },
+                                            "remove_avatar": {
+                                                "type": "boolean",
+                                                "description": "Set true untuk menghapus avatar saat ini.",
+                                                "example": false
+                                            }
+                                        },
+                                        "required": [
+                                            "name",
+                                            "email"
+                                        ]
+                                    }
                                 ]
                             }
                         }
@@ -1819,13 +2714,103 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Successful response"
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Profil berhasil diperbarui."
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {}
+                                        },
+                                        "version": {
+                                            "type": "integer",
+                                            "const": 2
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message",
+                                        "data",
+                                        "version"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean"
+                                        },
+                                        "errorCode": {
+                                            "type": "integer",
+                                            "const": 500
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Gagal mengunggah avatar ke Firebase Storage."
+                                        },
+                                        "version": {
+                                            "type": "integer",
+                                            "const": 2
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "errorCode",
+                                        "message",
+                                        "version"
+                                    ]
+                                }
+                            }
+                        }
                     },
                     "401": {
-                        "description": "Unauthorized"
-                    },
-                    "404": {
-                        "description": "Video not found"
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean"
+                                        },
+                                        "errorCode": {
+                                            "type": "integer",
+                                            "const": 401
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Pengguna tidak ditemukan atau tidak aktif."
+                                        },
+                                        "version": {
+                                            "type": "integer",
+                                            "const": 2
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "errorCode",
+                                        "message",
+                                        "version"
+                                    ]
+                                }
+                            }
+                        }
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
@@ -1836,63 +2821,74 @@
         "/firebase/webhook/user-created": {
             "post": {
                 "operationId": "firebaseWebhookUserCreated",
-                "description": "Webhook yang menerima event pembuatan user dari Firebase lalu melakukan sinkronisasi atau pembaruan data user lokal. Memerlukan Firebase ID token yang valid sebagai Bearer token.",
+                "description": "Webhook yang menerima event pembuatan user dari Firebase lalu melakukan sinkronisasi atau pembaruan data user lokal. Autentikasi menggunakan Firebase ID Token dengan uid `firebase-webhook-service`.",
                 "summary": "Sync created Firebase user",
                 "tags": [
                     "Firebase Webhooks"
                 ],
-                "security": [
-                    {
-                        "firebaseIdToken": []
-                    }
-                ],
                 "requestBody": {
-                    "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "uid": {
-                                        "type": "string",
-                                        "description": "Firebase UID pengguna.",
-                                        "example": "firebase-user-001"
+                                "allOf": [
+                                    {
+                                        "$ref": "#/components/schemas/FirebaseUserCreatedRequest"
                                     },
-                                    "email": {
-                                        "type": "string",
-                                        "format": "email",
-                                        "description": "Alamat email pengguna.",
-                                        "example": "user@example.com"
-                                    },
-                                    "displayName": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ],
-                                        "description": "Nama tampilan pengguna.",
-                                        "example": "Budi"
-                                    },
-                                    "photoURL": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ],
-                                        "format": "uri",
-                                        "description": "URL avatar pengguna.",
-                                        "example": "https://example.com/avatar.jpg"
-                                    },
-                                    "phoneNumber": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ],
-                                        "description": "Nomor telepon pengguna.",
-                                        "example": "+628123456789"
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "uuid": {
+                                                "type": "string",
+                                                "description": "Firebase UUID pengguna.",
+                                                "example": "firebase-user-001"
+                                            },
+                                            "email": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "format": "email",
+                                                "description": "Alamat email pengguna. Wajib kecuali providerType anonymous.",
+                                                "example": "user@example.com"
+                                            },
+                                            "displayName": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "description": "Nama tampilan pengguna.",
+                                                "example": "Budi"
+                                            },
+                                            "photoURL": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "format": "uri",
+                                                "description": "URL avatar pengguna.",
+                                                "example": "https://example.com/avatar.jpg"
+                                            },
+                                            "phoneNumber": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "description": "Nomor telepon pengguna.",
+                                                "example": "+628123456789"
+                                            },
+                                            "providerType": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "description": "Tipe provider autentikasi Firebase (e.g. password, google.com, anonymous).",
+                                                "example": "password"
+                                            }
+                                        },
+                                        "required": [
+                                            "uuid"
+                                        ]
                                     }
-                                },
-                                "required": [
-                                    "uid",
-                                    "email"
                                 ]
                             }
                         }
@@ -1917,6 +2913,25 @@
                                     "required": [
                                         "message",
                                         "id"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Anonymous user skipped"
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
                                     ]
                                 }
                             }
@@ -2105,7 +3120,76 @@
                                             ]
                                         },
                                         "list_video": {
-                                            "type": "string"
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "video_id": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "title": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "description": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "author": {
+                                                        "anyOf": [
+                                                            {
+                                                                "type": "string"
+                                                            },
+                                                            {
+                                                                "type": "string",
+                                                                "enum": [
+                                                                    ""
+                                                                ]
+                                                            }
+                                                        ]
+                                                    },
+                                                    "location": {
+                                                        "type": "string"
+                                                    },
+                                                    "date_upload": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ],
+                                                        "format": "date-time"
+                                                    },
+                                                    "thumbnail": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "video": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "id",
+                                                    "video_id",
+                                                    "title",
+                                                    "description",
+                                                    "author",
+                                                    "location",
+                                                    "date_upload",
+                                                    "thumbnail",
+                                                    "video"
+                                                ]
+                                            }
                                         },
                                         "slug": {
                                             "type": "string",
@@ -2131,7 +3215,7 @@
                 }
             }
         },
-        "/private-api/{video_id}/video/detail/{video_id}": {
+        "/private-api/{private_api}/video/detail/{video_id}": {
             "get": {
                 "operationId": "privateVideosShow",
                 "description": "Mengambil detail satu video private berdasarkan `video_id` legacy.",
@@ -2140,6 +3224,14 @@
                     "Private Videos"
                 ],
                 "parameters": [
+                    {
+                        "name": "private_api",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
                     {
                         "name": "api_key",
                         "in": "path",
@@ -2168,7 +3260,67 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "string"
+                                            "type": "object",
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string"
+                                                },
+                                                "video_id": {
+                                                    "type": "string"
+                                                },
+                                                "title": {
+                                                    "type": "string"
+                                                },
+                                                "description": {
+                                                    "type": "string"
+                                                },
+                                                "author": {
+                                                    "anyOf": [
+                                                        {
+                                                            "type": "string"
+                                                        },
+                                                        {
+                                                            "type": "string",
+                                                            "enum": [
+                                                                ""
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
+                                                "location": {
+                                                    "anyOf": [
+                                                        {
+                                                            "type": "string"
+                                                        },
+                                                        {
+                                                            "type": "string",
+                                                            "enum": [
+                                                                "need_update"
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
+                                                "date_upload": {
+                                                    "type": "string"
+                                                },
+                                                "thumbnail": {
+                                                    "type": "string"
+                                                },
+                                                "video": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "id",
+                                                "video_id",
+                                                "title",
+                                                "description",
+                                                "author",
+                                                "location",
+                                                "date_upload",
+                                                "thumbnail",
+                                                "video"
+                                            ]
                                         },
                                         "slug": {
                                             "type": "string",
@@ -2188,7 +3340,7 @@
                             }
                         }
                     },
-                    "500": {
+                    "404": {
                         "description": "",
                         "content": {
                             "application/json": {
@@ -2252,7 +3404,6 @@
                                     "thumbnail": {},
                                     "video_url": {},
                                     "storage_path": {},
-                                    "file_path": {},
                                     "provider": {},
                                     "metadata": {
                                         "type": "object",
@@ -2292,7 +3443,74 @@
                                             "const": "add"
                                         },
                                         "data": {
-                                            "type": "string"
+                                            "type": "object",
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer"
+                                                },
+                                                "video_id": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "title": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "description": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "author": {
+                                                    "anyOf": [
+                                                        {
+                                                            "type": "string"
+                                                        },
+                                                        {
+                                                            "type": "string",
+                                                            "enum": [
+                                                                ""
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
+                                                "location": {
+                                                    "type": "string",
+                                                    "const": "need_update"
+                                                },
+                                                "date_upload": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "format": "date-time"
+                                                },
+                                                "thumbnail": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "video": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "id",
+                                                "video_id",
+                                                "title",
+                                                "description",
+                                                "author",
+                                                "location",
+                                                "date_upload",
+                                                "thumbnail",
+                                                "video"
+                                            ]
                                         },
                                         "status": {
                                             "type": "string",
@@ -2311,7 +3529,7 @@
                 }
             }
         },
-        "/private-api/{video_id}/video/update/{video_id}": {
+        "/private-api/{private_api}/video/update/{video_id}": {
             "put": {
                 "operationId": "privateVideosUpdate",
                 "description": "Memperbarui data video private berdasarkan `video_id` legacy. Body JSON yang dikirim akan dipakai langsung untuk operasi update.",
@@ -2320,6 +3538,14 @@
                     "Private Videos"
                 ],
                 "parameters": [
+                    {
+                        "name": "private_api",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
                     {
                         "name": "api_key",
                         "in": "path",
@@ -2356,7 +3582,6 @@
                                     "thumbnail": {},
                                     "video_url": {},
                                     "storage_path": {},
-                                    "file_path": {},
                                     "provider": {},
                                     "metadata": {
                                         "type": "object",
@@ -2396,7 +3621,15 @@
                                             "const": "update"
                                         },
                                         "data": {
-                                            "type": "string"
+                                            "type": "array",
+                                            "items": {
+                                                "anyOf": [
+                                                    {},
+                                                    {
+                                                        "type": "string"
+                                                    }
+                                                ]
+                                            }
                                         },
                                         "status": {
                                             "type": "string",
@@ -2412,7 +3645,7 @@
                             }
                         }
                     },
-                    "500": {
+                    "404": {
                         "description": "",
                         "content": {
                             "application/json": {
@@ -2425,7 +3658,31 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "const": "Update Failed"
+                                            "const": "Video not found or no changes applied"
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "const": "error"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "No valid fields to update"
                                         }
                                     },
                                     "required": [
@@ -2527,6 +3784,66 @@
     },
     "components": {
         "schemas": {
+            "BookResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "uuid": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string"
+                    },
+                    "coverUrl": {
+                        "type": "string"
+                    },
+                    "tags": {
+                        "type": [
+                            "array",
+                            "null"
+                        ],
+                        "items": {}
+                    },
+                    "url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "version": {
+                        "type": "integer"
+                    },
+                    "applications": {
+                        "type": "array",
+                        "items": {}
+                    },
+                    "createdAt": {
+                        "type": "string"
+                    },
+                    "updatedAt": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "uuid",
+                    "title",
+                    "type",
+                    "coverUrl",
+                    "tags",
+                    "url",
+                    "version",
+                    "applications",
+                    "createdAt",
+                    "updatedAt"
+                ],
+                "title": "BookResource"
+            },
             "DistrictResource": {
                 "type": "object",
                 "properties": {
@@ -2538,6 +3855,9 @@
                     },
                     "name": {
                         "type": "string"
+                    },
+                    "villagesCount": {
+                        "type": "integer"
                     },
                     "regency": {
                         "type": "object",
@@ -2592,6 +3912,61 @@
                 ],
                 "title": "DistrictResource"
             },
+            "FirebaseUserCreatedRequest": {
+                "type": "object",
+                "properties": {
+                    "uuid": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "email"
+                    },
+                    "displayName": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "photoURL": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uri"
+                    },
+                    "phoneNumber": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "providerType": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "emailVerified": {
+                        "type": [
+                            "boolean",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "uuid"
+                ],
+                "title": "FirebaseUserCreatedRequest"
+            },
+            "MessageBag": {
+                "type": "array",
+                "items": {},
+                "title": "MessageBag"
+            },
             "ProvinceResource": {
                 "type": "object",
                 "properties": {
@@ -2604,10 +3979,10 @@
                     "name": {
                         "type": "string"
                     },
-                    "regencies_count": {
+                    "regenciesCount": {
                         "type": "integer"
                     },
-                    "districts_count": {
+                    "districtsCount": {
                         "type": "integer"
                     }
                 },
@@ -2636,7 +4011,10 @@
                             "null"
                         ]
                     },
-                    "districts_count": {
+                    "districtsCount": {
+                        "type": "integer"
+                    },
+                    "villagesCount": {
                         "type": "integer"
                     },
                     "province": {
@@ -2666,6 +4044,305 @@
                     "type"
                 ],
                 "title": "RegencyResource"
+            },
+            "SchoolResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "code": {
+                        "type": "string"
+                    },
+                    "old_code": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "npsn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "bentuk_pendidikan": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "address": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "rt": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "rw": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "postcode": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "latitude": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "longitude": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "province": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "code": {
+                                "type": "string"
+                            },
+                            "name": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "code",
+                            "name"
+                        ]
+                    },
+                    "regency": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "code": {
+                                "type": "string"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "type": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "code",
+                            "name",
+                            "type"
+                        ]
+                    },
+                    "district": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "code": {
+                                "type": "string"
+                            },
+                            "name": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "code",
+                            "name"
+                        ]
+                    },
+                    "village": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "code": {
+                                "type": "string"
+                            },
+                            "name": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "code",
+                            "name"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "code",
+                    "old_code",
+                    "npsn",
+                    "name",
+                    "bentuk_pendidikan",
+                    "status",
+                    "address",
+                    "rt",
+                    "rw",
+                    "postcode",
+                    "latitude",
+                    "longitude"
+                ],
+                "title": "SchoolResource"
+            },
+            "UpdateProfileRequest": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "maxLength": 255
+                    },
+                    "username": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    },
+                    "phone": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 20
+                    },
+                    "avatar": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "binary",
+                        "contentMediaType": "application/octet-stream",
+                        "maxLength": 2048
+                    },
+                    "remove_avatar": {
+                        "type": [
+                            "boolean",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "name",
+                    "email"
+                ],
+                "title": "UpdateProfileRequest"
+            },
+            "VillageResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "code": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "district": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "code": {
+                                "type": "string"
+                            },
+                            "name": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "code",
+                            "name"
+                        ]
+                    },
+                    "regency": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "code": {
+                                "type": "string"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "type": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "code",
+                            "name",
+                            "type"
+                        ]
+                    },
+                    "province": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "code": {
+                                "type": "string"
+                            },
+                            "name": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "code",
+                            "name"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "code",
+                    "name"
+                ],
+                "title": "VillageResource"
             }
         },
         "responses": {
@@ -2717,14 +4394,6 @@
                         }
                     }
                 }
-            }
-        },
-        "securitySchemes": {
-            "firebaseIdToken": {
-                "type": "http",
-                "scheme": "bearer",
-                "bearerFormat": "Firebase ID Token",
-                "description": "Firebase ID token yang diperoleh dari Firebase Authentication SDK. Kirim sebagai `Authorization: Bearer <firebase_id_token>`."
             }
         }
     }

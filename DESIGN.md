@@ -793,7 +793,7 @@ Update URL → Complete
 - [React 19](https://react.dev)
 - [Firebase](https://firebase.google.com/docs)
 - [Tailwind CSS](https://tailwindcss.com)
-- [Material Tailwind](https://www.material-tailwind.com)
+- [Material Tailwind](https://www.material-tailwind.com/docs/v3/)
 
 ### 16.2 Project Documentation
 - `API_DOCUMENTATION.md`: API reference

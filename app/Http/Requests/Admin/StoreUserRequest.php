@@ -8,6 +8,7 @@ use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class StoreUserRequest extends FormRequest
 {
@@ -17,6 +18,16 @@ class StoreUserRequest extends FormRequest
     public function authorize(): bool
     {
         return Gate::allows('create', User::class);
+    }
+
+    /**
+     * Convert hard 403 into a form/validation error so Inertia can surface a toast.
+     */
+    protected function failedAuthorization(): void
+    {
+        throw ValidationException::withMessages([
+            'authorization' => 'Kamu tidak punya hak untuk menambahkan pengguna.',
+        ]);
     }
 
     /**

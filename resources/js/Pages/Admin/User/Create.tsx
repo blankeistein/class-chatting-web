@@ -54,7 +54,14 @@ export default function Create() {
       onSuccess: () => {
         toast.success("User berhasil ditambahkan.");
       },
-      onError: () => toast.error("Gagal menambahkan user. Periksa kembali form Anda."),
+      onError: (formErrors) => {
+        const message =
+          formErrors.authorization ||
+          formErrors.role ||
+          Object.values(formErrors)[0] ||
+          "Gagal menambahkan user. Periksa kembali form Anda.";
+        toast.error(String(message));
+      },
     });
   };
 

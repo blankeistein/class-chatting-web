@@ -41,6 +41,14 @@ class UserPolicy
     }
 
     /**
+     * Determine whether the user can update the model.
+     */
+    public function update(User $user, User $model): bool
+    {
+        return $user->canManageUsers();
+    }
+
+    /**
      * Determine whether the user can delete the model.
      */
     public function delete(User $user, User $model): bool
@@ -58,6 +66,10 @@ class UserPolicy
      */
     public function changeRole(User $user, User $model, string $newRole): bool
     {
+        if ($user->isAdmin()) {
+            return in_array($newRole, RoleEnum::values(), true);
+        }
+
         // Staff can only change roles to user, teacher, or student
         if ($user->isStaff()) {
             $allowedRoles = [

@@ -35,9 +35,37 @@ export default function ErrorHandlerProvider({ children, placement = "top-center
       }
     };
 
-    const unsubscribe = router.on('error', (errors) => {
+    // Validation errors (422) — form bag / session errors from Inertia page response.
+    const unsubscribeError = router.on('error', (errors) => {
       notif(errors.detail.errors);
-    })
+    });
+
+    // Non-Inertia HTTP responses (e.g. bare 403 HTML) fire "invalid", not "error".
+    // Returning false prevents Inertia's default full-page error modal.
+    const unsubscribeInvalid = router.on('invalid', (event) => {
+      const status = event.detail.response?.status;
+      const message =
+        status === 403
+          ? 'Kamu tidak punya hak untuk melakukan aksi ini.'
+          : status === 404
+            ? 'Data tidak ditemukan.'
+            : status === 419
+              ? 'Sesi berakhir. Muat ulang halaman lalu coba lagi.'
+              : status && status >= 500
+                ? 'Terjadi kesalahan server. Silakan coba lagi.'
+                : 'Terjadi kesalahan. Silakan coba lagi.';
+
+      notif(message);
+
+      return false;
+    });
+
+    const unsubscribeException = router.on('exception', (event) => {
+      const exception = event.detail.exception;
+      notif(exception?.message || 'Terjadi kesalahan jaringan. Silakan coba lagi.');
+
+      return false;
+    });
 
     // Pasang listener saat aplikasi di-load
     window.addEventListener('error', handleError);
@@ -47,9 +75,11 @@ export default function ErrorHandlerProvider({ children, placement = "top-center
     return () => {
       window.removeEventListener('error', handleError);
       window.removeEventListener('unhandledrejection', handleUnhandledRejection);
-      unsubscribe();
+      unsubscribeError();
+      unsubscribeInvalid();
+      unsubscribeException();
     };
-  }, []);
+  }, [notif]);
 
   return (
     <>

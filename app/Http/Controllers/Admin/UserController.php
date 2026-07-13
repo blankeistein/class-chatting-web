@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\RoleEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreUserRequest;
 use App\Http\Requests\Admin\UpdateUserRequest;
@@ -241,7 +242,11 @@ class UserController extends Controller
         $validated = $request->validated();
 
         // Check if user can change to this role
-        if ($validated['role'] !== $user->role) {
+        $currentRole = $user->role instanceof RoleEnum
+            ? $user->role->value
+            : (string) $user->role;
+
+        if ($validated['role'] !== $currentRole) {
             if (! Gate::allows('changeRole', [$user, $validated['role']])) {
                 return back()->withErrors([
                     'authorization' => 'Kamu tidak punya hak untuk mengubah role ini.',

@@ -6,18 +6,18 @@ import {
   Input,
   Select,
   Dialog,
-  Checkbox,
   Radio,
 } from "@material-tailwind/react";
 import { SearchIcon, Loader2Icon, HashIcon, Edit3Icon, Hammer, XIcon, LayoutListIcon, LayoutGridIcon } from "lucide-react";
 import { toast } from "react-hot-toast";
 import axios from "axios";
 import { router } from "@inertiajs/react";
+import Checkbox from "@/Components/Checkbox";
 
 interface Book {
   id: number;
   title: string;
-  thumbnail: string;
+  cover_url: string;
 }
 
 interface GenerateCodeDialogProps {
@@ -202,7 +202,6 @@ export default function GenerateCodeDialog({ open, setOpen }: GenerateCodeDialog
                       checked={isUnlimited}
                       onChange={() => setIsUnlimited(!isUnlimited)}
                     >
-                      <Checkbox.Indicator />
                     </Checkbox>
                     Tanpa Batas
                   </Typography>
@@ -342,10 +341,9 @@ export default function GenerateCodeDialog({ open, setOpen }: GenerateCodeDialog
                           className="p-0 shrink-0"
                           onChange={() => toggleBook(book.id)}
                         >
-                          <Checkbox.Indicator />
                         </Checkbox>
                         <img
-                          src={book.thumbnail}
+                          src={book.cover_url || '/assets/images/book-thumbnail.webp'}
                           alt={book.title}
                           className="w-8 h-10 object-cover rounded shrink-0 bg-slate-200 dark:bg-slate-700"
                         />
@@ -371,11 +369,10 @@ export default function GenerateCodeDialog({ open, setOpen }: GenerateCodeDialog
                             className="p-0"
                             onChange={() => toggleBook(book.id)}
                           >
-                            <Checkbox.Indicator />
                           </Checkbox>
                         </div>
                         <img
-                          src={book.thumbnail}
+                          src={book.cover_url || '/assets/images/book-thumbnail.webp'}
                           alt={book.title}
                           className="w-16 h-20 object-cover rounded-md bg-slate-200 dark:bg-slate-700 shadow-sm"
                         />

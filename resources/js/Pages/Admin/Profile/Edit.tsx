@@ -30,7 +30,6 @@ interface User {
   username: string | null;
   phone: string | null;
   avatar: string | null;
-  image: string;
   role: string;
 }
 
@@ -113,7 +112,7 @@ export default function Edit({ user }: { user: User }) {
               <div className="flex items-center gap-4">
                 <div className="relative">
                   <Avatar
-                    src={avatarPreview || user.image}
+                    src={avatarPreview || user.avatar || "/assets/images/avatar-placeholder.webp"}
                     alt={user.name}
                     className="w-20 h-20 border-2 border-slate-200 dark:border-slate-700"
                   />

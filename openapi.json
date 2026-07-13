@@ -37,6 +37,14 @@
             "description": "Endpoint versi 2 untuk melihat dan memperbarui profil pengguna yang terautentikasi Firebase."
         },
         {
+            "name": "Email Verification V2",
+            "description": "Endpoint versi 2 untuk mengirim ulang link konfirmasi/verifikasi akun melalui email."
+        },
+        {
+            "name": "Password Reset V2",
+            "description": "Endpoint versi 2 untuk mengirim link ubah/reset password melalui email."
+        },
+        {
             "name": "Firebase Webhooks",
             "description": "Webhook internal untuk sinkronisasi data pengguna dari Firebase."
         },
@@ -2634,7 +2642,7 @@
             },
             "put": {
                 "operationId": "publicProfileUpdateV2",
-                "description": "Memperbarui profil pengguna di database lokal lalu menyinkronkan perubahan ke Firebase Auth, Firebase Storage (avatar), dan Firestore di path `users/{uuid}` (field `name` dan `searchUserName`).",
+                "description": "Memperbarui profil pengguna di database lokal lalu menyinkronkan perubahan ke Firebase Auth, Firebase Storage (avatar), dan Firestore di path `users/{uuid}` (field `name`, `searchUserName`, serta `schoolId`/`schoolName`/`schoolAddress` bila `schoolId` dikirim).",
                 "summary": "Update current user profile v2",
                 "tags": [
                     "Profile V2"
@@ -2700,6 +2708,11 @@
                                                 "type": "boolean",
                                                 "description": "Set true untuk menghapus avatar saat ini.",
                                                 "example": false
+                                            },
+                                            "schoolId": {
+                                                "type": "integer",
+                                                "description": "ID sekolah di server. Menyimpan/memperbarui relasi murid dan menyinkronkan schoolId, schoolName, schoolAddress ke Firestore.",
+                                                "example": 12
                                             }
                                         },
                                         "required": [
@@ -2796,6 +2809,339 @@
                                         "message": {
                                             "type": "string",
                                             "const": "Pengguna tidak ditemukan atau tidak aktif."
+                                        },
+                                        "version": {
+                                            "type": "integer",
+                                            "const": 2
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "errorCode",
+                                        "message",
+                                        "version"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v2/email/verification-notification": {
+            "post": {
+                "operationId": "publicEmailVerificationSendV2",
+                "description": "Mengirim link konfirmasi akun ke email pengguna yang terautentikasi Firebase. Maksimal 1 pengiriman setiap 5 menit per pengguna.",
+                "summary": "Send account confirmation link v2",
+                "tags": [
+                    "Email Verification V2"
+                ],
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true,
+                        "description": "Firebase ID token bearer. Format: `Bearer <firebase_id_token>`.",
+                        "schema": {},
+                        "example": "Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6Ij..."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "status": {
+                                                    "type": "boolean"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "const": "Link verifikasi telah dikirim ke email kamu."
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "email": {
+                                                            "type": "string"
+                                                        },
+                                                        "already_verified": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "sent": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "retry_after_seconds": {
+                                                            "type": "integer",
+                                                            "const": 300
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "email",
+                                                        "already_verified",
+                                                        "sent",
+                                                        "retry_after_seconds"
+                                                    ]
+                                                },
+                                                "version": {
+                                                    "type": "integer",
+                                                    "const": 2
+                                                }
+                                            },
+                                            "required": [
+                                                "status",
+                                                "message",
+                                                "data",
+                                                "version"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "status": {
+                                                    "type": "boolean"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "const": "Email sudah terverifikasi."
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "email": {
+                                                            "type": "string"
+                                                        },
+                                                        "already_verified": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "sent": {
+                                                            "type": "boolean"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "email",
+                                                        "already_verified",
+                                                        "sent"
+                                                    ]
+                                                },
+                                                "version": {
+                                                    "type": "integer",
+                                                    "const": 2
+                                                }
+                                            },
+                                            "required": [
+                                                "status",
+                                                "message",
+                                                "data",
+                                                "version"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean"
+                                        },
+                                        "errorCode": {
+                                            "type": "integer",
+                                            "const": 429
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "version": {
+                                            "type": "integer",
+                                            "const": 2
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "errorCode",
+                                        "message",
+                                        "version"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean"
+                                        },
+                                        "errorCode": {
+                                            "type": "integer",
+                                            "const": 401
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Pengguna tidak ditemukan atau tidak aktif."
+                                        },
+                                        "version": {
+                                            "type": "integer",
+                                            "const": 2
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "errorCode",
+                                        "message",
+                                        "version"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/password/forgot": {
+            "post": {
+                "operationId": "publicPasswordForgotV2",
+                "description": "Mengirim link ubah password ke email yang diberikan. Untuk keamanan, response sukses tetap sama meskipun email tidak terdaftar. Throttle bawaan broker password Laravel berlaku (default 60 detik).",
+                "summary": "Send password reset link v2",
+                "tags": [
+                    "Password Reset V2"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "allOf": [
+                                    {
+                                        "$ref": "#/components/schemas/SendPasswordResetLinkRequest"
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "email": {
+                                                "type": "string",
+                                                "format": "email",
+                                                "description": "Alamat email akun yang ingin diubah passwordnya.",
+                                                "example": "user@example.com",
+                                                "maxLength": 255
+                                            }
+                                        },
+                                        "required": [
+                                            "email"
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Jika email terdaftar, link ubah password telah dikirim."
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "email": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "email"
+                                            ]
+                                        },
+                                        "version": {
+                                            "type": "integer",
+                                            "const": 2
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message",
+                                        "data",
+                                        "version"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean"
+                                        },
+                                        "errorCode": {
+                                            "type": "integer",
+                                            "const": 500
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Gagal mengirim link ubah password. Silakan coba lagi."
+                                        },
+                                        "version": {
+                                            "type": "integer",
+                                            "const": 2
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "errorCode",
+                                        "message",
+                                        "version"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean"
+                                        },
+                                        "errorCode": {
+                                            "type": "integer",
+                                            "const": 429
+                                        },
+                                        "message": {
+                                            "type": "string"
                                         },
                                         "version": {
                                             "type": "integer",
@@ -4212,6 +4558,20 @@
                 ],
                 "title": "SchoolResource"
             },
+            "SendPasswordResetLinkRequest": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "maxLength": 255
+                    }
+                },
+                "required": [
+                    "email"
+                ],
+                "title": "SendPasswordResetLinkRequest"
+            },
             "UpdateProfileRequest": {
                 "type": "object",
                 "properties": {
@@ -4250,6 +4610,12 @@
                     "remove_avatar": {
                         "type": [
                             "boolean",
+                            "null"
+                        ]
+                    },
+                    "schoolId": {
+                        "type": [
+                            "integer",
                             "null"
                         ]
                     }

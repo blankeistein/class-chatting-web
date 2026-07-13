@@ -5,6 +5,8 @@ use App\Http\Controllers\API\RegionController;
 use App\Http\Controllers\API\SchoolController;
 use App\Http\Controllers\API\V1\BookController as V1BookController;
 use App\Http\Controllers\API\V2\BookController as V2BookController;
+use App\Http\Controllers\API\V2\EmailVerificationController as V2EmailVerificationController;
+use App\Http\Controllers\API\V2\PasswordResetController as V2PasswordResetController;
 use App\Http\Controllers\API\V2\ProfileController as V2ProfileController;
 use App\Http\Controllers\API\V2\VideoController as V2VideoController;
 use App\Http\Controllers\API\VideoController;
@@ -28,9 +30,13 @@ Route::prefix('v2')->group(function () {
 
     Route::post('video/{video}', [V2VideoController::class, 'store'])->middleware(['throttle:500,1', 'firebase.id_token']);
 
+    Route::post('password/forgot', [V2PasswordResetController::class, 'sendResetLink'])->middleware('throttle:10,1');
+
     Route::middleware(['throttle:60,1', 'firebase.id_token'])->group(function () {
         Route::get('profile', [V2ProfileController::class, 'show']);
         Route::match(['put', 'post'], 'profile', [V2ProfileController::class, 'update']);
+
+        Route::post('email/verification-notification', [V2EmailVerificationController::class, 'send']);
     });
 });
 

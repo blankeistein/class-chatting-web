@@ -170,7 +170,8 @@ class BookController extends Controller
         $books = cache()->remember($cacheKey, 300, function () use ($search) {
             return Book::query()
                 ->when($search, function ($query, $search) {
-                    $query->where('title', 'like', "%{$search}%");
+                    $query->where('title', 'like', "%{$search}%")
+                        ->orWhere('uuid', 'like', "%{$search}%");
                 })
                 ->latest()
                 ->limit(20)

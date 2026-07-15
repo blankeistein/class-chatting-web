@@ -351,7 +351,7 @@ export default function Index({ users: paginatedUsers, filters }: { users: any, 
                       <td className="p-4">
                         <div className="flex items-center gap-3">
                           <Avatar
-                            src={user.avatar}
+                            src={user.avatar || '/assets/images/avatar-placeholder.webp'}
                             alt={user.name}
                             size="sm"
                           />

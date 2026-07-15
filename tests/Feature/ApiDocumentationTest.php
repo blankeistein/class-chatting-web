@@ -15,10 +15,11 @@ it('stores a machine readable openapi document for ai tooling', function () {
             '/v1/book/level/{code}',
             '/v2/book/activate',
             '/v2/book/level/{code}',
+            '/v2/password/forgot',
+            '/v2/password/reset',
             '/v2/profile',
             '/v1/regions/provinces',
             '/firebase/webhook/user-created',
-            '/video/update-hls-url',
             '/private-api/{api_key}/book',
             '/private-api/{api_key}/video/list',
         ]);

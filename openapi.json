@@ -42,7 +42,7 @@
         },
         {
             "name": "Password Reset V2",
-            "description": "Endpoint versi 2 untuk mengirim link ubah/reset password melalui email."
+            "description": "Endpoint versi 2 untuk lupa password (kirim link) dan reset password (ubah password dengan token dari email)."
         },
         {
             "name": "Firebase Webhooks",
@@ -2642,7 +2642,7 @@
             },
             "put": {
                 "operationId": "publicProfileUpdateV2",
-                "description": "Memperbarui profil pengguna di database lokal lalu menyinkronkan perubahan ke Firebase Auth, Firebase Storage (avatar), dan Firestore di path `users/{uuid}` (field `name`, `searchUserName`, serta `schoolId`/`schoolName`/`schoolAddress` bila `schoolId` dikirim).",
+                "description": "Memperbarui profil pengguna di database lokal lalu menyinkronkan perubahan ke Firebase Auth, Firebase Storage (avatar), dan Firestore di path `users/{uuid}` (field `name`, `searchUserName`, serta `schoolId`/`schoolName`/`schoolAddress` bila `schoolId` dikirim). Email, username, dan nomor telepon tidak dapat diubah melalui endpoint ini.",
                 "summary": "Update current user profile v2",
                 "tags": [
                     "Profile V2"
@@ -2674,31 +2674,6 @@
                                                 "example": "Budi Santoso",
                                                 "maxLength": 255
                                             },
-                                            "email": {
-                                                "type": "string",
-                                                "format": "email",
-                                                "description": "Alamat email pengguna.",
-                                                "example": "budi@example.com",
-                                                "maxLength": 255
-                                            },
-                                            "username": {
-                                                "type": [
-                                                    "string",
-                                                    "null"
-                                                ],
-                                                "description": "Username unik pengguna.",
-                                                "example": "budi_santoso",
-                                                "maxLength": 255
-                                            },
-                                            "phone": {
-                                                "type": [
-                                                    "string",
-                                                    "null"
-                                                ],
-                                                "description": "Nomor telepon pengguna.",
-                                                "example": "+6281234567890",
-                                                "maxLength": 20
-                                            },
                                             "avatar": {
                                                 "type": "string",
                                                 "format": "binary",
@@ -2710,14 +2685,13 @@
                                                 "example": false
                                             },
                                             "schoolId": {
-                                                "type": "integer",
-                                                "description": "ID sekolah di server. Menyimpan/memperbarui relasi murid dan menyinkronkan schoolId, schoolName, schoolAddress ke Firestore.",
-                                                "example": 12
+                                                "type": "string",
+                                                "description": "Kode sekolah (`schools.code`). Menyimpan/memperbarui relasi murid dan menyinkronkan schoolId, schoolName, schoolAddress ke Firestore.",
+                                                "example": "SCH-12345678"
                                             }
                                         },
                                         "required": [
-                                            "name",
-                                            "email"
+                                            "name"
                                         ]
                                     }
                                 ]
@@ -3152,6 +3126,142 @@
                                         "status",
                                         "errorCode",
                                         "message",
+                                        "version"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v2/password/reset": {
+            "post": {
+                "operationId": "publicPasswordResetV2",
+                "description": "Mengubah password menggunakan token reset yang dikirim melalui email. Token hanya berlaku untuk akun aktif dan akan dihapus setelah berhasil digunakan. Response error disamakan untuk mencegah enumerasi akun.",
+                "summary": "Reset password v2",
+                "tags": [
+                    "Password Reset V2"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "allOf": [
+                                    {
+                                        "$ref": "#/components/schemas/ResetPasswordRequest"
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "token": {
+                                                "type": "string",
+                                                "description": "Token reset password dari email.",
+                                                "example": "a1b2c3d4e5f6..."
+                                            },
+                                            "email": {
+                                                "type": "string",
+                                                "format": "email",
+                                                "description": "Alamat email akun yang direset.",
+                                                "example": "user@example.com",
+                                                "maxLength": 255
+                                            },
+                                            "password": {
+                                                "type": "string",
+                                                "description": "Password baru minimal 8 karakter.",
+                                                "example": "passwordBaru123",
+                                                "minLength": 8
+                                            },
+                                            "password_confirmation": {
+                                                "type": "string",
+                                                "description": "Konfirmasi password baru.",
+                                                "example": "passwordBaru123",
+                                                "minLength": 8
+                                            }
+                                        },
+                                        "required": [
+                                            "token",
+                                            "email",
+                                            "password",
+                                            "password_confirmation"
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "400": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean"
+                                        },
+                                        "errorCode": {
+                                            "type": "integer",
+                                            "const": 400
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Token reset tidak valid atau sudah kadaluarsa."
+                                        },
+                                        "version": {
+                                            "type": "integer",
+                                            "const": 2
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "errorCode",
+                                        "message",
+                                        "version"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Password berhasil diubah."
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "email": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "email"
+                                            ]
+                                        },
+                                        "version": {
+                                            "type": "integer",
+                                            "const": 2
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message",
+                                        "data",
                                         "version"
                                     ]
                                 }
@@ -4391,6 +4501,34 @@
                 ],
                 "title": "RegencyResource"
             },
+            "ResetPasswordRequest": {
+                "type": "object",
+                "properties": {
+                    "token": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "maxLength": 255
+                    },
+                    "password": {
+                        "type": "string",
+                        "minLength": 8
+                    },
+                    "password_confirmation": {
+                        "type": "string",
+                        "minLength": 8
+                    }
+                },
+                "required": [
+                    "token",
+                    "email",
+                    "password",
+                    "password_confirmation"
+                ],
+                "title": "ResetPasswordRequest"
+            },
             "SchoolResource": {
                 "type": "object",
                 "properties": {
@@ -4579,25 +4717,6 @@
                         "type": "string",
                         "maxLength": 255
                     },
-                    "email": {
-                        "type": "string",
-                        "format": "email",
-                        "maxLength": 255
-                    },
-                    "username": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "maxLength": 255
-                    },
-                    "phone": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "maxLength": 20
-                    },
                     "avatar": {
                         "type": [
                             "string",
@@ -4615,14 +4734,14 @@
                     },
                     "schoolId": {
                         "type": [
-                            "integer",
+                            "string",
                             "null"
-                        ]
+                        ],
+                        "maxLength": 50
                     }
                 },
                 "required": [
-                    "name",
-                    "email"
+                    "name"
                 ],
                 "title": "UpdateProfileRequest"
             },

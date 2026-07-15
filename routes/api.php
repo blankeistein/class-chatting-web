@@ -30,7 +30,10 @@ Route::prefix('v2')->group(function () {
 
     Route::post('video/{video}', [V2VideoController::class, 'store'])->middleware(['throttle:500,1', 'firebase.id_token']);
 
-    Route::post('password/forgot', [V2PasswordResetController::class, 'sendResetLink'])->middleware('throttle:10,1');
+    Route::middleware('throttle:10,1')->group(function () {
+        Route::post('password/forgot', [V2PasswordResetController::class, 'sendResetLink']);
+        Route::post('password/reset', [V2PasswordResetController::class, 'resetPassword']);
+    });
 
     Route::middleware(['throttle:60,1', 'firebase.id_token'])->group(function () {
         Route::get('profile', [V2ProfileController::class, 'show']);

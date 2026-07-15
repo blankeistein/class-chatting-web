@@ -3,15 +3,22 @@
 namespace App\Http\Controllers\API\V2;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\API\V2\ResetPasswordRequest;
 use App\Http\Requests\API\V2\SendPasswordResetLinkRequest;
 use App\Models\User;
 use Dedoc\Scramble\Attributes\BodyParameter;
 use Dedoc\Scramble\Attributes\Endpoint;
 use Dedoc\Scramble\Attributes\Group;
+use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
+use Kreait\Firebase\Exception\Auth\UserNotFound;
+use Kreait\Laravel\Firebase\Facades\Firebase;
 
-#[Group('Password Reset V2', 'Endpoint versi 2 untuk mengirim link ubah/reset password melalui email.', 24)]
+#[Group('Password Reset V2', 'Endpoint versi 2 untuk lupa password (kirim link) dan reset password (ubah password dengan token dari email).', 24)]
 class PasswordResetController extends Controller
 {
     #[Endpoint(
@@ -60,6 +67,90 @@ class PasswordResetController extends Controller
                 'email' => $email,
             ],
         ]);
+    }
+
+    #[Endpoint(
+        operationId: 'publicPasswordResetV2',
+        title: 'Reset password v2',
+        description: 'Mengubah password menggunakan token reset yang dikirim melalui email. Token hanya berlaku untuk akun aktif dan akan dihapus setelah berhasil digunakan. Response error disamakan untuk mencegah enumerasi akun.'
+    )]
+    #[BodyParameter('token', 'Token reset password dari email.', required: true, example: 'a1b2c3d4e5f6...')]
+    #[BodyParameter('email', 'Alamat email akun yang direset.', required: true, example: 'user@example.com')]
+    #[BodyParameter('password', 'Password baru minimal 8 karakter.', required: true, example: 'passwordBaru123')]
+    #[BodyParameter('password_confirmation', 'Konfirmasi password baru.', required: true, example: 'passwordBaru123')]
+    public function resetPassword(ResetPasswordRequest $request): JsonResponse
+    {
+        $validated = $request->validated();
+        $email = (string) $validated['email'];
+
+        $user = User::query()
+            ->where('email', $email)
+            ->where('is_active', true)
+            ->first();
+
+        if (! $user) {
+            return $this->errorResponse(
+                400,
+                400,
+                'Token reset tidak valid atau sudah kadaluarsa.'
+            );
+        }
+
+        $status = Password::reset(
+            $validated,
+            function (User $user, string $password): void {
+                $user->forceFill([
+                    'password' => Hash::make($password),
+                    'remember_token' => Str::random(60),
+                ])->save();
+
+                $this->syncFirebasePassword($user, $password);
+
+                event(new PasswordReset($user));
+            }
+        );
+
+        if ($status === Password::PASSWORD_RESET) {
+            return $this->successResponse([
+                'message' => 'Password berhasil diubah.',
+                'data' => [
+                    'email' => $email,
+                ],
+            ]);
+        }
+
+        return $this->errorResponse(
+            400,
+            400,
+            'Token reset tidak valid atau sudah kadaluarsa.'
+        );
+    }
+
+    private function syncFirebasePassword(User $user, string $password): void
+    {
+        if (blank($user->firebase_uid)) {
+            return;
+        }
+
+        try {
+            $auth = Firebase::auth();
+
+            try {
+                $auth->getUser($user->firebase_uid);
+                $auth->changeUserPassword($user->firebase_uid, $password);
+            } catch (UserNotFound) {
+                Log::warning('Firebase user not found during API password reset', [
+                    'user_id' => $user->id,
+                    'firebase_uid' => $user->firebase_uid,
+                ]);
+            }
+        } catch (\Throwable $e) {
+            Log::error('Failed to sync password to Firebase during API password reset', [
+                'user_id' => $user->id,
+                'firebase_uid' => $user->firebase_uid,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     private function successResponse(array $data, int $statusCode = 200): JsonResponse

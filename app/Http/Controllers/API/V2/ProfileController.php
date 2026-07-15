@@ -56,16 +56,13 @@ class ProfileController extends Controller
     #[Endpoint(
         operationId: 'publicProfileUpdateV2',
         title: 'Update current user profile v2',
-        description: 'Memperbarui profil pengguna di database lokal lalu menyinkronkan perubahan ke Firebase Auth, Firebase Storage (avatar), dan Firestore di path `users/{uuid}` (field `name`, `searchUserName`, serta `schoolId`/`schoolName`/`schoolAddress` bila `schoolId` dikirim).'
+        description: 'Memperbarui profil pengguna di database lokal lalu menyinkronkan perubahan ke Firebase Auth, Firebase Storage (avatar), dan Firestore di path `users/{uuid}` (field `name`, `searchUserName`, serta `schoolId`/`schoolName`/`schoolAddress` bila `schoolId` dikirim). Email, username, dan nomor telepon tidak dapat diubah melalui endpoint ini.'
     )]
     #[HeaderParameter('Authorization', 'Firebase ID token bearer. Format: `Bearer <firebase_id_token>`.', required: true, example: 'Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6Ij...')]
     #[BodyParameter('name', 'Nama lengkap pengguna.', required: true, example: 'Budi Santoso')]
-    #[BodyParameter('email', 'Alamat email pengguna.', required: true, example: 'budi@example.com')]
-    #[BodyParameter('username', 'Username unik pengguna.', required: false, example: 'budi_santoso')]
-    #[BodyParameter('phone', 'Nomor telepon pengguna.', required: false, example: '+6281234567890')]
     #[BodyParameter('avatar', 'File gambar avatar (jpg, jpeg, png, webp). Maksimal 2MB.', required: false, type: 'string', format: 'binary')]
     #[BodyParameter('remove_avatar', 'Set true untuk menghapus avatar saat ini.', required: false, type: 'boolean', example: false)]
-    #[BodyParameter('schoolId', 'ID sekolah di server. Menyimpan/memperbarui relasi murid dan menyinkronkan schoolId, schoolName, schoolAddress ke Firestore.', required: false, type: 'integer', example: 12)]
+    #[BodyParameter('schoolId', 'Kode sekolah (`schools.code`). Menyimpan/memperbarui relasi murid dan menyinkronkan schoolId, schoolName, schoolAddress ke Firestore.', required: false, type: 'string', example: 'SCH-12345678')]
     public function update(UpdateProfileRequest $request): JsonResponse
     {
         $user = $request->authenticatedUser() ?? $this->resolveActiveUser($request);
@@ -78,9 +75,6 @@ class ProfileController extends Controller
 
         $data = [
             'name' => $validated['name'],
-            'email' => $validated['email'],
-            'username' => $validated['username'] ?? null,
-            'phone' => $validated['phone'] ?? null,
         ];
 
         if ($request->boolean('remove_avatar') && $user->avatar) {
@@ -105,7 +99,7 @@ class ProfileController extends Controller
         $this->syncFirestoreProfile($user);
 
         if (array_key_exists('schoolId', $validated) && $validated['schoolId'] !== null) {
-            $this->syncSchoolAssignment($user, (int) $validated['schoolId']);
+            $this->syncSchoolAssignment($user, $validated['schoolId']);
             $user->load(['student.school']);
         }
 
@@ -218,9 +212,9 @@ class ProfileController extends Controller
     /**
      * Persist school assignment on the server and sync school fields to Firestore.
      */
-    private function syncSchoolAssignment(User $user, int $schoolId): void
+    private function syncSchoolAssignment(User $user, string $schoolCode): void
     {
-        $school = School::query()->find($schoolId);
+        $school = School::query()->where('code', $schoolCode)->first();
 
         if (! $school) {
             return;

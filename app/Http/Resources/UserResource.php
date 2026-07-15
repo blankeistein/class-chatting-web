@@ -24,7 +24,13 @@ class UserResource extends JsonResource
             'avatar' => $this->image,
             'role' => $this->role?->value ?? $this->role,
             'is_active' => (bool) $this->is_active,
-            'schoolId' => $this->whenLoaded('student', fn () => $this->student?->school_id),
+            'schoolId' => $this->whenLoaded('student', function (): ?string {
+                if ($this->student?->relationLoaded('school') && $this->student->school) {
+                    return $this->student->school->code;
+                }
+
+                return null;
+            }),
             'school' => $this->when(
                 $this->relationLoaded('student') && $this->student?->relationLoaded('school') && $this->student->school,
                 function (): array {

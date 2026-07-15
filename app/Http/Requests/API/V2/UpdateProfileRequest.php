@@ -5,7 +5,6 @@ namespace App\Http\Requests\API\V2;
 use App\Models\User;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class UpdateProfileRequest extends FormRequest
 {
@@ -24,16 +23,11 @@ class UpdateProfileRequest extends FormRequest
      */
     public function rules(): array
     {
-        $userId = $this->authenticatedUser()?->id;
-
         return [
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($userId)],
-            'username' => ['nullable', 'string', 'max:255', Rule::unique('users', 'username')->ignore($userId)],
-            'phone' => ['nullable', 'string', 'max:20', Rule::unique('users', 'phone')->ignore($userId)],
             'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'remove_avatar' => ['nullable', 'boolean'],
-            'schoolId' => ['nullable', 'integer', 'exists:schools,id'],
+            'schoolId' => ['nullable', 'string', 'max:50', 'exists:schools,code'],
         ];
     }
 
@@ -44,15 +38,9 @@ class UpdateProfileRequest extends FormRequest
     {
         return [
             'name.required' => 'Nama lengkap wajib diisi.',
-            'email.required' => 'Email wajib diisi.',
-            'email.email' => 'Format email tidak valid.',
-            'email.unique' => 'Email sudah terdaftar.',
-            'username.unique' => 'Username sudah digunakan.',
-            'phone.unique' => 'Nomor telepon sudah digunakan.',
             'avatar.image' => 'File harus berupa gambar.',
             'avatar.mimes' => 'Format gambar harus jpg, jpeg, png, atau webp.',
             'avatar.max' => 'Ukuran gambar maksimal 2MB.',
-            'schoolId.integer' => 'schoolId harus berupa angka.',
             'schoolId.exists' => 'Sekolah tidak ditemukan.',
         ];
     }

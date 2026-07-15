@@ -175,8 +175,8 @@ it('updates the user profile and syncs changes to firebase auth and firestore', 
             ->once()
             ->with($user->firebase_uid, Mockery::on(function (array $properties): bool {
                 return $properties['displayName'] === 'Budi Santoso'
-                    && $properties['email'] === 'new@example.com'
-                    && $properties['phoneNumber'] === '+6282222222222'
+                    && $properties['email'] === 'old@example.com'
+                    && $properties['phoneNumber'] === '+6281111111111'
                     && array_key_exists('photoUrl', $properties)
                     && $properties['photoUrl'] === null;
             }));
@@ -192,9 +192,6 @@ it('updates the user profile and syncs changes to firebase auth and firestore', 
         ->withHeader('Authorization', 'Bearer valid-firebase-token')
         ->putJson('/api/v2/profile', [
             'name' => 'Budi Santoso',
-            'email' => 'new@example.com',
-            'username' => 'newuser',
-            'phone' => '+6282222222222',
         ]);
 
     $response
@@ -206,18 +203,18 @@ it('updates the user profile and syncs changes to firebase auth and firestore', 
             'data' => [
                 'id' => $user->id,
                 'name' => 'Budi Santoso',
-                'email' => 'new@example.com',
-                'username' => 'newuser',
-                'phone' => '+6282222222222',
+                'email' => 'old@example.com',
+                'username' => 'olduser',
+                'phone' => '+6281111111111',
             ],
         ]);
 
     $this->assertDatabaseHas('users', [
         'id' => $user->id,
         'name' => 'Budi Santoso',
-        'email' => 'new@example.com',
-        'username' => 'newuser',
-        'phone' => '+6282222222222',
+        'email' => 'old@example.com',
+        'username' => 'olduser',
+        'phone' => '+6281111111111',
     ]);
 });
 
@@ -258,13 +255,12 @@ it('assigns school from schoolId and syncs school data to firestore', function (
         ->withHeader('Authorization', 'Bearer valid-firebase-token')
         ->putJson('/api/v2/profile', [
             'name' => 'Siswa Baru',
-            'email' => 'siswa@example.com',
-            'schoolId' => $school->id,
+            'schoolId' => $school->code,
         ]);
 
     $response
         ->assertSuccessful()
-        ->assertJsonPath('data.schoolId', $school->id)
+        ->assertJsonPath('data.schoolId', $school->code)
         ->assertJsonPath('data.school.name', 'SMAN 8 Kota')
         ->assertJsonPath('data.role', 'student');
 
@@ -309,11 +305,10 @@ it('updates existing student school when schoolId is sent on profile update', fu
         ->withHeader('Authorization', 'Bearer valid-firebase-token')
         ->putJson('/api/v2/profile', [
             'name' => 'Siswa Pindah',
-            'email' => 'pindah@example.com',
-            'schoolId' => $newSchool->id,
+            'schoolId' => $newSchool->code,
         ])
         ->assertSuccessful()
-        ->assertJsonPath('data.schoolId', $newSchool->id);
+        ->assertJsonPath('data.schoolId', $newSchool->code);
 
     $this->assertDatabaseHas('students', [
         'user_id' => $user->id,
@@ -336,8 +331,7 @@ it('rejects invalid schoolId on profile update', function () {
         ->withHeader('Authorization', 'Bearer valid-firebase-token')
         ->putJson('/api/v2/profile', [
             'name' => 'Invalid School',
-            'email' => 'invalid-school@example.com',
-            'schoolId' => 999999,
+            'schoolId' => 'INVALID-SCHOOL-CODE',
         ])
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['schoolId']);
@@ -365,21 +359,12 @@ it('builds searchUserName with full lowercase name and space-separated parts', f
         ->withHeader('Authorization', 'Bearer valid-firebase-token')
         ->putJson('/api/v2/profile', [
             'name' => 'Ahmad Fauzi Rahman',
-            'email' => 'search@example.com',
         ])
         ->assertSuccessful();
 });
 
-it('validates unique email and username when updating profile', function () {
-    User::factory()->create([
-        'email' => 'taken@example.com',
-        'username' => 'takenuser',
-        'firebase_uid' => 'other-user',
-    ]);
-
+it('requires name when updating profile', function () {
     $user = User::factory()->create([
-        'email' => 'me@example.com',
-        'username' => 'meuser',
         'firebase_uid' => 'firebase-user-profile-001',
         'is_active' => true,
     ]);
@@ -388,13 +373,9 @@ it('validates unique email and username when updating profile', function () {
 
     $this
         ->withHeader('Authorization', 'Bearer valid-firebase-token')
-        ->putJson('/api/v2/profile', [
-            'name' => 'Me',
-            'email' => 'taken@example.com',
-            'username' => 'takenuser',
-        ])
+        ->putJson('/api/v2/profile', [])
         ->assertUnprocessable()
-        ->assertJsonValidationErrors(['email', 'username']);
+        ->assertJsonValidationErrors(['name']);
 });
 
 it('uploads avatar to firebase storage and syncs photo url', function () {
@@ -437,7 +418,6 @@ it('uploads avatar to firebase storage and syncs photo url', function () {
         ->withHeader('Authorization', 'Bearer valid-firebase-token')
         ->post('/api/v2/profile', [
             'name' => 'Avatar User',
-            'email' => 'avatar@example.com',
             'avatar' => $file,
         ], [
             'Accept' => 'application/json',
@@ -497,7 +477,6 @@ it('removes avatar from storage and firebase auth when requested', function () {
         ->withHeader('Authorization', 'Bearer valid-firebase-token')
         ->putJson('/api/v2/profile', [
             'name' => 'Remove Avatar',
-            'email' => 'remove@example.com',
             'remove_avatar' => true,
         ]);
 

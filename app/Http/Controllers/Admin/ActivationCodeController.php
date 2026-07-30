@@ -13,7 +13,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Enum;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -157,7 +156,9 @@ class ActivationCodeController extends Controller
     private function generateUniqueCode($length)
     {
         do {
-            $code = strtoupper(Str::random($length));
+            $allowed = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+            $code = strtoupper(substr(str_shuffle(str_repeat($allowed, $length)), 0, $length));
+
         } while (ActivationCode::where('code', $code)->exists());
 
         return $code;

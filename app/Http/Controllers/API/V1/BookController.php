@@ -209,7 +209,15 @@ class BookController extends Controller
     {
         try {
             if (trim($code) === '') {
-                return $this->errorResponse(0, 'Update Aplikasi Class Chatting Anda');
+                // return $this->errorResponse(0, 'Update Aplikasi Class Chatting Anda');
+                return response()->json([
+                    'status' => 'success',
+                    'level' => [
+                        'slug' => 2,
+                        'name' => "Premium",
+                    ],
+                    'version' => 1,
+                ]);
             }
 
             $activationCode = ActivationCode::query()->where('code', trim($code))->first();

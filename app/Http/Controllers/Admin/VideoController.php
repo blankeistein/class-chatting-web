@@ -7,6 +7,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\VideoStoreRequest;
 use App\Http\Requests\VideoUpdateRequest;
 use App\Models\Video;
+use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -129,7 +131,7 @@ class VideoController extends Controller
      * Get video statistics with date range filter.
      * Results are cached for 5 minutes to reduce database load.
      */
-    public function statistics(Request $request, Video $video)
+    public function statistics(Request $request, Video $video): JsonResponse
     {
         $range = $request->input('range', 'month'); // week, month, year, custom
 
@@ -140,24 +142,24 @@ class VideoController extends Controller
                 'end_date' => 'required|date|after_or_equal:start_date',
             ]);
 
-            $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
-            $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
+            $startDate = Carbon::parse($request->input('start_date'))->startOfDay();
+            $endDate = Carbon::parse($request->input('end_date'))->endOfDay();
 
             // Cache key includes dates for custom range
-            $cacheKey = "video_stats_{$video->slug}_custom_{$startDate->format('Y-m-d')}_{$endDate->format('Y-m-d')}";
+            $cacheKey = "video_stats_v2_{$video->slug}_custom_{$startDate->format('Y-m-d')}_{$endDate->format('Y-m-d')}";
         } else {
             // Cache key based on video slug and range
-            $cacheKey = "video_stats_{$video->slug}_{$range}";
+            $cacheKey = "video_stats_v2_{$video->slug}_{$range}";
         }
 
         // Cache for 5 minutes (300 seconds)
-        return Cache::remember($cacheKey, 300, function () use ($video, $range, $request) {
+        $statistics = Cache::remember($cacheKey, 300, function () use ($video, $range, $request) {
             // Calculate date range
             if ($range === 'custom') {
-                $startDate = \Carbon\Carbon::parse($request->input('start_date'))->startOfDay();
-                $endDate = \Carbon\Carbon::parse($request->input('end_date'))->endOfDay();
+                $startDate = Carbon::parse($request->input('start_date'))->startOfDay();
+                $endDate = Carbon::parse($request->input('end_date'))->endOfDay();
             } else {
-                $startDate = match($range) {
+                $startDate = match ($range) {
                     'week' => now()->startOfWeek(),
                     'month' => now()->startOfMonth(),
                     'year' => now()->startOfYear(),
@@ -186,7 +188,7 @@ class VideoController extends Controller
                     ->groupBy('date')
                     ->orderBy('date', 'asc')
                     ->get()
-                    ->map(fn($item) => [
+                    ->map(fn ($item) => [
                         'date' => $item->date,
                         'count' => $item->count,
                         'label' => date('M Y', strtotime($item->date.'-01')),
@@ -199,7 +201,7 @@ class VideoController extends Controller
                     ->groupBy('date')
                     ->orderBy('date', 'asc')
                     ->get()
-                    ->map(fn($item) => [
+                    ->map(fn ($item) => [
                         'date' => $item->date,
                         'count' => $item->count,
                         'label' => date('d M', strtotime($item->date)),
@@ -213,7 +215,7 @@ class VideoController extends Controller
                 ->latest('viewed_at')
                 ->limit(10)
                 ->get()
-                ->map(fn($view) => [
+                ->map(fn ($view) => [
                     'id' => $view->id,
                     'user_name' => $view->user?->name ?? 'Guest',
                     'ip_address' => $view->ip_address,
@@ -227,22 +229,24 @@ class VideoController extends Controller
                 ->groupBy('hour')
                 ->orderBy('hour', 'asc')
                 ->get()
-                ->map(fn($item) => [
+                ->map(fn ($item) => [
                     'hour' => $item->hour,
                     'count' => $item->count,
                 ]);
 
-            return response()->json([
+            return [
                 'total_views' => $totalViews,
                 'unique_viewers' => $uniqueViewers,
-                'views_by_date' => $viewsByDate,
-                'recent_views' => $recentViews,
-                'views_by_hour' => $viewsByHour,
+                'views_by_date' => $viewsByDate->all(),
+                'recent_views' => $recentViews->all(),
+                'views_by_hour' => $viewsByHour->all(),
                 'range' => $range,
                 'start_date' => $startDate->toISOString(),
                 'end_date' => $endDate->toISOString(),
-            ]);
+            ];
         });
+
+        return response()->json($statistics);
     }
 
     /**

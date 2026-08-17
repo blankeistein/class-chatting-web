@@ -17,11 +17,11 @@ test('it returns default value for non existent setting', function () {
 });
 
 test('it retrieves setting from cache', function () {
-    $settings = collect([
+    $settings = [
         'test_setting_cached' => 'cached_value',
-    ]);
+    ];
 
-    Cache::forever('settings', $settings);
+    Cache::forever('settings:v2', $settings);
 
     $this->assertEquals('cached_value', setting('test_setting_cached'));
 });

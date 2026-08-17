@@ -9,6 +9,7 @@ use App\Http\Requests\BookUploadFileRequest;
 use App\Http\Resources\BookResource;
 use App\Models\Book;
 use App\Services\FirebaseStorageService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Gate;
@@ -162,10 +163,10 @@ class BookController extends Controller
         return redirect()->route('admin.books.upload', $book->id)->with('success', 'File buku berhasil diperbarui.');
     }
 
-    public function selection(Request $request)
+    public function selection(Request $request): JsonResponse
     {
         $search = $request->input('search');
-        $cacheKey = 'books_selection_'.md5($search ?? 'all');
+        $cacheKey = 'books_selection_v2_'.md5($search ?? 'all');
 
         $books = cache()->remember($cacheKey, 300, function () use ($search) {
             return Book::query()
@@ -175,7 +176,8 @@ class BookController extends Controller
                 })
                 ->latest()
                 ->limit(20)
-                ->get(['id', 'title', 'cover_url']);
+                ->get(['id', 'title', 'cover_url'])
+                ->toArray();
         });
 
         return response()->json($books);

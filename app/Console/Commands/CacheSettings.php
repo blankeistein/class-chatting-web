@@ -25,14 +25,16 @@ class CacheSettings extends Command
     /**
      * Execute the console command.
      */
-    public function handle()
+    public function handle(): int
     {
         $settings = Setting::all()->keyBy('key')->map(function ($setting) {
             return $setting->value;
-        });
+        })->all();
 
-        Cache::forever('settings', $settings);
+        Cache::forever('settings:v2', $settings);
 
         $this->info('Settings have been cached successfully!');
+
+        return self::SUCCESS;
     }
 }

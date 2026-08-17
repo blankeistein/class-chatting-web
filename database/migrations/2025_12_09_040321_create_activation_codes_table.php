@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -13,7 +14,10 @@ return new class extends Migration
     {
         Schema::create('activation_codes', function (Blueprint $table) {
             $table->id();
-            $table->string('code')->unique()->collation('utf8mb4_bin');
+            $column_code = $table->string('code')->unique();
+            if (DB::getDriverName() === 'mysql') {
+                $column_code->collation('utf8mb4_bin');
+            }
             $table->string('user_id')->nullable()->index();
             $table->timestamp('activated_at')->nullable();
             $table->foreignId('activated_in')->nullable();

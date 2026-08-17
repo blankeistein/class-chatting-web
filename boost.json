@@ -2,8 +2,7 @@
     "agents": [
         "codex"
     ],
-    "herd_mcp": false,
     "mcp": true,
-    "nightwatch_mcp": false,
+    "nightwatch": false,
     "sail": false
 }

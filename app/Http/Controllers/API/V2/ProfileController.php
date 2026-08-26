@@ -20,6 +20,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
+use Kreait\Firebase\Contract\Database;
 use Kreait\Laravel\Firebase\Facades\Firebase;
 
 #[Group('Profile V2', 'Endpoint versi 2 untuk melihat dan memperbarui profil pengguna yang terautentikasi Firebase.', 22)]
@@ -28,6 +29,7 @@ class ProfileController extends Controller
     public function __construct(
         private FirebaseStorageService $storage,
         private FirestoreClient $firestore,
+        private Database $database,
         private SyncStudentSchoolToFirestoreService $syncStudentSchoolToFirestore,
     ) {}
 
@@ -102,6 +104,8 @@ class ProfileController extends Controller
             $this->syncSchoolAssignment($user, $validated['schoolId']);
             $user->load(['student.school']);
         }
+
+        $this->syncRealtimeDatabaseProfile($user);
 
         return $this->successResponse([
             'message' => 'Profil berhasil diperbarui.',
@@ -202,6 +206,31 @@ class ProfileController extends Controller
                 ], ['merge' => true]);
         } catch (\Throwable $e) {
             Log::warning('Failed to sync profile to Firestore', [
+                'user_id' => $user->id,
+                'firebase_uid' => $user->firebase_uid,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Sync profile fields to the Realtime Database document users/{firebase_uid}.
+     */
+    private function syncRealtimeDatabaseProfile(User $user): void
+    {
+        if (blank($user->firebase_uid)) {
+            return;
+        }
+
+        try {
+            $this->database
+                ->getReference('AllUsers/'.$user->firebase_uid)
+                ->update([
+                    'userName' => $user->name,
+                    'userUrlProfile' => $user->avatar,
+                ]);
+        } catch (\Throwable $e) {
+            Log::warning('Failed to sync profile to Realtime Database', [
                 'user_id' => $user->id,
                 'firebase_uid' => $user->firebase_uid,
                 'error' => $e->getMessage(),

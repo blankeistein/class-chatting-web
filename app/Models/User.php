@@ -115,6 +115,11 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->role?->canManageContent() ?? false;
     }
 
+    public function canManageVideo(): bool
+    {
+        return $this->role === RoleEnum::Admin;
+    }
+
     /**
      * Scope a query to only include active users.
      */

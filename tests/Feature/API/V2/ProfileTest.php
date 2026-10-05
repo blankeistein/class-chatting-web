@@ -9,6 +9,8 @@ use App\Services\SyncStudentSchoolToFirestoreService;
 use Google\Cloud\Firestore\FirestoreClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Kreait\Firebase\Contract\Database;
+use Kreait\Firebase\Contract\Reference;
 use Kreait\Firebase\Exception\Auth\FailedToVerifyToken;
 use Kreait\Firebase\JWT\Contract\Token as ContractToken;
 use Kreait\Laravel\Firebase\Facades\Firebase;
@@ -36,7 +38,7 @@ function mockValidFirebaseToken(string $uid = 'firebase-user-profile-001', ?call
     Firebase::shouldReceive('auth')->andReturn($auth);
 }
 
-function expectFirestoreProfileSync(string $firebaseUid, string $name, array $searchUserName): void
+function expectFirestoreProfileSync(string $firebaseUid, string $name, array $searchUserName, array $extra = []): void
 {
     $document = Mockery::mock();
     $collection = Mockery::mock();
@@ -52,12 +54,15 @@ function expectFirestoreProfileSync(string $firebaseUid, string $name, array $se
         ->with($firebaseUid)
         ->andReturn($document);
 
+    $expectedPayload = [
+        'name' => $name,
+        'searchUserName' => $searchUserName,
+        ...$extra,
+    ];
+
     $document->shouldReceive('set')
         ->once()
-        ->with([
-            'name' => $name,
-            'searchUserName' => $searchUserName,
-        ], ['merge' => true])
+        ->with($expectedPayload, ['merge' => true])
         ->andReturnNull();
 
     test()->instance(FirestoreClient::class, $firestore);
@@ -74,6 +79,14 @@ beforeEach(function () {
     $firestore->shouldReceive('collection')->byDefault()->with('users')->andReturn($collection);
 
     $this->instance(FirestoreClient::class, $firestore);
+
+    $reference = Mockery::mock(Reference::class);
+    $reference->shouldReceive('update')->byDefault()->andReturnNull();
+
+    $database = Mockery::mock(Database::class);
+    $database->shouldReceive('getReference')->byDefault()->andReturn($reference);
+
+    $this->instance(Database::class, $database);
 });
 
 it('rejects profile requests without a firebase bearer token', function () {
@@ -485,4 +498,69 @@ it('removes avatar from storage and firebase auth when requested', function () {
         ->assertJsonPath('data.avatar', '/assets/images/avatar-placeholder.webp');
 
     expect($user->fresh()->avatar)->toBeNull();
+});
+
+it('syncs status, studentClass, and address to firestore and realtime database', function () {
+    $user = User::factory()->create([
+        'name' => 'John Doe',
+        'email' => 'john@example.com',
+        'firebase_uid' => 'firebase-user-profile-001',
+        'avatar' => 'https://example.com/avatar.webp',
+        'is_active' => true,
+    ]);
+
+    mockValidFirebaseToken($user->firebase_uid, function ($auth): void {
+        $auth->shouldReceive('updateUser')->once();
+    });
+
+    expectFirestoreProfileSync(
+        $user->firebase_uid,
+        'John Doe Updated',
+        ['john doe updated', 'john', 'doe', 'updated'],
+        [
+            'status' => 'Sedang fokus belajar',
+            'studentClass' => '12 MIPA 1',
+            'address' => 'Jl. Kebon Jeruk No. 10',
+        ]
+    );
+
+    $reference = Mockery::mock(Reference::class);
+    $reference->shouldReceive('update')
+        ->once()
+        ->with([
+            'userName' => 'John Doe Updated',
+            'userUrlProfile' => 'https://example.com/avatar.webp',
+            'status' => 'Sedang fokus belajar',
+            'studentClass' => '12 MIPA 1',
+            'address' => 'Jl. Kebon Jeruk No. 10',
+        ])
+        ->andReturnNull();
+
+    $database = Mockery::mock(Database::class);
+    $database->shouldReceive('getReference')
+        ->once()
+        ->with('AllUsers/'.$user->firebase_uid)
+        ->andReturn($reference);
+
+    $this->instance(Database::class, $database);
+
+    $response = $this
+        ->withHeader('Authorization', 'Bearer valid-firebase-token')
+        ->putJson('/api/v2/profile', [
+            'name' => 'John Doe Updated',
+            'status' => 'Sedang fokus belajar',
+            'studentClass' => '12 MIPA 1',
+            'address' => 'Jl. Kebon Jeruk No. 10',
+        ]);
+
+    $response
+        ->assertSuccessful()
+        ->assertJson([
+            'status' => true,
+            'version' => 2,
+            'data' => [
+                'id' => $user->id,
+                'name' => 'John Doe Updated',
+            ],
+        ]);
 });

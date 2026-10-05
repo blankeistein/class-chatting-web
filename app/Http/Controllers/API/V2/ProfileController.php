@@ -58,13 +58,16 @@ class ProfileController extends Controller
     #[Endpoint(
         operationId: 'publicProfileUpdateV2',
         title: 'Update current user profile v2',
-        description: 'Memperbarui profil pengguna di database lokal lalu menyinkronkan perubahan ke Firebase Auth, Firebase Storage (avatar), dan Firestore di path `users/{uuid}` (field `name`, `searchUserName`, serta `schoolId`/`schoolName`/`schoolAddress` bila `schoolId` dikirim). Email, username, dan nomor telepon tidak dapat diubah melalui endpoint ini.'
+        description: 'Memperbarui profil pengguna di database lokal lalu menyinkronkan perubahan ke Firebase Auth, Firebase Storage (avatar), Firestore di path `users/{uuid}` (field `name`, `searchUserName`, `status`, `studentClass`, `address`, serta `schoolId`/`schoolName`/`schoolAddress` bila `schoolId` dikirim), dan Realtime Database di path `AllUsers/{uuid}` (field `userName`, `userUrlProfile`, `status`, `studentClass`, `address`).'
     )]
     #[HeaderParameter('Authorization', 'Firebase ID token bearer. Format: `Bearer <firebase_id_token>`.', required: true, example: 'Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6Ij...')]
     #[BodyParameter('name', 'Nama lengkap pengguna.', required: true, example: 'Budi Santoso')]
     #[BodyParameter('avatar', 'File gambar avatar (jpg, jpeg, png, webp). Maksimal 2MB.', required: false, type: 'string', format: 'binary')]
     #[BodyParameter('remove_avatar', 'Set true untuk menghapus avatar saat ini.', required: false, type: 'boolean', example: false)]
     #[BodyParameter('schoolId', 'Kode sekolah (`schools.code`). Menyimpan/memperbarui relasi murid dan menyinkronkan schoolId, schoolName, schoolAddress ke Firestore.', required: false, type: 'string', example: 'SCH-12345678')]
+    #[BodyParameter('status', 'Status pengguna.', required: false, type: 'string', example: 'Aktif belajar')]
+    #[BodyParameter('studentClass', 'Kelas siswa.', required: false, type: 'string', example: '10 IPA 1')]
+    #[BodyParameter('address', 'Alamat pengguna.', required: false, type: 'string', example: 'Jl. Merdeka No. 123')]
     public function update(UpdateProfileRequest $request): JsonResponse
     {
         $user = $request->authenticatedUser() ?? $this->resolveActiveUser($request);
@@ -97,15 +100,26 @@ class ProfileController extends Controller
         $user->update($data);
         $user->refresh();
 
+        $extraProfile = [];
+        if (array_key_exists('status', $validated)) {
+            $extraProfile['status'] = $validated['status'];
+        }
+        if (array_key_exists('studentClass', $validated)) {
+            $extraProfile['studentClass'] = $validated['studentClass'];
+        }
+        if (array_key_exists('address', $validated)) {
+            $extraProfile['address'] = $validated['address'];
+        }
+
         $this->syncFirebaseProfile($user);
-        $this->syncFirestoreProfile($user);
+        $this->syncFirestoreProfile($user, $extraProfile);
 
         if (array_key_exists('schoolId', $validated) && $validated['schoolId'] !== null) {
             $this->syncSchoolAssignment($user, $validated['schoolId']);
             $user->load(['student.school']);
         }
 
-        $this->syncRealtimeDatabaseProfile($user);
+        $this->syncRealtimeDatabaseProfile($user, $extraProfile);
 
         return $this->successResponse([
             'message' => 'Profil berhasil diperbarui.',
@@ -188,22 +202,32 @@ class ProfileController extends Controller
     }
 
     /**
-     * Sync name-related fields to Firestore document users/{uuid}.
+     * Sync name-related and additional profile fields to Firestore document users/{uuid}.
+     *
+     * @param  array<string, mixed>  $extra
      */
-    private function syncFirestoreProfile(User $user): void
+    private function syncFirestoreProfile(User $user, array $extra = []): void
     {
         if (blank($user->firebase_uid)) {
             return;
         }
 
         try {
+            $data = [
+                'name' => $user->name,
+                'searchUserName' => $this->buildSearchUserName($user->name),
+            ];
+
+            foreach (['status', 'studentClass', 'address'] as $field) {
+                if (array_key_exists($field, $extra)) {
+                    $data[$field] = $extra[$field];
+                }
+            }
+
             $this->firestore
                 ->collection('users')
                 ->document($user->firebase_uid)
-                ->set([
-                    'name' => $user->name,
-                    'searchUserName' => $this->buildSearchUserName($user->name),
-                ], ['merge' => true]);
+                ->set($data, ['merge' => true]);
         } catch (\Throwable $e) {
             Log::warning('Failed to sync profile to Firestore', [
                 'user_id' => $user->id,
@@ -215,20 +239,37 @@ class ProfileController extends Controller
 
     /**
      * Sync profile fields to the Realtime Database document users/{firebase_uid}.
+     *
+     * @param  array<string, mixed>  $extra
      */
-    private function syncRealtimeDatabaseProfile(User $user): void
+    private function syncRealtimeDatabaseProfile(User $user, array $extra = []): void
     {
         if (blank($user->firebase_uid)) {
             return;
         }
 
         try {
+            $data = [
+                'userName' => $user->name,
+                'userUrlProfile' => $user->avatar,
+                'searchUserName' => strtolower($user->name),
+            ];
+
+            if (array_key_exists('status', $extra)) {
+                $data['userStatus'] = $extra['status'];
+            }
+
+            if (array_key_exists('address', $extra)) {
+                $data['userAlamat'] = $extra['address'];
+            }
+
+            if (array_key_exists('studentClass', $extra)) {
+                $data['studentClass'] = $extra['studentClass'];
+            }
+
             $this->database
                 ->getReference('AllUsers/'.$user->firebase_uid)
-                ->update([
-                    'userName' => $user->name,
-                    'userUrlProfile' => $user->avatar,
-                ]);
+                ->update($data);
         } catch (\Throwable $e) {
             Log::warning('Failed to sync profile to Realtime Database', [
                 'user_id' => $user->id,

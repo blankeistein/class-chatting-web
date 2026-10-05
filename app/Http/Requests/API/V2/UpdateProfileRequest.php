@@ -28,6 +28,9 @@ class UpdateProfileRequest extends FormRequest
             'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'remove_avatar' => ['nullable', 'boolean'],
             'schoolId' => ['nullable', 'string', 'max:50', 'exists:schools,code'],
+            'status' => ['nullable', 'string', 'max:500'],
+            'studentClass' => ['nullable', 'string', 'max:100'],
+            'address' => ['nullable', 'string', 'max:500'],
         ];
     }
 
@@ -56,6 +59,12 @@ class UpdateProfileRequest extends FormRequest
         if ($this->has('school_id') && ! $this->has('schoolId')) {
             $this->merge([
                 'schoolId' => $this->input('school_id'),
+            ]);
+        }
+
+        if ($this->has('student_class') && ! $this->has('studentClass')) {
+            $this->merge([
+                'studentClass' => $this->input('student_class'),
             ]);
         }
     }

@@ -25,7 +25,7 @@ class UpdateProfileRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:1024'],
             'remove_avatar' => ['nullable', 'boolean'],
             'schoolId' => ['nullable', 'string', 'max:50', 'exists:schools,code'],
             'status' => ['nullable', 'string', 'max:500'],

@@ -112,13 +112,14 @@ class ProfileController extends Controller
         }
 
         $this->syncFirebaseProfile($user);
-        $this->syncFirestoreProfile($user, $extraProfile);
 
         if (array_key_exists('schoolId', $validated) && $validated['schoolId'] !== null) {
             $this->syncSchoolAssignment($user, $validated['schoolId']);
             $user->load(['student.school']);
+            $extraProfile['schoolId'] = $user->student?->school?->code;
         }
 
+        $this->syncFirestoreProfile($user, $extraProfile);
         $this->syncRealtimeDatabaseProfile($user, $extraProfile);
 
         return $this->successResponse([
@@ -218,7 +219,7 @@ class ProfileController extends Controller
                 'searchUserName' => $this->buildSearchUserName($user->name),
             ];
 
-            foreach (['status', 'studentClass', 'address'] as $field) {
+            foreach (['status', 'studentClass', 'address', 'schoolId'] as $field) {
                 if (array_key_exists($field, $extra)) {
                     $data[$field] = $extra[$field];
                 }
@@ -265,6 +266,10 @@ class ProfileController extends Controller
 
             if (array_key_exists('studentClass', $extra)) {
                 $data['studentClass'] = $extra['studentClass'];
+            }
+
+            if (array_key_exists('schoolId', $extra)) {
+                $data['schoolId'] = $extra['schoolId'];
             }
 
             $this->database

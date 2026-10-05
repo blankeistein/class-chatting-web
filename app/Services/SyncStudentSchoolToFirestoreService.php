@@ -74,7 +74,7 @@ class SyncStudentSchoolToFirestoreService
             }
 
             $document->set([
-                'schoolId' => $school->id,
+                'schoolId' => $school->code,
                 'schoolName' => $school->name,
                 'schoolAddress' => $this->formatSchoolAddress($school),
             ], ['merge' => true]);

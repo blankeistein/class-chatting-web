@@ -23,7 +23,7 @@ it('tracks a video view for the user identified by the firebase token', function
     $activationCode = ActivationCode::query()->create([
         'code' => 'VIDEO-AKTIF-001',
         'type' => 'private',
-        'tier' => ActivationCodeTierEnum::REGULAR,
+        'tier' => ActivationCodeTierEnum::PREMIUM,
         'is_active' => true,
         'activated_at' => now(),
         'user_id' => $user->firebase_uid,
@@ -40,7 +40,71 @@ it('tracks a video view for the user identified by the firebase token', function
     $response
         ->assertCreated()
         ->assertJsonPath('success', true)
-        ->assertJsonPath('data.video_id', $video->id);
+        ->assertJsonPath('data.id', $video->id)
+        ->assertJsonPath('data.level.slug', ActivationCodeTierEnum::PREMIUM->value)
+        ->assertJsonPath('data.level.name', 'Premium');
+
+    $this->assertDatabaseHas('video_views', [
+        'video_id' => $video->id,
+        'user_id' => $user->id,
+    ]);
+});
+
+it('tracks a video view with regular tier when activation code is empty', function () {
+    $user = User::factory()->create([
+        'firebase_uid' => 'firebase-video-user-empty-code',
+        'is_active' => true,
+    ]);
+    $video = Video::query()->create([
+        'title' => 'Video Pembelajaran Reguler',
+        'slug' => 'video-pembelajaran-reguler',
+        'uploaded_by' => $user->id,
+    ]);
+
+    mockVerifiedFirebaseToken('firebase-video-user-empty-code');
+
+    $response = $this
+        ->withHeader('Authorization', 'Bearer valid-firebase-token')
+        ->postJson("/api/v2/video/{$video->slug}", [
+            'activation_code' => null,
+        ]);
+
+    $response
+        ->assertCreated()
+        ->assertJsonPath('success', true)
+        ->assertJsonPath('data.id', $video->id)
+        ->assertJsonPath('data.level.slug', ActivationCodeTierEnum::REGULAR->value)
+        ->assertJsonPath('data.level.name', 'Regular');
+
+    $this->assertDatabaseHas('video_views', [
+        'video_id' => $video->id,
+        'user_id' => $user->id,
+    ]);
+});
+
+it('tracks a video view with regular tier when activation code is omitted', function () {
+    $user = User::factory()->create([
+        'firebase_uid' => 'firebase-video-user-omitted-code',
+        'is_active' => true,
+    ]);
+    $video = Video::query()->create([
+        'title' => 'Video Pembelajaran Reguler Tanpa Kode',
+        'slug' => 'video-pembelajaran-reguler-tanpa-kode',
+        'uploaded_by' => $user->id,
+    ]);
+
+    mockVerifiedFirebaseToken('firebase-video-user-omitted-code');
+
+    $response = $this
+        ->withHeader('Authorization', 'Bearer valid-firebase-token')
+        ->postJson("/api/v2/video/{$video->slug}", []);
+
+    $response
+        ->assertCreated()
+        ->assertJsonPath('success', true)
+        ->assertJsonPath('data.id', $video->id)
+        ->assertJsonPath('data.level.slug', ActivationCodeTierEnum::REGULAR->value)
+        ->assertJsonPath('data.level.name', 'Regular');
 
     $this->assertDatabaseHas('video_views', [
         'video_id' => $video->id,
@@ -84,7 +148,7 @@ function mockVerifiedFirebaseToken(string $firebaseUid): void
     $auth = Mockery::mock();
     $auth->shouldReceive('verifyIdToken')
         ->once()
-        ->with('valid-firebase-token')
+        ->with('valid-firebase-token', false, 5)
         ->andReturn($verifiedToken);
 
     Firebase::shouldReceive('auth')->once()->andReturn($auth);

@@ -38,8 +38,12 @@ export default function BookEditDialog({
 
   useEffect(() => {
     if (form) {
+      const isFreemium = Boolean(form.isFreemium);
+
       setEditForm({
         ...form,
+        isFreemium: isFreemium,
+        lock: isFreemium ? false : Boolean(form.lock),
         keyword: form.keyword
           .map((keyword) => keyword.trim())
           .filter((keyword, index, keywords) => keyword.length > 0 && keywords.indexOf(keyword) === index),
@@ -59,6 +63,26 @@ export default function BookEditDialog({
     setEditForm((currentForm) => {
       if (!currentForm) {
         return currentForm;
+      }
+
+      if (field === "isFreemium") {
+        const isFreemium = Boolean(value);
+
+        return {
+          ...currentForm,
+          isFreemium: isFreemium,
+          ...(isFreemium ? { lock: false } : {}),
+        };
+      }
+
+      if (field === "lock") {
+        const isLocked = Boolean(value);
+
+        return {
+          ...currentForm,
+          lock: isLocked,
+          ...(isLocked ? { isFreemium: false } : {}),
+        };
       }
 
       return {
@@ -263,20 +287,39 @@ export default function BookEditDialog({
                       <Select value={editForm.status} onValueChange={(value) => handleEditFormChange("status", value ?? "draft")}>
                         <Select.Trigger id="status" placeholder="Pilih status" />
                         <Select.List>
-                          <Select.Option value="publish">publish</Select.Option>
-                          <Select.Option value="draft">draft</Select.Option>
+                          <Select.Option value="publish">Publish</Select.Option>
+                          <Select.Option value="development">Development</Select.Option>
+                          <Select.Option value="draft">Draft</Select.Option>
                         </Select.List>
                       </Select>
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Checkbox id="lock" checked={editForm.lock} onChange={(event) => handleEditFormChange("lock", event.target.checked)}>
-                    <Checkbox.Indicator />
-                  </Checkbox>
-                  <Typography as="label" htmlFor="lock" className="cursor-pointer text-foreground">
-                    Kunci buku
-                  </Typography>
+                <div className="flex flex-wrap items-center gap-6">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="freemium"
+                      checked={Boolean(editForm.isFreemium)}
+                      onChange={(event) => handleEditFormChange("isFreemium", event.target.checked)}
+                    >
+                      <Checkbox.Indicator />
+                    </Checkbox>
+                    <Typography as="label" htmlFor="freemium" className="cursor-pointer text-foreground">
+                      Freemium
+                    </Typography>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="lock"
+                      checked={editForm.lock}
+                      onChange={(event) => handleEditFormChange("lock", event.target.checked)}
+                    >
+                      <Checkbox.Indicator />
+                    </Checkbox>
+                    <Typography as="label" htmlFor="lock" className="cursor-pointer text-foreground">
+                      Kunci buku
+                    </Typography>
+                  </div>
                 </div>
               </>
             )}

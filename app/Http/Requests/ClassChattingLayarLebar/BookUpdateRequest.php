@@ -30,10 +30,11 @@ class BookUpdateRequest extends FormRequest
             'keyword' => ['nullable', 'array'],
             'keyword.*' => ['string', 'max:100'],
             'lock' => ['required', 'boolean'],
+            'isFreemium' => ['nullable', 'boolean'],
             'name' => ['required', 'string', 'max:255'],
             'order' => ['required', 'integer', 'min:1'],
             'price' => ['required', 'numeric', 'min:0'],
-            'status' => ['required', 'string', 'in:publish,draft'],
+            'status' => ['required', 'string', 'in:publish,draft,development'],
             'downloadLink' => ['nullable', 'string', 'max:2048'],
             'version' => ['required', 'integer', 'min:1'],
         ];

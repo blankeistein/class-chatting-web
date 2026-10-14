@@ -133,6 +133,7 @@ class BookController extends Controller
                 'playstoreId' => $validated['playstoreId'] ?? '',
                 'keyword' => $validated['keyword'] ? implode(',', $validated['keyword']) : '',
                 'lock' => $validated['lock'],
+                'isFreemium' => (bool) ($validated['isFreemium'] ?? false),
                 'name' => $validated['name'],
                 'order' => $validated['order'],
                 'price' => $validated['price'],

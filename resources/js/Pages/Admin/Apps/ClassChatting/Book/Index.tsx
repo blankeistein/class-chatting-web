@@ -62,6 +62,7 @@ export type Book = {
   status: string;
   downloadLink: string;
   version: number;
+  isFreemium?: boolean;
 };
 
 export type FirebaseBook = {
@@ -77,6 +78,7 @@ export type FirebaseBook = {
   status: string;
   downloadLink: string;
   version: number;
+  isFreemium?: boolean;
 };
 
 type BookCategory = {
@@ -101,6 +103,7 @@ const normalizeBook = (key: string, value: Partial<FirebaseBook>): Book => {
     playstoreId: value.playstoreId ?? value.id ?? key,
     keyword: value.keyword ? value.keyword.split(",").map((k) => k.trim()) : [],
     lock: Boolean(value.lock),
+    isFreemium: Boolean(value.isFreemium),
     name: value.name ?? "-",
     oldOrder: typeof value.order === "number" ? value.order : Number.MAX_SAFE_INTEGER,
     order: typeof value.order === "number" ? value.order : Number.MAX_SAFE_INTEGER,
@@ -122,6 +125,7 @@ const createPayloadBook = (book: NewBook, orderBook: number): FirebaseBook => {
     playstoreId: baseId,
     keyword,
     lock: false,
+    isFreemium: false,
     name: book.title,
     order: orderBook,
     price: 0,
@@ -428,6 +432,7 @@ export default function Index() {
         playstoreId: newForm.playstoreId,
         keyword: newForm.keyword,
         lock: newForm.lock,
+        isFreemium: Boolean(newForm.isFreemium),
         name: newForm.name,
         order: Number(newForm.order),
         price: Number(newForm.price),

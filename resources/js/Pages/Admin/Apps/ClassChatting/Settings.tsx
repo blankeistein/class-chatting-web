@@ -1,6 +1,5 @@
 import React from "react";
 import { Head } from "@inertiajs/react";
-import axios from "axios";
 import {
   Alert,
   Button,
@@ -11,24 +10,24 @@ import {
   Textarea,
   Typography,
 } from "@material-tailwind/react";
-import { doc, onSnapshot } from "firebase/firestore";
+import { onValue, ref, update } from "firebase/database";
 import { CreditCardIcon, LoaderCircleIcon, SaveIcon, Settings2Icon } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
 import { PageHeader } from "@/Components/PageHeader";
 import AdminAppLayout from "@/Layouts/AdminAppLayout";
-import { getFirebaseFirestore } from "@/lib/firebase";
+import { getFirebaseDatabase } from "@/lib/firebase";
 
 type GeneralSettingsDocument = {
+  announcements?: string;
   announcement?: string;
   noRekening?: string;
   updatedAt?: unknown;
 };
 
-const SETTINGS_COLLECTION = "settings";
-const GENERAL_DOCUMENT = "general";
+const SETTINGS_PATH = "settings";
 
 export default function Settings() {
-  const firestore = React.useMemo(() => getFirebaseFirestore(), []);
+  const database = React.useMemo(() => getFirebaseDatabase(), []);
   const [activeTab, setActiveTab] = React.useState("general");
   const [announcement, setAnnouncement] = React.useState("");
   const [noRekening, setNoRekening] = React.useState("");
@@ -39,21 +38,29 @@ export default function Settings() {
   const [loadError, setLoadError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    if (!firestore) {
+    if (!database) {
       setIsLoading(false);
-      setLoadError("Firebase Firestore belum terkonfigurasi.");
-      toast.error("Firebase Firestore belum terkonfigurasi. Tambahkan VITE_FIREBASE_PROJECT_ID.");
+      setLoadError("Firebase Realtime Database belum terkonfigurasi.");
+      toast.error("Firebase Realtime Database belum terkonfigurasi. Tambahkan VITE_FIREBASE_DATABASE_URL.");
 
       return;
     }
 
-    const settingsReference = doc(firestore, SETTINGS_COLLECTION, GENERAL_DOCUMENT);
-    const unsubscribe = onSnapshot(
+    const settingsReference = ref(database, SETTINGS_PATH);
+    const unsubscribe = onValue(
       settingsReference,
       (snapshot) => {
-        const data = snapshot.data() as GeneralSettingsDocument | undefined;
-        const nextAnnouncement = data?.announcement ?? "";
-        const nextNoRekening = data?.noRekening ?? "";
+        const data = snapshot.val() as GeneralSettingsDocument | null;
+        const nextAnnouncement = typeof data?.announcements === "string"
+          ? data.announcements
+          : typeof data?.announcement === "string"
+            ? data.announcement
+            : "";
+        const nextNoRekening = typeof data?.noRekening === "string"
+          ? data.noRekening
+          : data?.noRekening
+            ? String(data.noRekening)
+            : "";
 
         setAnnouncement(nextAnnouncement);
         setNoRekening(nextNoRekening);
@@ -64,23 +71,29 @@ export default function Settings() {
       },
       (error) => {
         console.error("Error fetching class chatting settings:", error);
-        setLoadError("Gagal membaca pengaturan dari Firebase Firestore.");
+        setLoadError("Gagal membaca pengaturan dari Firebase Realtime Database.");
         setIsLoading(false);
-        toast.error("Gagal membaca pengaturan dari Firebase Firestore.");
+        toast.error("Gagal membaca pengaturan dari Firebase Realtime Database.");
       },
     );
 
     return () => unsubscribe();
-  }, [firestore]);
+  }, [database]);
 
   const hasChanges = announcement !== lastSavedAnnouncement || noRekening !== lastSavedNoRekening;
 
   const handleSave = async () => {
+    if (!database) {
+      toast.error("Firebase Realtime Database belum terkonfigurasi.");
+
+      return;
+    }
+
     setIsSaving(true);
 
     try {
-      await axios.post(route("admin.apps.class-chatting.settings.store"), {
-        announcement,
+      await update(ref(database, SETTINGS_PATH), {
+        announcements: announcement,
         noRekening,
       });
 
@@ -88,12 +101,8 @@ export default function Settings() {
       setLastSavedNoRekening(noRekening);
       toast.success("Pengaturan berhasil disimpan.");
     } catch (error) {
-      console.error("Error saving class chatting settings:", error);
-      if (axios.isAxiosError(error)) {
-        toast.error(error.response?.data?.message ?? "Gagal menyimpan pengaturan.");
-      } else {
-        toast.error("Gagal menyimpan pengaturan.");
-      }
+      console.error("Error saving class chatting settings to RTDB:", error);
+      toast.error("Gagal menyimpan pengaturan ke Realtime Database.");
     } finally {
       setIsSaving(false);
     }
@@ -107,7 +116,7 @@ export default function Settings() {
       <div className="min-h-screen space-y-6 p-4 md:p-6">
         <PageHeader
           title="Pengaturan Class Chatting"
-          description="Kelola pengaturan umum aplikasi Class Chatting yang tersimpan di Firebase Firestore."
+          description="Kelola pengaturan umum aplikasi Class Chatting yang tersimpan di Firebase Realtime Database."
           actions={(
             <Button
               className="flex items-center gap-2 bg-slate-900 dark:bg-white dark:text-slate-900"

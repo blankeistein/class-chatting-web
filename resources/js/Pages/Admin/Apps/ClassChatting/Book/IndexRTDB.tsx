@@ -43,6 +43,7 @@ import BookEditDialog from "@/Pages/Admin/Apps/Partials/Book/EditBookDialog";
 import { GridBookCard } from "@/Pages/Admin/Apps/Partials/Book/GridBookCard";
 import AddBookDialog, { type Book as NewBook } from "@/Pages/Admin/Apps/Partials/Book/AddBookDialog";
 import BookDetailDialog from "@/Pages/Admin/Apps/Partials/Book/BookDetailDialog";
+import ChangeBookOrderDialog from "@/Pages/Admin/Apps/Partials/Book/ChangeBookOrderDialog";
 import { PageHeader } from "@/Components/PageHeader";
 import { Book } from "./Index";
 import SortableBookTableRow from "@/Pages/Admin/Apps/Partials/Book/SortableBookTableRow";
@@ -179,7 +180,9 @@ export default function IndexRTDB() {
   const [activeDeleteKey, setActiveDeleteKey] = React.useState<string | null>(null);
   const [activeEditKey, setActiveEditKey] = React.useState<string | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = React.useState(false);
+  const [isChangeOrderDialogOpen, setIsChangeOrderDialogOpen] = React.useState(false);
   const [selectedBook, setSelectedBook] = React.useState<Book | null>(null);
+  const [selectedOrderBook, setSelectedOrderBook] = React.useState<Book | null>(null);
   const [editForm, setEditForm] = React.useState<Book | null>(null);
 
   React.useEffect(() => {
@@ -364,6 +367,29 @@ export default function IndexRTDB() {
   const openDetailDialog = useCallback((book: Book) => {
     setSelectedBook(book);
     setIsDetailDialogOpen(true);
+  }, []);
+
+  const openChangeOrderDialog = useCallback((book: Book) => {
+    setSelectedOrderBook(book);
+    setIsChangeOrderDialogOpen(true);
+  }, []);
+
+  const handleChangeOrder = useCallback((book: Book, targetOrder: number) => {
+    setBooks((currentBooks) => {
+      const currentIndex = currentBooks.findIndex((item) => item.originalKey === book.originalKey);
+      const targetIndex = targetOrder - 1;
+
+      if (currentIndex === -1 || targetIndex < 0 || targetIndex >= currentBooks.length || currentIndex === targetIndex) {
+        return currentBooks;
+      }
+
+      const reorderedBooks = arrayMove(currentBooks, currentIndex, targetIndex);
+
+      return resequenceBooks(reorderedBooks);
+    });
+
+    setIsOrderMode(true);
+    toast.success(`"${book.name}" dipindahkan ke urutan #${targetOrder}. Klik "Simpan Urutan" untuk menyimpan.`);
   }, []);
 
   const handleSaveEdit = useCallback(async (newForm: Book) => {
@@ -649,6 +675,7 @@ export default function IndexRTDB() {
                             activeDeleteKey={activeDeleteKey}
                             onView={openDetailDialog}
                             onEdit={openEditDialog}
+                            onChangeOrder={openChangeOrderDialog}
                             onCopyLink={copyToClipboard}
                             onDelete={handleDeleteBook}
                           />
@@ -676,6 +703,7 @@ export default function IndexRTDB() {
                         onView={openDetailDialog}
                         onToggleLock={updateLockStatus}
                         onEdit={openEditDialog}
+                        onChangeOrder={openChangeOrderDialog}
                         onCopyLink={copyToClipboard}
                         onDelete={handleDeleteBook}
                         onMoveUp={moveBookUp}
@@ -731,6 +759,18 @@ export default function IndexRTDB() {
           setSelectedBook(null);
         }}
         onCopyLink={copyToClipboard}
+      />
+
+      <ChangeBookOrderDialog
+        open={isChangeOrderDialogOpen}
+        book={selectedOrderBook}
+        totalBooks={books.length}
+        onOpenChange={setIsChangeOrderDialogOpen}
+        onClose={() => {
+          setIsChangeOrderDialogOpen(false);
+          setSelectedOrderBook(null);
+        }}
+        onSubmit={handleChangeOrder}
       />
     </>
   );

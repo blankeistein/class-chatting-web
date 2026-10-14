@@ -13,14 +13,19 @@ use Google\Cloud\Firestore\FieldValue;
 use Google\Cloud\Firestore\FirestoreClient;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
+use Kreait\Firebase\Contract\Database;
+use Kreait\Firebase\Database\Transaction;
+use Kreait\Firebase\Exception\Database\TransactionFailed;
 use Throwable;
 
 class BookController extends Controller
 {
     public function __construct(
         protected FirestoreClient $firestore,
+        protected Database $database,
     ) {}
 
     public function index(): InertiaResponse
@@ -104,6 +109,8 @@ class BookController extends Controller
                 'app_key' => AppEnum::CLASS_CHATTING->value,
             ]);
 
+            $this->incrementBooksCatalogVersion($documentId);
+
             return response()->json([
                 'message' => 'Buku berhasil ditambahkan ke Firestore.',
             ], 201);
@@ -145,6 +152,8 @@ class BookController extends Controller
                 'merge' => true,
             ]);
 
+            $this->incrementBooksCatalogVersion($documentId);
+
             return response()->json([
                 'message' => 'Data buku berhasil diperbarui.',
             ]);
@@ -174,6 +183,8 @@ class BookController extends Controller
                 'merge' => true,
             ]);
 
+            $this->incrementBooksCatalogVersion($documentId);
+
             return response()->json([
                 'message' => 'Status kunci buku berhasil diperbarui.',
             ]);
@@ -195,6 +206,8 @@ class BookController extends Controller
                     ])
                     ->all()
             );
+
+            $this->incrementBooksCatalogVersion();
 
             return response()->json([
                 'message' => 'Urutan buku berhasil disimpan.',
@@ -271,6 +284,8 @@ class BookController extends Controller
                     ->delete();
             }
 
+            $this->incrementBooksCatalogVersion($documentId);
+
             return response()->json([
                 'message' => 'Buku berhasil dihapus dari Firestore.',
             ]);
@@ -311,6 +326,49 @@ class BookController extends Controller
             }
 
             $writer->commit();
+        }
+    }
+
+    private function incrementBooksCatalogVersion(?string $bookId = null): void
+    {
+        $maxAttempts = 3;
+        $attempt = 0;
+
+        while ($attempt < $maxAttempts) {
+            $attempt++;
+
+            try {
+                $newVersion = $this->database->runTransaction(function (Transaction $transaction): int {
+                    $ref = $this->database->getReference('settings/booksCatalogVersion');
+                    $snapshot = $transaction->snapshot($ref);
+                    $currentValue = $snapshot->getValue();
+                    $newValue = ((int) ($currentValue ?? 0)) + 1;
+                    $transaction->set($ref, $newValue);
+
+                    return $newValue;
+                });
+
+                Log::info("Berhasil menaikkan booksCatalogVersion di RTDB untuk buku {$bookId}", [
+                    'bookId' => $bookId,
+                    'newVersion' => $newVersion,
+                ]);
+
+                return;
+            } catch (TransactionFailed $e) {
+                if ($attempt >= $maxAttempts) {
+                    Log::error("Gagal menaikkan booksCatalogVersion di RTDB untuk buku {$bookId} setelah {$maxAttempts} percobaan", [
+                        'bookId' => $bookId,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            } catch (Throwable $e) {
+                Log::error("Gagal menaikkan booksCatalogVersion di RTDB untuk buku {$bookId}", [
+                    'bookId' => $bookId,
+                    'error' => $e->getMessage(),
+                ]);
+
+                return;
+            }
         }
     }
 }

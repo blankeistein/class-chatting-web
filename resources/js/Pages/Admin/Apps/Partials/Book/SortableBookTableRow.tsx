@@ -1,6 +1,6 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { BookIcon, Copy, EyeIcon, GripVerticalIcon, LoaderCircleIcon, LockIcon, MoreVertical, PencilIcon, Trash2Icon, UnlockIcon } from "lucide-react";
+import { ArrowDownUp, BookIcon, Copy, EyeIcon, GripVerticalIcon, LoaderCircleIcon, LockIcon, MoreVertical, PencilIcon, Trash2Icon, UnlockIcon } from "lucide-react";
 import { Chip, IconButton, Menu, Typography } from "@material-tailwind/react";
 import { Book } from "@/Pages/Admin/Apps/ClassChatting/Book/Index";
 
@@ -13,6 +13,7 @@ type SortableBookTableRowProps = {
   activeDeleteKey: string | null;
   onView: (book: Book) => void;
   onEdit: (book: Book) => void;
+  onChangeOrder?: (book: Book) => void;
   onCopyLink: (url: string) => void;
   onDelete: (book: Book) => void;
 };
@@ -26,6 +27,7 @@ export default function SortableBookTableRow({
   isDeleting,
   onView,
   onEdit,
+  onChangeOrder,
   onCopyLink,
   onDelete,
 }: SortableBookTableRowProps) {
@@ -114,6 +116,12 @@ export default function SortableBookTableRow({
               <PencilIcon className="h-4 w-4 mr-2" />
               Edit
             </Menu.Item>
+            {onChangeOrder && (
+              <Menu.Item onClick={() => onChangeOrder(book)}>
+                <ArrowDownUp className="h-4 w-4 mr-2" />
+                Ubah Urutan
+              </Menu.Item>
+            )}
             <Menu.Item onClick={() => onCopyLink(book.downloadLink)}>
               <Copy className="h-4 w-4 mr-2" />
               Salin Link

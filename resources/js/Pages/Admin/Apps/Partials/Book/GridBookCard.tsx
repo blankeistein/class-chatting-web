@@ -1,7 +1,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Card, Chip, IconButton, Menu, Typography } from "@material-tailwind/react";
-import { ArrowDownIcon, ArrowUpIcon, Copy, EyeIcon, GripVerticalIcon, LoaderCircleIcon, LockIcon, MoreVertical, PencilIcon, Trash2Icon, UnlockIcon } from "lucide-react";
+import { ArrowDownIcon, ArrowDownUp, ArrowUpIcon, Copy, EyeIcon, GripVerticalIcon, LoaderCircleIcon, LockIcon, MoreVertical, PencilIcon, Trash2Icon, UnlockIcon } from "lucide-react";
 import { memo, useMemo } from "react";
 import { Book } from "@/Pages/Admin/Apps/ClassChatting/Book/Index";
 
@@ -17,6 +17,7 @@ type GridBookCardProps = {
   onView: (book: Book) => void;
   onToggleLock: (book: Book, nextLock: boolean) => void;
   onEdit: (book: Book) => void;
+  onChangeOrder?: (book: Book) => void;
   onCopyLink: (url: string) => void;
   onDelete: (book: Book) => void;
   onMoveUp: (index: number) => void;
@@ -35,6 +36,7 @@ export const GridBookCard = memo(function GridBookCard({
   onView,
   onToggleLock,
   onEdit,
+  onChangeOrder,
   onCopyLink,
   onDelete,
   onMoveUp,
@@ -118,6 +120,12 @@ export const GridBookCard = memo(function GridBookCard({
                 <PencilIcon className="h-4 w-4 mr-2" />
                 Edit
               </Menu.Item>
+              {onChangeOrder && (
+                <Menu.Item onClick={() => onChangeOrder(book)}>
+                  <ArrowDownUp className="h-4 w-4 mr-2" />
+                  Ubah Urutan
+                </Menu.Item>
+              )}
               <Menu.Item onClick={() => onCopyLink(book.downloadLink)}>
                 <Copy className="h-4 w-4 mr-2" />
                 Salin Link
@@ -179,6 +187,7 @@ export const GridBookCard = memo(function GridBookCard({
     previousProps.canMoveUp === nextProps.canMoveUp &&
     previousProps.canMoveDown === nextProps.canMoveDown &&
     previousProps.isDeleting === nextProps.isDeleting &&
-    previousProps.isSortable === nextProps.isSortable
+    previousProps.isSortable === nextProps.isSortable &&
+    previousProps.onChangeOrder === nextProps.onChangeOrder
   );
 });

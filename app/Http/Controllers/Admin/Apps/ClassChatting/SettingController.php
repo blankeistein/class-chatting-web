@@ -4,15 +4,15 @@ namespace App\Http\Controllers\Admin\Apps\ClassChatting;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ClassChatting\SettingsRequest;
-use Google\Cloud\Firestore\FirestoreClient;
 use Illuminate\Http\JsonResponse;
 use Inertia\Inertia;
 use Inertia\Response;
+use Kreait\Firebase\Contract\Database;
 
 class SettingController extends Controller
 {
     public function __construct(
-        protected FirestoreClient $firestore,
+        protected Database $database,
     ) {}
 
     public function index(): Response
@@ -23,15 +23,11 @@ class SettingController extends Controller
     public function update(SettingsRequest $request): JsonResponse
     {
         try {
-            $this->firestore
-                ->collection('settings')
-                ->document('general')
-                ->set([
-                    'announcement' => $request->string('announcement')->toString(),
+            $this->database
+                ->getReference('settings')
+                ->update([
+                    'announcements' => $request->string('announcement')->toString(),
                     'noRekening' => $request->string('noRekening')->toString(),
-                    'updatedAt' => now(),
-                ], [
-                    'merge' => true,
                 ]);
 
             return response()->json([

@@ -7,21 +7,12 @@ use App\Models\User;
 
 class UserPolicy
 {
-    public function before(User $user, $ability): ?bool
-    {
-        if ($user->isAdmin()) {
-            return true; // Admin can perform any action
-        }
-
-        return null; // Defer to other methods for non-admin users
-    }
-
     /**
      * Determine whether the user can view any models.
      */
     public function viewAny(User $user): bool
     {
-        return $user->canManageUsers();
+        return $user->can('users.view');
     }
 
     /**
@@ -29,7 +20,7 @@ class UserPolicy
      */
     public function view(User $user, User $model): bool
     {
-        return $user->canManageUsers();
+        return $user->can('users.view');
     }
 
     /**
@@ -37,7 +28,7 @@ class UserPolicy
      */
     public function create(User $user): bool
     {
-        return $user->canManageUsers();
+        return $user->can('users.create');
     }
 
     /**
@@ -45,7 +36,7 @@ class UserPolicy
      */
     public function update(User $user, User $model): bool
     {
-        return $user->canManageUsers();
+        return $user->can('users.edit');
     }
 
     /**
@@ -58,7 +49,7 @@ class UserPolicy
             return false;
         }
 
-        return $user->isAdmin();
+        return $user->can('users.delete');
     }
 
     /**
@@ -66,12 +57,11 @@ class UserPolicy
      */
     public function changeRole(User $user, User $model, string $newRole): bool
     {
-        if ($user->isAdmin()) {
+        if ($user->can('roles.edit') || $user->hasRole(['Admin', 'Developer'])) {
             return in_array($newRole, RoleEnum::values(), true);
         }
 
-        // Staff can only change roles to user, teacher, or student
-        if ($user->isStaff()) {
+        if ($user->can('users.edit')) {
             $allowedRoles = [
                 RoleEnum::User->value,
                 RoleEnum::Teacher->value,

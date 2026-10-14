@@ -9,14 +9,17 @@ use App\Models\Province;
 use App\Models\Regency;
 use App\Models\School;
 use App\Models\Student;
+use App\Models\Teacher;
 use App\Models\User;
 use App\Models\Video;
 use App\Models\Village;
 use App\Policies\ActivationCodePolicy;
 use App\Policies\BookPolicy;
 use App\Policies\RegionPolicy;
+use App\Policies\RolePolicy;
 use App\Policies\SchoolPolicy;
 use App\Policies\StudentPolicy;
+use App\Policies\TeacherPolicy;
 use App\Policies\UserPolicy;
 use App\Policies\VideoPolicy;
 use Dedoc\Scramble\Scramble;
@@ -33,6 +36,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use RuntimeException;
+use Spatie\Permission\Models\Role;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -93,25 +97,37 @@ class AppServiceProvider extends ServiceProvider
             return $user !== null && in_array($user->email, (array) config('app.development_email', []), true);
         });
 
+        // Superadmin bypass: Admin and Developer have all permissions
+        Gate::before(function (User $user, string $ability): ?bool {
+            if ($user->isAdmin() || $user->hasRole(['Admin', 'Developer'])) {
+                return true;
+            }
+
+            return null;
+        });
+
         // Role-based authorization gates
         Gate::define('viewAdmin', function (User $user): bool {
-            return $user->isAdmin();
+            return $user->hasRole(['Admin', 'Developer']) || $user->hasAnyPermission([
+                'users.view', 'books.view', 'videos.view', 'schools.view',
+                'students.view', 'teachers.view', 'regions.view', 'roles.view',
+            ]);
         });
 
         Gate::define('manageUsers', function (User $user): bool {
-            return $user->canManageUsers();
+            return $user->can('users.view');
         });
 
         Gate::define('manageSettings', function (User $user): bool {
-            return $user->isAdmin();
+            return $user->can('settings.view');
         });
 
         Gate::define('viewReports', function (User $user): bool {
-            return $user->canManageUsers();
+            return $user->can('users.view');
         });
 
         Gate::define('manageSchools', function (User $user): bool {
-            return $user->canManageUsers();
+            return $user->can('schools.view');
         });
 
         Gate::policy(ActivationCode::class, ActivationCodePolicy::class);
@@ -120,10 +136,12 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(User::class, UserPolicy::class);
         Gate::policy(School::class, SchoolPolicy::class);
         Gate::policy(Student::class, StudentPolicy::class);
+        Gate::policy(Teacher::class, TeacherPolicy::class);
         Gate::policy(Province::class, RegionPolicy::class);
         Gate::policy(Regency::class, RegionPolicy::class);
         Gate::policy(District::class, RegionPolicy::class);
         Gate::policy(Village::class, RegionPolicy::class);
+        Gate::policy(Role::class, RolePolicy::class);
 
         RateLimiter::for('login', function (Request $request) {
             return [

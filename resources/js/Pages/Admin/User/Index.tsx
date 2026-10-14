@@ -52,6 +52,8 @@ const SORT_OPTIONS = [
 const ROLE_OPTIONS = [
   { label: "Semua Role", value: "" },
   { label: "Admin", value: "admin" },
+  { label: "Developer", value: "developer" },
+  { label: "Staff", value: "staff" },
   { label: "Guru", value: "teacher" },
   { label: "Murid", value: "student" },
   { label: "User", value: "user" },

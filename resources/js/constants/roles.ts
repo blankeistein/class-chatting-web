@@ -4,6 +4,7 @@ export const ROLES = {
   STUDENT: 'student',
   STAFF: 'staff',
   ADMIN: 'admin',
+  DEVELOPER: 'developer',
 } as const;
 
 export const ROLE_LABELS = {
@@ -12,6 +13,7 @@ export const ROLE_LABELS = {
   [ROLES.STUDENT]: 'Student',
   [ROLES.STAFF]: 'Staff',
   [ROLES.ADMIN]: 'Admin',
+  [ROLES.DEVELOPER]: 'Developer',
 } as const;
 
 export type Role = typeof ROLES[keyof typeof ROLES];

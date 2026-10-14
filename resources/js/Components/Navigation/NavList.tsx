@@ -16,6 +16,7 @@ export type ChildLinkType = {
   title: string;
   routeName: string;
   badge?: number;
+  permission?: string;
 };
 
 export type LinkType = {
@@ -25,6 +26,7 @@ export type LinkType = {
   routeName?: string;
   badge?: number;
   children?: ChildLinkType[];
+  permission?: string;
 };
 
 interface Props {

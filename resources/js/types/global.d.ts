@@ -14,6 +14,8 @@ export type AuthProps = {
       image: string;
       notifications: any[];
       unread_notifications_count: number;
+      permissions: string[];
+      roles: string[];
     } | null;
     firebase: {
       uid: string;

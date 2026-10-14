@@ -19,6 +19,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Kreait\Firebase\Exception\Auth\EmailExists;
 use Kreait\Laravel\Firebase\Facades\Firebase;
+use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
@@ -144,7 +145,7 @@ class UserController extends Controller
             $firebaseUid = $firebaseUser->uid;
 
             // Create user in database
-            User::create([
+            $newUser = User::create([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
                 'username' => $validated['username'],
@@ -155,6 +156,11 @@ class UserController extends Controller
                 'firebase_uid' => $firebaseUid,
                 'avatar' => $avatarUrl,
             ]);
+
+            $spatieRole = ucfirst($validated['role']);
+            if (Role::where('name', $spatieRole)->exists()) {
+                $newUser->assignRole($spatieRole);
+            }
 
             return redirect()->route('admin.users.index')->with('success', 'User berhasil ditambahkan.');
 
@@ -179,7 +185,7 @@ class UserController extends Controller
                 }
 
                 // Create user in database with existing Firebase UID
-                User::create([
+                $newUser = User::create([
                     'name' => $validated['name'],
                     'email' => $validated['email'],
                     'username' => $validated['username'],
@@ -190,6 +196,11 @@ class UserController extends Controller
                     'firebase_uid' => $firebaseUid,
                     'avatar' => $avatarUrl,
                 ]);
+
+                $spatieRole = ucfirst($validated['role']);
+                if (Role::where('name', $spatieRole)->exists()) {
+                    $newUser->assignRole($spatieRole);
+                }
 
                 return redirect()->route('admin.users.index')->with('success', 'User berhasil ditambahkan.');
 
@@ -347,6 +358,13 @@ class UserController extends Controller
         }
 
         $user->update($data);
+
+        if (isset($validated['role'])) {
+            $spatieRole = ucfirst($validated['role']);
+            if (Role::where('name', $spatieRole)->exists()) {
+                $user->syncRoles([$spatieRole]);
+            }
+        }
 
         return redirect()->route('admin.users.index')->with('success', 'User berhasil diperbarui.');
     }

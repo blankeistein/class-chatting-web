@@ -25,7 +25,8 @@ class ActivationCode extends Model
         'is_active',
     ];
 
-    protected function casts(): array {
+    protected function casts(): array
+    {
         return [
             'tier' => ActivationCodeTierEnum::class,
             'is_active' => 'boolean',

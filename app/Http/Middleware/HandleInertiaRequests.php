@@ -38,12 +38,15 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'auth.user' => fn () => $request->user() ? [
+                'id' => $request->user()->id,
                 'name' => $request->user()->name,
                 'email' => $request->user()->email,
                 'image' => $request->user()->image,
-                'role' => $request->user()->role,
+                'role' => $request->user()->role?->value ?? (string) $request->user()->role,
                 'notifications' => $request->user()->notifications()->limit(5)->get(),
                 'unread_notifications_count' => $request->user()->unreadNotifications()->count(),
+                'permissions' => $request->user()->getAllPermissions()->pluck('name')->values()->all(),
+                'roles' => $request->user()->getRoleNames()->values()->all(),
             ] : null,
             'auth.firebase' => fn () => $request->session()->get('firebase_auth'),
             'flash' => [

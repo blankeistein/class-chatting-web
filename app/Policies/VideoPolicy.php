@@ -4,25 +4,15 @@ namespace App\Policies;
 
 use App\Models\User;
 use App\Models\Video;
-use Illuminate\Auth\Access\Response;
 
 class VideoPolicy
 {
-    public function before(User $user, $ability): ?bool
-    {
-        if ($user->isAdmin()) {
-            return true; // Admin can perform any action
-        }
-
-        return null; // Defer to other methods for non-admin users
-    }
-
     /**
      * Determine whether the user can view any models.
      */
     public function viewAny(User $user): bool
     {
-        return $user->canManageVideo();
+        return $user->can('videos.view');
     }
 
     /**
@@ -30,7 +20,7 @@ class VideoPolicy
      */
     public function view(User $user, Video $video): bool
     {
-        return $user->canManageVideo();
+        return $user->can('videos.view');
     }
 
     /**
@@ -38,7 +28,7 @@ class VideoPolicy
      */
     public function create(User $user): bool
     {
-        return $user->canManageVideo();
+        return $user->can('videos.create');
     }
 
     /**
@@ -46,8 +36,11 @@ class VideoPolicy
      */
     public function update(User $user, Video $video): bool
     {
-        // Non-admin users can only update videos they uploaded
-        return $user->canManageVideo() && $video->uploaded_by === $user->id;
+        if ($user->hasRole(['Admin', 'Developer'])) {
+            return true;
+        }
+
+        return $user->can('videos.edit') && $video->uploaded_by === $user->id;
     }
 
     /**
@@ -55,7 +48,10 @@ class VideoPolicy
      */
     public function delete(User $user, Video $video): bool
     {
-        // Non-admin users can only delete videos they uploaded
-        return $user->canManageVideo() && $video->uploaded_by === $user->id;
+        if ($user->hasRole(['Admin', 'Developer'])) {
+            return true;
+        }
+
+        return $user->can('videos.delete') && $video->uploaded_by === $user->id;
     }
 }

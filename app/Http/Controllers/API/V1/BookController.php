@@ -214,7 +214,7 @@ class BookController extends Controller
                     'status' => 'success',
                     'level' => [
                         'slug' => 2,
-                        'name' => "Premium",
+                        'name' => 'Premium',
                     ],
                     'version' => 1,
                 ]);

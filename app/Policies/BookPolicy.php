@@ -7,21 +7,12 @@ use App\Models\User;
 
 class BookPolicy
 {
-    public function before(User $user, string $ability): ?bool
-    {
-        if ($user->isAdmin()) {
-            return true; // Admin can perform any action
-        }
-
-        return null; // Defer to other methods for non-admin users
-    }
-
     /**
      * Determine whether the user can view any models.
      */
     public function viewAny(User $user): bool
     {
-        return false;
+        return $user->can('books.view');
     }
 
     /**
@@ -29,7 +20,7 @@ class BookPolicy
      */
     public function view(User $user, Book $book): bool
     {
-        return false;
+        return $user->can('books.view');
     }
 
     /**
@@ -37,7 +28,7 @@ class BookPolicy
      */
     public function create(User $user): bool
     {
-        return false; // Only admin can create (handled by before method)
+        return $user->can('books.create');
     }
 
     /**
@@ -45,7 +36,7 @@ class BookPolicy
      */
     public function update(User $user, Book $book): bool
     {
-        return false; // Only admin can update (handled by before method)
+        return $user->can('books.edit');
     }
 
     /**
@@ -53,7 +44,7 @@ class BookPolicy
      */
     public function delete(User $user, Book $book): bool
     {
-        return false; // Only admin can delete (handled by before method)
+        return $user->can('books.delete');
     }
 
     /**
@@ -61,7 +52,7 @@ class BookPolicy
      */
     public function restore(User $user, Book $book): bool
     {
-        return false;
+        return $user->can('books.delete');
     }
 
     /**
@@ -69,6 +60,6 @@ class BookPolicy
      */
     public function forceDelete(User $user, Book $book): bool
     {
-        return false;
+        return $user->can('books.delete');
     }
 }

@@ -17,6 +17,7 @@
         "laravel/framework": "^13.0",
         "laravel/tinker": "^3.0",
         "sentry/sentry-laravel": "^4.25",
+        "spatie/laravel-permission": "^8.3",
         "tightenco/ziggy": "^2.5"
     },
     "require-dev": {

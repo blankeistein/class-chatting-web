@@ -10,10 +10,11 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
-    use HasFactory, Notifiable, SoftDeletes;
+    use HasFactory, HasRoles, Notifiable, SoftDeletes;
 
     protected $fillable = [
         'name',
@@ -72,6 +73,16 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasOne(Student::class);
     }
 
+    public function teacher(): HasOne
+    {
+        return $this->hasOne(Teacher::class);
+    }
+
+    public function getSchoolAttribute(): ?School
+    {
+        return $this->student?->school ?? $this->teacher?->school;
+    }
+
     public function getMeta(string $key, mixed $default = null): mixed
     {
         return $this->metadata->firstWhere('key', $key)?->value ?? $default;
@@ -92,32 +103,32 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function isAdmin(): bool
     {
-        return $this->role === RoleEnum::Admin;
+        return $this->role === RoleEnum::Admin || $this->role === RoleEnum::Developer || $this->hasRole(['Admin', 'Developer']);
     }
 
     public function isStaff(): bool
     {
-        return $this->role === RoleEnum::Staff;
+        return $this->role === RoleEnum::Staff || $this->hasRole('Staff');
     }
 
     public function isUser(): bool
     {
-        return $this->role === RoleEnum::User;
+        return $this->role === RoleEnum::User || $this->hasRole('User');
     }
 
     public function canManageUsers(): bool
     {
-        return $this->role?->canManageUsers() ?? false;
+        return $this->can('users.view') || ($this->role?->canManageUsers() ?? false);
     }
 
     public function canManageContent(): bool
     {
-        return $this->role?->canManageContent() ?? false;
+        return $this->can('books.view') || ($this->role?->canManageContent() ?? false);
     }
 
     public function canManageVideo(): bool
     {
-        return $this->role === RoleEnum::Admin;
+        return $this->can('videos.view') || $this->isAdmin();
     }
 
     /**

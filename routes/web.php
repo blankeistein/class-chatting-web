@@ -10,8 +10,10 @@ use App\Http\Controllers\Admin\Apps\ClassChattingLayarLebar\BookController as Cl
 use App\Http\Controllers\Admin\BookController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\EmailConfigController;
+use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\RegionController as AdminRegionController;
+use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\SchoolController as AdminSchoolController;
 use App\Http\Controllers\Admin\StudentController as AdminStudentController;
 use App\Http\Controllers\Admin\UserController;
@@ -135,6 +137,8 @@ Route::middleware('auth')->group(function () {
         Route::delete('users/bulk-delete', [UserController::class, 'bulkDelete'])->name('users.bulk-delete');
         Route::get('users/{user}/books', [UserController::class, 'books'])->name('users.books');
         Route::resource('users', UserController::class);
+        Route::resource('roles', RoleController::class);
+        Route::resource('permissions', PermissionController::class)->only(['index', 'store', 'update', 'destroy']);
 
         Route::get('email-config', [EmailConfigController::class, 'index'])->name('email-config.index');
         Route::post('email-config/check-connection', [EmailConfigController::class, 'checkConnection'])->name('email-config.check-connection');

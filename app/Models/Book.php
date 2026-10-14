@@ -24,7 +24,8 @@ class Book extends Model
 
     public const TYPE_PENILAIAN = 'penilaian';
 
-    protected function casts(): array {
+    protected function casts(): array
+    {
         return [
             'tags' => 'array',
         ];

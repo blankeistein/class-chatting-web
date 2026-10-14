@@ -13,7 +13,7 @@ import {
   Tooltip,
   Typography,
 } from "@material-tailwind/react";
-import { ArchiveIcon, BellIcon, BookIcon, Building2Icon, ChevronDownIcon, GithubIcon, GraduationCapIcon, Grid3X3, Grip, LayoutDashboardIcon, LayoutGrid, LogOutIcon, MailIcon, MapPinnedIcon, MenuIcon, MoonIcon, PiIcon, PinIcon, ScrollTextIcon, Settings2Icon, SettingsIcon, SunIcon, TicketIcon, Trash2Icon, UserCircle2Icon, UserRoundCog, VideoIcon, XIcon } from "lucide-react";
+import { ArchiveIcon, BellIcon, BookIcon, Building2Icon, ChevronDownIcon, GithubIcon, GraduationCapIcon, Grid3X3, Grip, LayoutDashboardIcon, LayoutGrid, LogOutIcon, MailIcon, MapPinnedIcon, MenuIcon, MoonIcon, PiIcon, PinIcon, ScrollTextIcon, Settings2Icon, SettingsIcon, ShieldCheckIcon, ShieldIcon, SunIcon, TicketIcon, Trash2Icon, UserCircle2Icon, UserRoundCog, VideoIcon, XIcon } from "lucide-react";
 import { useTheme } from "../Contexts/ThemeContext";
 import { Link, router, usePage } from "@inertiajs/react";
 import { route } from "ziggy-js";
@@ -28,6 +28,7 @@ import Sidebar from "@/Components/Navigation/Sidebar";
 import MobileNavbar from "@/Components/Navigation/MobileNavbar";
 import Footer from "./Footer";
 import { useFirebaseAuth } from "@/Hooks/useFirebaseAuth";
+import { usePermission } from "@/Hooks/usePermission";
 
 const Links: LinkType[] = [
   {
@@ -39,6 +40,7 @@ const Links: LinkType[] = [
     icon: TicketIcon,
     title: "Kode Aktivasi",
     routeName: "admin.activation-code.index",
+    permission: "activation-codes.view",
   },
   {
     icon: ArchiveIcon,
@@ -48,11 +50,13 @@ const Links: LinkType[] = [
         title: "Buku",
         icon: BookIcon,
         routeName: "admin.books.index",
+        permission: "books.view",
       },
       {
         title: "Video",
         icon: VideoIcon,
         routeName: "admin.videos.index",
+        permission: "videos.view",
       },
     ],
   },
@@ -60,42 +64,69 @@ const Links: LinkType[] = [
     title: "Sekolah",
     icon: Building2Icon,
     routeName: "admin.schools.index",
+    permission: "schools.view",
   },
   {
     title: "Murid",
     icon: GraduationCapIcon,
     routeName: "admin.students.index",
+    permission: "students.view",
   },
   {
     icon: MapPinnedIcon,
     title: "Daerah",
+    permission: "regions.view",
     children: [
       {
         title: "Provinsi",
         icon: MapPinnedIcon,
         routeName: "admin.regions.provinces.index",
+        permission: "regions.view",
       },
       {
         title: "Kota/Kabupaten",
         icon: MapPinnedIcon,
         routeName: "admin.regions.regencies.index",
+        permission: "regions.view",
       },
       {
         title: "Kecamatan",
         icon: MapPinnedIcon,
         routeName: "admin.regions.districts.index",
+        permission: "regions.view",
       },
       {
         title: "Desa/Kelurahan",
         icon: MapPinnedIcon,
         routeName: "admin.regions.villages.index",
+        permission: "regions.view",
       },
-    ]
+    ],
   },
   {
     icon: UserCircle2Icon,
     title: "Pengguna",
     routeName: "admin.users.index",
+    permission: "users.view",
+  },
+  {
+    icon: ShieldCheckIcon,
+    title: "Hak Akses",
+    permission: "roles.view",
+    children: [
+      {
+        title: "Role",
+        icon: UserRoundCog,
+        routeName: "admin.roles.index",
+        permission: "roles.view",
+      },
+      {
+        title: "Permission",
+        icon: ShieldCheckIcon,
+        routeName: "admin.permissions.index",
+        permission: "permissions.view",
+      },
+    ],
   },
   {
     icon: SettingsIcon,
@@ -105,10 +136,10 @@ const Links: LinkType[] = [
         title: "Email",
         icon: MapPinnedIcon,
         routeName: "admin.email-config.index",
+        permission: "email-config.view",
       },
     ],
   },
-
 ];
 
 type AppLinkType = {
@@ -217,7 +248,7 @@ function ProfileMenu() {
   );
 }
 
-function TopNavbar({ onToggleSidebar }: { onToggleSidebar: () => void }) {
+function TopNavbar({ onToggleSidebar, links }: { onToggleSidebar: () => void; links: LinkType[] }) {
   const [openNav, setOpenNav] = useState(false);
 
   useEffect(() => {
@@ -298,7 +329,7 @@ function TopNavbar({ onToggleSidebar }: { onToggleSidebar: () => void }) {
           </div>
         </Navbar>
       </div>
-      <MobileNavbar links={Links} open={openNav} onOpenChange={() => setOpenNav(!openNav)} />
+      <MobileNavbar links={links} open={openNav} onOpenChange={() => setOpenNav(!openNav)} />
     </>
   );
 }
@@ -306,6 +337,20 @@ function TopNavbar({ onToggleSidebar }: { onToggleSidebar: () => void }) {
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const contentRef = React.useRef<HTMLDivElement>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const { can } = usePermission();
+
+  const filteredLinks = useMemo(() => {
+    return Links.filter((link) => {
+      if (link.permission && !can(link.permission)) {
+        return false;
+      }
+      return true;
+    }).map((link) => {
+      if (!link.children) return link;
+      const children = link.children.filter((child) => !child.permission || can(child.permission));
+      return { ...link, children };
+    }).filter((link) => !link.children || link.children.length > 0 || link.routeName);
+  }, [can]);
 
   useEffect(() => {
     const removeListener = router.on('navigate', () => {
@@ -317,9 +362,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <ErrorHandlerProvider>
       <div className="h-screen bg-background flex overflow-hidden">
-        <Sidebar links={Links} isCollapsed={isCollapsed} />
+        <Sidebar links={filteredLinks} isCollapsed={isCollapsed} />
         <div ref={contentRef} className="flex-1 overflow-auto">
-          <TopNavbar onToggleSidebar={() => setIsCollapsed(!isCollapsed)} />
+          <TopNavbar onToggleSidebar={() => setIsCollapsed(!isCollapsed)} links={filteredLinks} />
           {children}
           <Footer />
         </div>

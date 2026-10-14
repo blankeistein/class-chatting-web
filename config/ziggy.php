@@ -11,13 +11,13 @@ return [
             'password.email',
             'password.reset',
             'password.update',
-            'authenticate-firebase-user'
+            'authenticate-firebase-user',
         ],
         'user' => [
-            'user.*'
+            'user.*',
         ],
         'teacher' => [
-            'teacher.*'
-        ]
-    ]
+            'teacher.*',
+        ],
+    ],
 ];

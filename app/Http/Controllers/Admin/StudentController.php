@@ -25,8 +25,16 @@ class StudentController extends Controller
 
     public function index(Request $request): Response
     {
+        Gate::authorize('viewAny', Student::class);
+
         $search = trim((string) $request->input('search', ''));
         $schoolId = $request->input('school_id');
+
+        $currentUser = $request->user();
+        if ($currentUser && ($currentUser->role === RoleEnum::Teacher || $currentUser->hasRole('Teacher')) && $currentUser->teacher) {
+            $schoolId = $currentUser->teacher->school_id;
+        }
+
         $className = trim((string) $request->input('class_name', ''));
         $isActive = $request->input('is_active');
         $sortBy = trim((string) $request->input('sort_by', 'created_at'));

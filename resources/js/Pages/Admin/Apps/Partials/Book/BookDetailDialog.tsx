@@ -79,6 +79,11 @@ export default function BookDetailDialog({
                     <Chip size="sm" variant="ghost" color={book.status === "publish" ? "success" : "warning"}>
                       <Chip.Label>{book.status.toUpperCase()}</Chip.Label>
                     </Chip>
+                    {book.isFreemium && (
+                      <Chip size="sm" variant="ghost" color="info">
+                        <Chip.Label>FREEMIUM</Chip.Label>
+                      </Chip>
+                    )}
                   </div>
                 </div>
 
@@ -123,7 +128,13 @@ export default function BookDetailDialog({
                     </Typography>
                     <div className="mt-2 flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
                       {book.lock ? <LockIcon className="h-4 w-4" /> : <ShieldCheckIcon className="h-4 w-4" />}
-                      <span>{book.lock ? "Buku dengan password" : "Buku dapat diakses publik"}</span>
+                      <span>
+                        {book.lock
+                          ? "Buku dengan password"
+                          : book.isFreemium
+                            ? "Buku Freemium"
+                            : "Buku dapat diakses publik"}
+                      </span>
                     </div>
                   </div>
                 </div>

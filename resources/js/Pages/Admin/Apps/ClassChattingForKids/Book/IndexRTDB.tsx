@@ -44,6 +44,8 @@ import { GridBookCard } from "@/Pages/Admin/Apps/Partials/Book/GridBookCard";
 import AddBookDialog, { type Book as NewBook } from "@/Pages/Admin/Apps/Partials/Book/AddBookDialog";
 import BookDetailDialog from "@/Pages/Admin/Apps/Partials/Book/BookDetailDialog";
 import { PageHeader } from "@/Components/PageHeader";
+import Checkbox from "@/Components/Checkbox";
+import { BookBulkActionBar } from "@/Components/BookBulkActionBar";
 import { Book } from "./Index";
 import SortableBookTableRow from "@/Pages/Admin/Apps/Partials/Book/SortableBookTableRow";
 
@@ -181,6 +183,8 @@ export default function IndexRTDB() {
   const [isDetailDialogOpen, setIsDetailDialogOpen] = React.useState(false);
   const [selectedBook, setSelectedBook] = React.useState<Book | null>(null);
   const [editForm, setEditForm] = React.useState<Book | null>(null);
+  const [selectedKeys, setSelectedKeys] = React.useState<string[]>([]);
+  const [isBulkProcessing, setIsBulkProcessing] = React.useState(false);
 
   React.useEffect(() => {
     if (!database) {
@@ -365,6 +369,94 @@ export default function IndexRTDB() {
     setSelectedBook(book);
     setIsDetailDialogOpen(true);
   }, []);
+
+  const toggleSelectKey = useCallback((key: string) => {
+    setSelectedKeys((currentKeys) =>
+      currentKeys.includes(key) ? currentKeys.filter((item) => item !== key) : [...currentKeys, key]
+    );
+  }, []);
+
+  const toggleSelectAllFiltered = useCallback(() => {
+    if (filteredBooks.length === 0) {
+      return;
+    }
+
+    const allFilteredKeys = filteredBooks.map((b) => b.originalKey);
+    const isAllSelected = allFilteredKeys.every((key) => selectedKeys.includes(key));
+
+    if (isAllSelected) {
+      setSelectedKeys((currentKeys) => currentKeys.filter((k) => !allFilteredKeys.includes(k)));
+    } else {
+      setSelectedKeys((currentKeys) => Array.from(new Set([...currentKeys, ...allFilteredKeys])));
+    }
+  }, [filteredBooks, selectedKeys]);
+
+  const handleBulkAction = useCallback(async (action: "delete" | "status" | "lock", payload?: { status?: "publish" | "draft"; lock?: boolean }) => {
+    if (!database) {
+      toast.error("Firebase Realtime Database belum siap.");
+      return;
+    }
+
+    if (selectedKeys.length === 0) {
+      toast.error("Pilih minimal satu buku terlebih dahulu.");
+      return;
+    }
+
+    if (action === "delete") {
+      if (!window.confirm(`Hapus ${selectedKeys.length} buku terpilih dari Realtime Database?`)) {
+        return;
+      }
+    }
+
+    setIsBulkProcessing(true);
+
+    try {
+      if (action === "delete") {
+        const updates: Record<string, null | number> = {};
+        for (const key of selectedKeys) {
+          updates[`${ALL_BOOKS_PATH}/${key}`] = null;
+        }
+
+        const remainingBooks = books
+          .filter((item) => !selectedKeys.includes(item.originalKey))
+          .sort((left, right) => {
+            if (left.order !== right.order) {
+              return left.order - right.order;
+            }
+            return left.name.localeCompare(right.name);
+          });
+
+        remainingBooks.forEach((item, index) => {
+          updates[`${ALL_BOOKS_PATH}/${item.originalKey}/orderBook`] = index + 1;
+        });
+
+        await update(ref(database), updates);
+        toast.success(`${selectedKeys.length} buku berhasil dihapus.`);
+        setSelectedKeys([]);
+      } else if (action === "status" && payload?.status) {
+        const updates: Record<string, string> = {};
+        for (const key of selectedKeys) {
+          updates[`${ALL_BOOKS_PATH}/${key}/status`] = payload.status;
+        }
+        await update(ref(database), updates);
+        toast.success(`Status ${selectedKeys.length} buku berhasil diubah ke ${payload.status.toUpperCase()}.`);
+        setSelectedKeys([]);
+      } else if (action === "lock" && typeof payload?.lock === "boolean") {
+        const updates: Record<string, boolean> = {};
+        for (const key of selectedKeys) {
+          updates[`${ALL_BOOKS_PATH}/${key}/lock`] = payload.lock;
+        }
+        await update(ref(database), updates);
+        toast.success(`${selectedKeys.length} buku berhasil ${payload.lock ? "dikunci" : "dibuka kuncinya"}.`);
+        setSelectedKeys([]);
+      }
+    } catch (error) {
+      console.error("Error bulk action RTDB:", error);
+      toast.error("Gagal memproses aksi massal di Realtime Database.");
+    } finally {
+      setIsBulkProcessing(false);
+    }
+  }, [database, selectedKeys, books]);
 
   const handleSaveEdit = useCallback(async (newForm: Book) => {
     if (!database || !newForm) {
@@ -628,6 +720,14 @@ export default function IndexRTDB() {
                     <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
                       <thead className="bg-slate-50 dark:bg-slate-950/60">
                         <tr className="text-left text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                          <th className="px-4 py-3 w-10 text-center">
+                            {!isOrderMode && (
+                              <Checkbox
+                                checked={filteredBooks.length > 0 && filteredBooks.every((b) => selectedKeys.includes(b.originalKey))}
+                                onChange={toggleSelectAllFiltered}
+                              />
+                            )}
+                          </th>
                           <th className="px-4 py-3"></th>
                           <th className="px-4 py-3">Buku</th>
                           <th className="px-4 py-3">Keyword</th>
@@ -643,6 +743,8 @@ export default function IndexRTDB() {
                             key={book.originalKey}
                             book={book}
                             books={books}
+                            isSelected={selectedKeys.includes(book.originalKey)}
+                            onToggleSelect={() => toggleSelectKey(book.originalKey)}
                             isOrderMode={isOrderMode}
                             hasActiveSearch={hasActiveFilter}
                             isDeleting={activeDeleteKey === book.originalKey}
@@ -656,6 +758,16 @@ export default function IndexRTDB() {
                       </tbody>
                     </table>
                   </div>
+
+                  <BookBulkActionBar
+                    selectedCount={selectedKeys.length}
+                    totalCount={filteredBooks.length}
+                    isProcessing={isBulkProcessing}
+                    onClearSelection={() => setSelectedKeys([])}
+                    onDelete={() => handleBulkAction("delete")}
+                    onChangeStatus={(status) => handleBulkAction("status", { status })}
+                    onChangeLock={(lock) => handleBulkAction("lock", { lock })}
+                  />
                 </Card>
               ) : (
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">

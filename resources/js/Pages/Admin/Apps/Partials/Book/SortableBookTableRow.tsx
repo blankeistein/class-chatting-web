@@ -2,6 +2,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { ArrowDownUp, BookIcon, Copy, EyeIcon, GripVerticalIcon, LoaderCircleIcon, LockIcon, MoreVertical, PencilIcon, Trash2Icon, UnlockIcon } from "lucide-react";
 import { Chip, IconButton, Menu, Typography } from "@material-tailwind/react";
+import Checkbox from "@/Components/Checkbox";
 import { Book } from "@/Pages/Admin/Apps/ClassChatting/Book/Index";
 
 type SortableBookTableRowProps = {
@@ -11,6 +12,8 @@ type SortableBookTableRowProps = {
   hasActiveSearch: boolean;
   isDeleting: boolean;
   activeDeleteKey: string | null;
+  isSelected?: boolean;
+  onToggleSelect?: (key: string) => void;
   onView: (book: Book) => void;
   onEdit: (book: Book) => void;
   onChangeOrder?: (book: Book) => void;
@@ -25,6 +28,8 @@ export default function SortableBookTableRow({
   isOrderMode,
   hasActiveSearch,
   isDeleting,
+  isSelected = false,
+  onToggleSelect,
   onView,
   onEdit,
   onChangeOrder,
@@ -52,8 +57,17 @@ export default function SortableBookTableRow({
     <tr
       ref={setNodeRef}
       style={style}
-      className={`align-top ${isDragging ? "relative z-10 opacity-70" : ""}`}
+      className={`align-top transition-colors ${isSelected ? "bg-sky-50/50 dark:bg-sky-950/20" : ""} ${isDragging ? "relative z-10 opacity-70" : ""}`}
     >
+      <td className="px-4 py-4 w-10">
+        {!isOrderMode && onToggleSelect ? (
+          <Checkbox
+            checked={isSelected}
+            onChange={() => onToggleSelect(book.originalKey)}
+            color="primary"
+          />
+        ) : null}
+      </td>
       <td className="px-4 py-4">
         {isOrderMode && !hasActiveSearch ? (
           <button

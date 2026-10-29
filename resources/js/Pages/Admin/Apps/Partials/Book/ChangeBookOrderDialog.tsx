@@ -54,7 +54,7 @@ export default function ChangeBookOrderDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange ?? onClose} size="sm">
-      <Dialog.Overlay>
+      <Dialog.Overlay lockScroll={false}>
         <Dialog.Content className="overflow-hidden p-0 dark:border-slate-800">
           <form onSubmit={handleSubmit}>
             <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">

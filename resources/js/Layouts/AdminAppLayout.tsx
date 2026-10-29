@@ -596,7 +596,7 @@ export default function AdminAppLayout({ appName, children }: { appName: string,
     <ErrorHandlerProvider>
       <div className="h-screen bg-background flex overflow-hidden">
         <Sidebar title={title} logo={logo} links={links} isCollapsed={isCollapsed} />
-        <div ref={contentRef} className="flex-1 overflow-auto">
+        <div ref={contentRef} className="flex-1 overflow-auto [overflow-anchor:none]">
           <TopNavbar title={title} logo={logo} links={links} onToggleSidebar={() => setIsCollapsed(!isCollapsed)} />
           {children}
           <Footer />

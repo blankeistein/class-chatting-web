@@ -34,7 +34,14 @@ import {
   PlusIcon,
   SaveIcon,
   SearchIcon,
+  Trash2Icon,
+  LockIcon,
+  UnlockIcon,
+  GlobeIcon,
+  FileTextIcon,
 } from "lucide-react";
+import Checkbox from "@/Components/Checkbox";
+import { BookBulkActionBar } from "@/Components/BookBulkActionBar";
 import { Toaster, toast } from "react-hot-toast";
 import { onValue, ref, remove, set, update } from "firebase/database";
 import AdminAppLayout from "@/Layouts/AdminAppLayout";
@@ -184,6 +191,8 @@ export default function IndexRTDB() {
   const [selectedBook, setSelectedBook] = React.useState<Book | null>(null);
   const [selectedOrderBook, setSelectedOrderBook] = React.useState<Book | null>(null);
   const [editForm, setEditForm] = React.useState<Book | null>(null);
+  const [selectedKeys, setSelectedKeys] = React.useState<string[]>([]);
+  const [isBulkProcessing, setIsBulkProcessing] = React.useState(false);
 
   React.useEffect(() => {
     if (!database) {
@@ -445,6 +454,95 @@ export default function IndexRTDB() {
     }
   }, [database]);
 
+  const toggleSelectKey = useCallback((key: string) => {
+    setSelectedKeys((currentKeys) =>
+      currentKeys.includes(key) ? currentKeys.filter((item) => item !== key) : [...currentKeys, key]
+    );
+  }, []);
+
+  const toggleSelectAllFiltered = useCallback(() => {
+    if (filteredBooks.length === 0) {
+      return;
+    }
+
+    const allFilteredKeys = filteredBooks.map((b) => b.originalKey);
+    const isAllSelected = allFilteredKeys.every((key) => selectedKeys.includes(key));
+
+    if (isAllSelected) {
+      setSelectedKeys((currentKeys) => currentKeys.filter((k) => !allFilteredKeys.includes(k)));
+    } else {
+      setSelectedKeys((currentKeys) => Array.from(new Set([...currentKeys, ...allFilteredKeys])));
+    }
+  }, [filteredBooks, selectedKeys]);
+
+  const handleBulkAction = useCallback(async (action: "delete" | "status" | "lock", payload?: { status?: "publish" | "draft"; lock?: boolean }) => {
+    if (!database) {
+      toast.error("Firebase Realtime Database belum siap.");
+      return;
+    }
+
+    if (selectedKeys.length === 0) {
+      toast.error("Pilih minimal satu buku terlebih dahulu.");
+      return;
+    }
+
+    if (action === "delete") {
+      if (!window.confirm(`Hapus ${selectedKeys.length} buku terpilih dari Realtime Database?`)) {
+        return;
+      }
+    }
+
+    setIsBulkProcessing(true);
+
+    try {
+      if (action === "delete") {
+        const updates: Record<string, null | number> = {};
+        for (const key of selectedKeys) {
+          updates[`${ALL_BOOKS_PATH}/${key}`] = null;
+        }
+
+        // Hitung urutan ulang buku tersisa
+        const remainingBooks = books
+          .filter((item) => !selectedKeys.includes(item.originalKey))
+          .sort((left, right) => {
+            if (left.order !== right.order) {
+              return left.order - right.order;
+            }
+            return left.name.localeCompare(right.name);
+          });
+
+        remainingBooks.forEach((item, index) => {
+          updates[`${ALL_BOOKS_PATH}/${item.originalKey}/orderBook`] = index + 1;
+        });
+
+        await update(ref(database), updates);
+        toast.success(`${selectedKeys.length} buku berhasil dihapus.`);
+        setSelectedKeys([]);
+      } else if (action === "status" && payload?.status) {
+        const updates: Record<string, string> = {};
+        for (const key of selectedKeys) {
+          updates[`${ALL_BOOKS_PATH}/${key}/status`] = payload.status;
+        }
+        await update(ref(database), updates);
+        toast.success(`Status ${selectedKeys.length} buku berhasil diubah ke ${payload.status.toUpperCase()}.`);
+        setSelectedKeys([]);
+      } else if (action === "lock" && typeof payload?.lock === "boolean") {
+        const updates: Record<string, boolean> = {};
+        for (const key of selectedKeys) {
+          updates[`${ALL_BOOKS_PATH}/${key}/lock`] = payload.lock;
+        }
+        await update(ref(database), updates);
+        toast.success(`${selectedKeys.length} buku berhasil ${payload.lock ? "dikunci" : "dibuka kuncinya"}.`);
+        setSelectedKeys([]);
+      }
+    } catch (error) {
+      console.error("Error bulk action RTDB:", error);
+      toast.error("Gagal memproses aksi massal di Realtime Database.");
+    } finally {
+      setIsBulkProcessing(false);
+    }
+  }, [database, selectedKeys, books]);
+
   const copyToClipboard = useCallback((text: string) => {
     if ("clipboard" in navigator) {
       navigator.clipboard.writeText(text).then(() => {
@@ -605,6 +703,18 @@ export default function IndexRTDB() {
           </Card.Body>
         </Card>
 
+        {/* Floating Bulk Action Bar on Table Mode */}
+        {viewMode === "table" && !isOrderMode && (
+          <BookBulkActionBar
+            selectedCount={selectedKeys.length}
+            isProcessing={isBulkProcessing}
+            onUpdateStatus={(status) => handleBulkAction("status", { status })}
+            onUpdateLock={(lock) => handleBulkAction("lock", { lock })}
+            onDelete={() => handleBulkAction("delete")}
+            onClearSelection={() => setSelectedKeys([])}
+          />
+        )}
+
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="ml-auto flex items-center gap-2 flex-wrap">
             <Chip size="sm" variant="ghost" className="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
@@ -654,7 +764,19 @@ export default function IndexRTDB() {
                     <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
                       <thead className="bg-slate-50 dark:bg-slate-950/60">
                         <tr className="text-left text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                          <th className="px-4 py-3"></th>
+                          <th className="w-10 px-4 py-3">
+                            {!isOrderMode && (
+                              <Checkbox
+                                checked={
+                                  filteredBooks.length > 0 &&
+                                  filteredBooks.every((b) => selectedKeys.includes(b.originalKey))
+                                }
+                                onChange={toggleSelectAllFiltered}
+                                color="primary"
+                              />
+                            )}
+                          </th>
+                          <th className="px-4 py-3">Urutan</th>
                           <th className="px-4 py-3">Buku</th>
                           <th className="px-4 py-3">Keyword</th>
                           <th className="px-4 py-3">Status</th>
@@ -673,6 +795,8 @@ export default function IndexRTDB() {
                             hasActiveSearch={hasActiveFilter}
                             isDeleting={activeDeleteKey === book.originalKey}
                             activeDeleteKey={activeDeleteKey}
+                            isSelected={selectedKeys.includes(book.originalKey)}
+                            onToggleSelect={toggleSelectKey}
                             onView={openDetailDialog}
                             onEdit={openEditDialog}
                             onChangeOrder={openChangeOrderDialog}

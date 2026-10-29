@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\AnakIndonesiaMenghafal\BookReorderRequest;
 use App\Http\Requests\AnakIndonesiaMenghafal\BookStoreRequest;
 use App\Http\Requests\AnakIndonesiaMenghafal\BookUpdateRequest;
+use App\Http\Requests\ClassChatting\BookBulkActionRequest;
 use App\Models\Book;
 use App\Models\BookIntegration;
 use Google\Cloud\Firestore\FieldValue;
@@ -277,6 +278,118 @@ class BookController extends Controller
         } catch (Throwable $exception) {
             return response()->json([
                 'message' => 'Gagal menghapus buku dari Firestore: '.$exception->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function bulkAction(BookBulkActionRequest $request): JsonResponse
+    {
+        $validated = $request->validated();
+        $action = $validated['action'];
+        $keys = array_values(array_unique($validated['keys']));
+
+        try {
+            if ($action === 'delete') {
+                $writer = $this->firestore->bulkWriter();
+
+                foreach ($keys as $key) {
+                    $docRef = $this->booksCollection()->document($key);
+                    $snapshot = $docRef->snapshot();
+                    if ($snapshot->exists()) {
+                        $writer->delete($docRef);
+                    }
+                }
+                $writer->commit();
+
+                // Delete integrations in mysql
+                $books = Book::query()->whereIn('uuid', $keys)->get();
+                if ($books->isNotEmpty()) {
+                    BookIntegration::query()
+                        ->whereIn('book_id', $books->pluck('id'))
+                        ->where('app_key', AppEnum::ANAK_INDONESIA_MENGHAFAL->value)
+                        ->delete();
+                }
+
+                // Resequence remaining books
+                $documents = $this->booksCollection()->documents();
+                $remainingBooks = [];
+                foreach ($documents as $snapshot) {
+                    if (! $snapshot->exists() || in_array($snapshot->id(), $keys, true)) {
+                        continue;
+                    }
+                    $remainingBooks[] = [
+                        'id' => $snapshot->id(),
+                        'name' => (string) ($snapshot['name'] ?? ''),
+                        'order' => (int) ($snapshot['order'] ?? 0),
+                    ];
+                }
+
+                usort($remainingBooks, function (array $left, array $right): int {
+                    if ($left['order'] !== $right['order']) {
+                        return $left['order'] <=> $right['order'];
+                    }
+
+                    return strcasecmp($left['name'], $right['name']);
+                });
+
+                $this->batchUpdateBookOrders(
+                    array_map(
+                        fn (array $book, int $index): array => [
+                            'id' => $book['id'],
+                            'order' => $index + 1,
+                        ],
+                        array_values($remainingBooks),
+                        array_keys(array_values($remainingBooks))
+                    )
+                );
+
+                return response()->json([
+                    'message' => count($keys).' buku berhasil dihapus.',
+                ]);
+            }
+
+            if ($action === 'status') {
+                $status = $validated['status'];
+                $writer = $this->firestore->bulkWriter();
+
+                foreach ($keys as $key) {
+                    $docRef = $this->booksCollection()->document($key);
+                    $writer->update($docRef, [
+                        ['path' => 'status', 'value' => $status],
+                        ['path' => 'updatedAt', 'value' => FieldValue::serverTimestamp()],
+                    ]);
+                }
+                $writer->commit();
+
+                return response()->json([
+                    'message' => 'Status '.count($keys).' buku berhasil diubah menjadi '.strtoupper($status).'.',
+                ]);
+            }
+
+            if ($action === 'lock') {
+                $lockStatus = (bool) $validated['lock'];
+                $writer = $this->firestore->bulkWriter();
+
+                foreach ($keys as $key) {
+                    $docRef = $this->booksCollection()->document($key);
+                    $writer->update($docRef, [
+                        ['path' => 'lock', 'value' => $lockStatus],
+                        ['path' => 'updatedAt', 'value' => FieldValue::serverTimestamp()],
+                    ]);
+                }
+                $writer->commit();
+
+                return response()->json([
+                    'message' => count($keys).' buku berhasil '.($lockStatus ? 'dikunci' : 'dibuka kuncinya').'.',
+                ]);
+            }
+
+            return response()->json([
+                'message' => 'Aksi tidak dikenali.',
+            ], 422);
+        } catch (Throwable $exception) {
+            return response()->json([
+                'message' => 'Gagal memproses aksi massal: '.$exception->getMessage(),
             ], 500);
         }
     }

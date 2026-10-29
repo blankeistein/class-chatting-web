@@ -154,6 +154,7 @@ Route::middleware('auth')->group(function () {
             Route::put('book/items/lock/{documentId}', [ClassChattingBookController::class, 'updateLock'])->name('book.items.lock.update');
             Route::put('book/items/{documentId}', [ClassChattingBookController::class, 'update'])->name('book.items.update');
             Route::patch('book/items/reorder', [ClassChattingBookController::class, 'reorder'])->name('book.items.reorder');
+            Route::post('book/items/bulk-action', [ClassChattingBookController::class, 'bulkAction'])->name('book.items.bulk-action');
             Route::delete('book/items/{documentId}', [ClassChattingBookController::class, 'destroy'])->name('book.items.destroy');
             Route::get('book/category', [ClassChattingBookController::class, 'category'])->name('book.category');
             Route::get('book-rtdb', [ClassChattingBookController::class, 'indexRTDB'])->name('book.book-rtdb');
@@ -171,6 +172,7 @@ Route::middleware('auth')->group(function () {
             Route::put('book/items/lock/{documentId}', [AnakIndonesiaMenghafalBookController::class, 'updateLock'])->name('book.items.lock.update');
             Route::put('book/items/{documentId}', [AnakIndonesiaMenghafalBookController::class, 'update'])->name('book.items.update');
             Route::patch('book/items/reorder', [AnakIndonesiaMenghafalBookController::class, 'reorder'])->name('book.items.reorder');
+            Route::post('book/items/bulk-action', [AnakIndonesiaMenghafalBookController::class, 'bulkAction'])->name('book.items.bulk-action');
             Route::delete('book/items/{documentId}', [AnakIndonesiaMenghafalBookController::class, 'destroy'])->name('book.items.destroy');
             Route::get('book/category', [AnakIndonesiaMenghafalBookController::class, 'category'])->name('book.category');
             Route::get('book-rtdb', [AnakIndonesiaMenghafalBookController::class, 'indexRTDB'])->name('book.book-rtdb');
@@ -186,6 +188,7 @@ Route::middleware('auth')->group(function () {
             Route::put('book/items/lock/{documentId}', [ClassChattingForKidsBookController::class, 'updateLock'])->name('book.items.lock.update');
             Route::put('book/items/{documentId}', [ClassChattingForKidsBookController::class, 'update'])->name('book.items.update');
             Route::patch('book/items/reorder', [ClassChattingForKidsBookController::class, 'reorder'])->name('book.items.reorder');
+            Route::post('book/items/bulk-action', [ClassChattingForKidsBookController::class, 'bulkAction'])->name('book.items.bulk-action');
             Route::delete('book/items/{documentId}', [ClassChattingForKidsBookController::class, 'destroy'])->name('book.items.destroy');
             Route::get('book/category', [ClassChattingForKidsBookController::class, 'category'])->name('book.category');
             Route::get('book-rtdb', [ClassChattingForKidsBookController::class, 'indexRTDB'])->name('book.book-rtdb');
@@ -201,6 +204,7 @@ Route::middleware('auth')->group(function () {
             Route::put('book/items/lock/{documentId}', [ClassChattingLayarLebarBookController::class, 'updateLock'])->name('book.items.lock.update');
             Route::put('book/items/{documentId}', [ClassChattingLayarLebarBookController::class, 'update'])->name('book.items.update');
             Route::patch('book/items/reorder', [ClassChattingLayarLebarBookController::class, 'reorder'])->name('book.items.reorder');
+            Route::post('book/items/bulk-action', [ClassChattingLayarLebarBookController::class, 'bulkAction'])->name('book.items.bulk-action');
             Route::delete('book/items/{documentId}', [ClassChattingLayarLebarBookController::class, 'destroy'])->name('book.items.destroy');
             Route::get('book/category', [ClassChattingLayarLebarBookController::class, 'category'])->name('book.category');
             Route::get('book-rtdb', [ClassChattingLayarLebarBookController::class, 'indexRTDB'])->name('book.book-rtdb');

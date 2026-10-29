@@ -23,6 +23,7 @@ import {
   Chip,
   IconButton,
   Input,
+  Menu,
   Select,
   Typography,
 } from "@material-tailwind/react";
@@ -35,7 +36,14 @@ import {
   PlusIcon,
   SaveIcon,
   SearchIcon,
+  Trash2Icon,
+  LockIcon,
+  UnlockIcon,
+  GlobeIcon,
+  FileTextIcon,
 } from "lucide-react";
+import Checkbox from "@/Components/Checkbox";
+import { BookBulkActionBar } from "@/Components/BookBulkActionBar";
 import { Toaster, toast } from "react-hot-toast";
 import { collection, doc, onSnapshot } from "firebase/firestore";
 import AdminAppLayout from "@/Layouts/AdminAppLayout";
@@ -230,6 +238,8 @@ export default function Index() {
   const [selectedBook, setSelectedBook] = React.useState<Book | null>(null);
   const [selectedOrderBook, setSelectedOrderBook] = React.useState<Book | null>(null);
   const [editForm, setEditForm] = React.useState<Book | null>(null);
+  const [selectedKeys, setSelectedKeys] = React.useState<string[]>([]);
+  const [isBulkProcessing, setIsBulkProcessing] = React.useState(false);
 
   React.useEffect(() => {
     if (!firestore) {
@@ -490,6 +500,60 @@ export default function Index() {
     }
   }, []);
 
+  const toggleSelectKey = useCallback((key: string) => {
+    setSelectedKeys((currentKeys) =>
+      currentKeys.includes(key) ? currentKeys.filter((item) => item !== key) : [...currentKeys, key]
+    );
+  }, []);
+
+  const toggleSelectAllFiltered = useCallback(() => {
+    if (filteredBooks.length === 0) {
+      return;
+    }
+
+    const allFilteredKeys = filteredBooks.map((b) => b.originalKey);
+    const isAllSelected = allFilteredKeys.every((key) => selectedKeys.includes(key));
+
+    if (isAllSelected) {
+      setSelectedKeys((currentKeys) => currentKeys.filter((k) => !allFilteredKeys.includes(k)));
+    } else {
+      setSelectedKeys((currentKeys) => Array.from(new Set([...currentKeys, ...allFilteredKeys])));
+    }
+  }, [filteredBooks, selectedKeys]);
+
+  const handleBulkAction = useCallback(async (action: "delete" | "status" | "lock", payload?: { status?: "publish" | "draft"; lock?: boolean }) => {
+    if (selectedKeys.length === 0) {
+      toast.error("Pilih minimal satu buku terlebih dahulu.");
+      return;
+    }
+
+    if (action === "delete") {
+      if (!window.confirm(`Hapus ${selectedKeys.length} buku terpilih dari Firestore?`)) {
+        return;
+      }
+    }
+
+    setIsBulkProcessing(true);
+
+    try {
+      const response = await axios.post<{ message: string }>(route("admin.apps.class-chatting.book.items.bulk-action"), {
+        action,
+        keys: selectedKeys,
+        status: payload?.status,
+        lock: payload?.lock,
+      });
+
+      toast.success(response.data.message || "Aksi massal berhasil dijalankan.");
+      setSelectedKeys([]);
+    } catch (error: any) {
+      console.error("Error bulk action:", error);
+      const message = error.response?.data?.message || "Gagal memproses aksi massal.";
+      toast.error(message);
+    } finally {
+      setIsBulkProcessing(false);
+    }
+  }, [selectedKeys]);
+
   const copyToClipboard = useCallback((text: string) => {
     if ("clipboard" in navigator) {
       navigator.clipboard.writeText(text).then(() => {
@@ -675,6 +739,18 @@ export default function Index() {
         </Card>
 
 
+        {/* Floating Bulk Action Bar on Table Mode */}
+        {viewMode === "table" && !isOrderMode && (
+          <BookBulkActionBar
+            selectedCount={selectedKeys.length}
+            isProcessing={isBulkProcessing}
+            onUpdateStatus={(status) => handleBulkAction("status", { status })}
+            onUpdateLock={(lock) => handleBulkAction("lock", { lock })}
+            onDelete={() => handleBulkAction("delete")}
+            onClearSelection={() => setSelectedKeys([])}
+          />
+        )}
+
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="ml-auto flex items-center gap-2 flex-wrap">
             <Chip size="sm" variant="ghost" className="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
@@ -724,7 +800,19 @@ export default function Index() {
                     <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
                       <thead className="bg-slate-50 dark:bg-slate-950/60">
                         <tr className="text-left text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                          <th className="px-4 py-3"></th>
+                          <th className="w-10 px-4 py-3">
+                            {!isOrderMode && (
+                              <Checkbox
+                                checked={
+                                  filteredBooks.length > 0 &&
+                                  filteredBooks.every((b) => selectedKeys.includes(b.originalKey))
+                                }
+                                onChange={toggleSelectAllFiltered}
+                                color="primary"
+                              />
+                            )}
+                          </th>
+                          <th className="px-4 py-3">Urutan</th>
                           <th className="px-4 py-3">Buku</th>
                           <th className="px-4 py-3">Keyword</th>
                           <th className="px-4 py-3">Status</th>
@@ -743,6 +831,8 @@ export default function Index() {
                             hasActiveSearch={hasActiveFilter}
                             isDeleting={activeDeleteKey === book.originalKey}
                             activeDeleteKey={activeDeleteKey}
+                            isSelected={selectedKeys.includes(book.originalKey)}
+                            onToggleSelect={toggleSelectKey}
                             onView={openDetailDialog}
                             onEdit={openEditDialog}
                             onChangeOrder={openChangeOrderDialog}

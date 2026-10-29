@@ -306,17 +306,19 @@ class BookController extends Controller
         try {
             if ($action === 'delete') {
                 $deletedOrders = [];
-                $writer = $this->firestore->bulkWriter();
 
-                foreach ($keys as $key) {
-                    $docRef = $this->booksCollection()->document($key);
-                    $snapshot = $docRef->snapshot();
-                    if ($snapshot->exists()) {
-                        $deletedOrders[] = (int) ($snapshot['order'] ?? 0);
-                        $writer->delete($docRef);
+                foreach (array_chunk($keys, 100) as $chunk) {
+                    $batch = $this->firestore->batch();
+                    foreach ($chunk as $key) {
+                        $docRef = $this->booksCollection()->document($key);
+                        $snapshot = $docRef->snapshot();
+                        if ($snapshot->exists()) {
+                            $deletedOrders[] = (int) ($snapshot['order'] ?? 0);
+                            $batch->delete($docRef);
+                        }
                     }
+                    $batch->commit();
                 }
-                $writer->commit();
 
                 // Delete integrations in mysql
                 $books = DatabaseBook::query()->whereIn('uuid', $keys)->get();
@@ -369,16 +371,18 @@ class BookController extends Controller
 
             if ($action === 'status') {
                 $status = $validated['status'];
-                $writer = $this->firestore->bulkWriter();
 
-                foreach ($keys as $key) {
-                    $docRef = $this->booksCollection()->document($key);
-                    $writer->update($docRef, [
-                        ['path' => 'status', 'value' => $status],
-                        ['path' => 'updatedAt', 'value' => FieldValue::serverTimestamp()],
-                    ]);
+                foreach (array_chunk($keys, 100) as $chunk) {
+                    $batch = $this->firestore->batch();
+                    foreach ($chunk as $key) {
+                        $docRef = $this->booksCollection()->document($key);
+                        $batch->update($docRef, [
+                            ['path' => 'status', 'value' => $status],
+                            ['path' => 'updatedAt', 'value' => FieldValue::serverTimestamp()],
+                        ]);
+                    }
+                    $batch->commit();
                 }
-                $writer->commit();
 
                 $this->incrementBooksCatalogVersion();
 
@@ -389,16 +393,18 @@ class BookController extends Controller
 
             if ($action === 'lock') {
                 $lockStatus = (bool) $validated['lock'];
-                $writer = $this->firestore->bulkWriter();
 
-                foreach ($keys as $key) {
-                    $docRef = $this->booksCollection()->document($key);
-                    $writer->update($docRef, [
-                        ['path' => 'lock', 'value' => $lockStatus],
-                        ['path' => 'updatedAt', 'value' => FieldValue::serverTimestamp()],
-                    ]);
+                foreach (array_chunk($keys, 100) as $chunk) {
+                    $batch = $this->firestore->batch();
+                    foreach ($chunk as $key) {
+                        $docRef = $this->booksCollection()->document($key);
+                        $batch->update($docRef, [
+                            ['path' => 'lock', 'value' => $lockStatus],
+                            ['path' => 'updatedAt', 'value' => FieldValue::serverTimestamp()],
+                        ]);
+                    }
+                    $batch->commit();
                 }
-                $writer->commit();
 
                 $this->incrementBooksCatalogVersion();
 
@@ -433,11 +439,11 @@ class BookController extends Controller
             ];
         }
 
-        foreach (array_chunk(array_values($uniqueBooks), 5) as $chunk) {
-            $writer = $this->firestore->bulkWriter();
+        foreach (array_chunk(array_values($uniqueBooks), 100) as $chunk) {
+            $batch = $this->firestore->batch();
 
             foreach ($chunk as $book) {
-                $writer->update(
+                $batch->update(
                     $this->booksCollection()->document($book['id']),
                     [
                         ['path' => 'order', 'value' => $book['order']],
@@ -446,7 +452,7 @@ class BookController extends Controller
                 );
             }
 
-            $writer->commit();
+            $batch->commit();
         }
     }
 
